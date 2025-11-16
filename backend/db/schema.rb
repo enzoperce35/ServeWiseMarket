@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_15_233133) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_16_030453) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,7 +25,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_15_233133) do
     t.boolean "verified"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "district"
-    t.string "subphase"
+    t.integer "district", default: 0, null: false
+    t.integer "subphase", default: 0, null: false
   end
 end
