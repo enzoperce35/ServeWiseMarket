@@ -1,0 +1,27 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: "Alice"
+  contact_number: "09171234567"
+  password: "password123"
+  password_confirmation: "password123"
+  role: "buyer"
+  block: "A"
+  lot: "12"
+  street: "Main St"
+  district: "Homes"
+  subphase: "Phase 1"
+  verified: false
+
+two:
+  name: "Bob"
+  contact_number: "09179876543"
+  password: "password456"
+  password_confirmation: "password456"
+  role: "seller"
+  block: "B"
+  lot: "5"
+  street: "2nd Ave"
+  district: "West"
+  subphase: "Phase 2"
+  verified: false
