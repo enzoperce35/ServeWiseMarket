@@ -1,9 +1,18 @@
+# app/controllers/application_controller.rb
+require 'jwt'  # make sure the jwt gem is loaded
+
 class ApplicationController < ActionController::API
   before_action :authenticate_user
 
-  # Encode payload into JWT
+  private
+
+  # ----------------------------
+  # JWT Encoding / Decoding
+  # ----------------------------
+
+  # Encode a payload into a JWT
   def encode_token(payload)
-    JWT.encode(payload, Rails.application.secrets.secret_key_base)
+    JWT.encode(payload, Rails.application.secret_key_base)
   end
 
   # Read Authorization header
@@ -11,21 +20,27 @@ class ApplicationController < ActionController::API
     request.headers['Authorization']
   end
 
-  # Decode JWT
+  # Decode JWT and return payload
   def decoded_token
-    if auth_header
-      token = auth_header.split(' ')[1]
-      begin
-        JWT.decode(token, Rails.application.secrets.secret_key_base, true, algorithm: 'HS256')
-      rescue JWT::DecodeError
-        nil
-      end
+    return nil unless auth_header
+
+    token = auth_header.split(' ')[1]
+    begin
+      JWT.decode(token, Rails.application.secret_key_base, true, algorithm: 'HS256')
+    rescue JWT::DecodeError
+      nil
     end
   end
 
-  # Find current user from decoded token
+  # ----------------------------
+  # Current User Helpers
+  # ----------------------------
+
+  # Get current user from JWT
   def current_user
-    @current_user ||= User.find_by(id: decoded_token[0]['user_id']) if decoded_token
+    return nil unless decoded_token
+    user_id = decoded_token[0]['user_id']
+    @current_user ||= User.find_by(id: user_id)
   end
 
   # Protect routes
@@ -33,4 +48,3 @@ class ApplicationController < ActionController::API
     render json: { error: 'Not Authorized' }, status: :unauthorized unless current_user
   end
 end
-

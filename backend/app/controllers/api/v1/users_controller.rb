@@ -7,20 +7,9 @@ module Api
         user.verified = false
 
         if user.save
-          render json: { status: 'success', user: user }, status: :created
+          render json: { status: 'success', user: user_response(user) }, status: :created
         else
           render json: { status: 'error', errors: user.errors.full_messages }, status: :unprocessable_entity
-        end
-      end
-
-      # POST /api/v1/login
-      def login
-        user = User.find_by(contact_number: params[:contact_number])
-
-        if user&.authenticate(params[:password])
-          render json: { status: 'success', user: user }, status: :ok
-        else
-          render json: { status: 'error', message: 'Invalid contact number or password' }, status: :unauthorized
         end
       end
 
@@ -36,9 +25,24 @@ module Api
           :block,
           :lot,
           :street,
-          :district,   # homes or west
-          :subphase    # Phase 1, Phase 2, etc.
+          :district,
+          :subphase
         )
+      end
+
+      def user_response(user)
+        {
+          id: user.id,
+          name: user.name,
+          contact_number: user.contact_number,
+          role: user.role,
+          district: user.district,
+          subphase: user.subphase,
+          block: user.block,
+          lot: user.lot,
+          street: user.street,
+          verified: user.verified
+        }
       end
     end
   end

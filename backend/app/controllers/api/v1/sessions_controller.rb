@@ -1,5 +1,4 @@
 class Api::V1::SessionsController < ApplicationController
-  # Skip authentication for login
   skip_before_action :authenticate_user, only: [:create]
 
   # POST /api/v1/login
@@ -15,14 +14,12 @@ class Api::V1::SessionsController < ApplicationController
   end
 
   # DELETE /api/v1/logout
-  # JWT is stateless, so logout is mainly frontend deleting the token
   def destroy
     render json: { message: 'Logged out successfully' }
   end
 
   private
 
-  # Customize what user data you return
   def user_response(user)
     {
       id: user.id,
