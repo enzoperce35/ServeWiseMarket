@@ -1,0 +1,162 @@
+/* =============================
+   GLOBAL RESET
+============================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  html, body {
+    width: 100%;
+    height: 100%;
+    font-family: 'Inter', Arial, sans-serif;
+    background: #f7f7f7;
+    color: #222;
+    line-height: 1.4;
+  }
+  
+  /* Smooth animation */
+  * {
+    transition: all 0.15s ease;
+  }
+  
+  /* Improve touch scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* =============================
+     ROOT COLOR VARIABLES
+  ============================= */
+  :root {
+    --color-primary: #ff6f3c;   /* Orange (Shopee-ish) */
+    --color-primary-dark: #e65c2f;
+    --color-secondary: #3b82f6; /* Accent blue */
+    --color-bg: #f7f7f7;
+    --color-white: #ffffff;
+    --color-border: #e5e7eb;
+  
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+  
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 10px rgba(0,0,0,0.08);
+  }
+  
+  /* =============================
+     PAGE LAYOUT HELPERS
+  ============================= */
+  .container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 1rem;
+  }
+  
+  .page-padding {
+    padding-top: 80px; /* For pages under the navbar */
+  }
+  
+  /* =============================
+     DEFAULT BUTTON STYLES
+  ============================= */
+  button,
+  .btn {
+    padding: 0.6rem 1.1rem;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+  }
+  
+  .btn-primary {
+    background: var(--color-primary);
+    color: white;
+  }
+  .btn-primary:hover {
+    background: var(--color-primary-dark);
+  }
+  
+  .btn-secondary {
+    background: white;
+    border: 1px solid var(--color-border);
+  }
+  .btn-secondary:hover {
+    background: #f4f4f4;
+  }
+  
+  /* =============================
+     CARD DEFAULTS
+  ============================= */
+  .card {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border);
+  }
+  
+  /* =============================
+     GRID HELPERS
+  ============================= */
+  .grid {
+    display: grid;
+    gap: 1rem;
+  }
+  
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  /* =============================
+     MOBILE RESPONSIVE HELPERS
+  ============================= */
+  @media (max-width: 768px) {
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      grid-template-columns: repeat(1, 1fr);
+    }
+  }
+  
+  /* =============================
+     SCROLLBAR (Sleek Thin)
+  ============================= */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #b3b3b3;
+  }
+  
+  /* =============================
+     LINK DEFAULTS
+  ============================= */
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+  
