@@ -1,10 +1,7 @@
-function App() {
+// src/App.jsx
+import { RouterProvider } from "react-router-dom";
+import { router } from "./router";
 
-  return (
-    <>
-      <h1>Welcome to Homes-West Market</h1>
-    </>
-  )
+export default function App() {
+  return <RouterProvider router={router} />;
 }
-
-export default App
