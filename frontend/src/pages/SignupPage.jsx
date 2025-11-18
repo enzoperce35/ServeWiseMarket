@@ -1,51 +1,46 @@
-// src/pages/Signup.jsx
 import { useState } from "react";
 import useAuth from "../hooks/useAuth";
 
-export default function Signup() {
-  const { signup } = useAuth();
+export default function SignupPage() {
+  const { handleSignup } = useAuth();
+
   const [form, setForm] = useState({
     name: "",
     contact_number: "",
     password: "",
     password_confirmation: "",
     role: "buyer",
-    block: "",
-    lot: "",
-    street: "",
-    district: "",
-    subphase: "",
   });
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSignup = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    await signup(form);
-    alert("Account created!");
+    try {
+      const data = await handleSignup(form);
+      console.log("Signup success!", data);
+      alert("Signup successful!");
+    } catch (err) {
+      console.error(err);
+      alert("Signup failed!");
+    }
   };
 
   return (
-    <div>
-      <h1>Signup</h1>
+    <form onSubmit={handleSubmit} className="signup-form">
+      <input name="name" placeholder="Name" onChange={handleChange} />
+      <input name="contact_number" placeholder="Contact Number" onChange={handleChange} />
+      <input type="password" name="password" placeholder="Password" onChange={handleChange} />
+      <input type="password" name="password_confirmation" placeholder="Confirm Password" onChange={handleChange} />
 
-      <form onSubmit={handleSignup}>
-        <input name="name" placeholder="Name" onChange={handleChange} />
-        <input name="contact_number" placeholder="Contact Number" onChange={handleChange} />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} />
-        <input name="password_confirmation" type="password" placeholder="Confirm Password" onChange={handleChange} />
+      <select name="role" onChange={handleChange}>
+        <option value="buyer">Buyer</option>
+        <option value="seller">Seller</option>
+      </select>
 
-        <input name="block" placeholder="Block" onChange={handleChange} />
-        <input name="lot" placeholder="Lot" onChange={handleChange} />
-        <input name="street" placeholder="Street" onChange={handleChange} />
-
-        <input name="district" placeholder="District" onChange={handleChange} />
-        <input name="subphase" placeholder="Subphase" onChange={handleChange} />
-
-        <button>Create Account</button>
-      </form>
-    </div>
+      <button type="submit">Sign Up</button>
+    </form>
   );
 }

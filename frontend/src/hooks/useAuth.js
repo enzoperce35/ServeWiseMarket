@@ -1,28 +1,33 @@
-// src/hooks/useAuth.js
 import { useState } from "react";
-import authApi from "../api/authApi";
+import { signup, login, logout } from "../api/authApi";
 
 export default function useAuth() {
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("user")));
+  const [authUser, setAuthUser] = useState(null);
 
-  const login = async (contact_number, password) => {
-    const res = await authApi.login({ contact_number, password });
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("user", JSON.stringify(res.data.user));
-    setUser(res.data.user);
-    return res.data.user;
+  const handleSignup = async (formData) => {
+    const data = await signup(formData);
+    localStorage.setItem("token", data.token);
+    setAuthUser(data.user);
+    return data;
   };
 
-  const signup = async (userData) => {
-    const res = await authApi.signup(userData);
-    return res.data;
+  const handleLogin = async (formData) => {
+    const data = await login(formData);
+    localStorage.setItem("token", data.token);
+    setAuthUser(data.user);
+    return data;
   };
 
-  const logout = () => {
+  const handleLogout = async () => {
+    await logout();
     localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
+    setAuthUser(null);
   };
 
-  return { user, login, signup, logout };
+  return {
+    authUser,
+    handleSignup,
+    handleLogin,
+    handleLogout,
+  };
 }

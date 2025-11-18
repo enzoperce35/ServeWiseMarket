@@ -1,46 +1,55 @@
-// src/pages/Login.jsx
 import { useState } from "react";
-import useAuth from "../hooks/useAuth";
+import { useAuthContext } from "../context/AuthContext";
+import "../css/pages/Auth.css";
 
-export default function Login() {
-  const { login } = useAuth();
-  const [contact, setContact] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+export default function LoginPage() {
+  const { login } = useAuthContext();
+  const [form, setForm] = useState({
+    contact_number: "",
+    password: "",
+  });
 
-  const handleLogin = async (e) => {
+  const [error, setError] = useState(null);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
-      await login(contact, password);
+    const res = await login(form);
+
+    if (!res.success) {
+      setError(res.message || "Login failed.");
+    } else {
       window.location.href = "/";
-    } catch (err) {
-      setError("Invalid contact number or password");
     }
   };
 
   return (
-    <div>
-      <h1>Login</h1>
+    <div className="auth-container">
+      <h1>Welcome Back</h1>
 
-      <form onSubmit={handleLogin}>
+      {error && <p className="auth-error">{error}</p>}
+
+      <form className="auth-form" onSubmit={handleSubmit}>
         <input
-          type="text"
+          name="contact_number"
           placeholder="Contact Number"
-          value={contact}
-          onChange={(e) => setContact(e.target.value)}
+          onChange={handleChange}
+          required
         />
 
         <input
           type="password"
+          name="password"
           placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={handleChange}
+          required
         />
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
-
-        <button type="submit">Login</button>
+        <button className="btn-primary">Login</button>
       </form>
     </div>
   );
