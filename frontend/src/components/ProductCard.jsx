@@ -1,18 +1,31 @@
 // src/components/ProductCard.jsx
 import React from "react";
+import { useAuthContext } from "../context/AuthContext";
 
 export default function ProductCard({ product }) {
-  // Ensure price is a number
-  const price = Number(product.price) || 0;
+  const { user } = useAuthContext();
 
-  // Fallback image
-  const imageUrl = product.image_url || "/placeholder.png";
+  const addToCart = () => {
+    if (!user) {
+      alert("Please log in to add items to cart.");
+      return;
+    }
+
+    alert(`Added ${product.name} to cart!`);
+  };
 
   return (
-    <div className="product-card">
-      <img src={imageUrl} alt={product.name || "Product"} />
-      <h3 className="product-card-title">{product.name || "Unnamed Product"}</h3>
-      <p className="product-card-price">${price.toFixed(2)}</p>
+    <div className="product-card" onClick={addToCart}>
+      <img
+        src={product.image_url || "https://via.placeholder.com/150"}
+        alt={product.name}
+      />
+
+      <h3 className="product-card-title">{product.name}</h3>
+
+      <p className="product-card-price">
+        ₱{Number(product.price || 0).toFixed(2)}
+      </p>
     </div>
   );
 }
