@@ -1,3 +1,4 @@
+// src/pages/ProductsPage.jsx
 import React, { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard";
 import Filters from "../components/Filters";
@@ -7,20 +8,36 @@ import { fetchProducts } from "../api/productApi";
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [filters, setFilters] = useState({
+    category: "",
+    search: "",
+    minPrice: "",
+    maxPrice: "",
+  });
 
-  useEffect(() => {
-    fetchProducts().then((data) => {
+  // Fetch products from backend
+  const loadProducts = async () => {
+    try {
+      const data = await fetchProducts(filters);
       setProducts(data);
       setFilteredProducts(data);
-    });
-  }, []);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+    }
+  };
+
+  // Reload products whenever filters change
+  useEffect(() => {
+    loadProducts();
+  }, [filters]);
 
   return (
     <div className="products-page">
       <div className="filters-container">
         <Filters
+          filters={filters}
+          setFilters={setFilters}
           products={products}
-          setFilteredProducts={setFilteredProducts}
         />
       </div>
 
@@ -30,7 +47,7 @@ export default function ProductsPage() {
             <ProductCard key={product.id} product={product} />
           ))
         ) : (
-          <p className="no-products">No products found.</p>
+          <div className="no-products">No products found</div>
         )}
       </div>
     </div>
