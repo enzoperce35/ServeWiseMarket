@@ -1,8 +1,12 @@
 class Product < ApplicationRecord
-  belongs_to :seller, class_name: "User"
+  # Associations
+  belongs_to :shop
 
-  # Pre-order validation
+  has_many :product_ratings, dependent: :destroy
+  
+  # Availability validation
   validates :availability_type, inclusion: { in: %w[on_hand pre_order] }
+
   with_options if: :pre_order? do
     validates :preorder_lead_time_hours, presence: true, numericality: { greater_than: 0 }
     validates :next_available_date, presence: true
@@ -11,16 +15,16 @@ class Product < ApplicationRecord
   # Status validation
   validates :status, inclusion: { in: %w[active draft archived] }
 
-  # Convenience methods
+  # Convenience flag
   def pre_order?
     availability_type == "pre_order"
   end
 
-  # Future ratings
-  has_many :product_ratings, dependent: :destroy
+  # Ratings helpers
   def average_rating
     product_ratings.average(:score)&.round(2) || 0
   end
+
   def ratings_count
     product_ratings.count
   end

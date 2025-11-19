@@ -1,6 +1,9 @@
 class User < ApplicationRecord
   has_secure_password
 
+  # Associations
+  has_one :shop, dependent: :destroy
+
   # Name: required
   validates :name, presence: true
 

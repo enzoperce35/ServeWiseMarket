@@ -10,9 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_19_142449) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_19_233447) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "product_ratings", force: :cascade do |t|
+    t.bigint "product_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "score", null: false
+    t.text "comment"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_product_ratings_on_product_id"
+    t.index ["user_id", "product_id"], name: "index_product_ratings_on_user_id_and_product_id", unique: true
+    t.index ["user_id"], name: "index_product_ratings_on_user_id"
+  end
 
   create_table "products", force: :cascade do |t|
     t.string "name", null: false
@@ -33,6 +45,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_142449) do
     t.index ["seller_id"], name: "index_products_on_seller_id"
   end
 
+  create_table "shops", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.string "status", default: "closed", null: false
+    t.string "image_url"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_shops_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "contact_number"
@@ -48,5 +71,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_142449) do
     t.integer "subphase", default: 0, null: false
   end
 
+  add_foreign_key "product_ratings", "products"
+  add_foreign_key "product_ratings", "users"
   add_foreign_key "products", "users", column: "seller_id"
+  add_foreign_key "shops", "users"
 end
