@@ -1,5 +1,5 @@
 /* ====================================
-   LOGIN PAGE & SIGNUP PAGE
+   SIGNUP / LOGIN PAGE STYLING
 ==================================== */
 
 .auth-page {
@@ -15,7 +15,7 @@
 
 .auth-page h2 {
   font-size: 2rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: #333;
 }
 
@@ -26,27 +26,33 @@
   max-width: 400px;
   background: #ffffff;
   padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   gap: 15px;
 }
 
-.auth-page input[type="text"],
-.auth-page input[type="password"],
+.auth-page label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.auth-page input,
 .auth-page select {
-  padding: 12px 15px;
+  padding: 12px 14px;
   font-size: 1rem;
   border-radius: 6px;
   border: 1px solid #dcdcdc;
+  margin-top: 5px;
   outline: none;
   transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
-.auth-page input[type="text"]:focus,
-.auth-page input[type="password"]:focus,
+.auth-page input:focus,
 .auth-page select:focus {
   border-color: #ff5722;
-  box-shadow: 0 0 5px rgba(255, 87, 34, 0.3);
+  box-shadow: 0 0 5px rgba(255, 87, 34, 0.25);
 }
 
 .auth-page button[type="submit"] {
@@ -59,6 +65,7 @@
   color: #ffffff;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease;
+  margin-top: 10px;
 }
 
 .auth-page button[type="submit"]:hover {
@@ -67,7 +74,7 @@
 }
 
 .auth-page p {
-  margin-top: 10px;
+  margin-top: 15px;
   text-align: center;
   font-size: 0.9rem;
   color: #555;
@@ -87,17 +94,16 @@
 /* =========================
    ERROR MESSAGES
 ========================= */
-.auth-page .error {
-  color: #e74c3c;
+.error-message {
+  color: #d32f2f;
   font-size: 0.85rem;
-  margin-top: -8px;
-  margin-bottom: 8px;
+  margin-top: 3px;
+  font-weight: 500;
 }
 
 /* =========================
    RESPONSIVE
 ========================= */
-
 @media (max-width: 480px) {
   .auth-page form {
     padding: 20px;

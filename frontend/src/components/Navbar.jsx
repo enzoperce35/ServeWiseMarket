@@ -5,7 +5,7 @@ import { useAuthContext } from "../context/AuthProvider";
 import "../css/components/Navbar.css";
 
 export default function Navbar() {
-  const { user, logout } = useAuthContext();
+  const { user, handleLogout } = useAuthContext();
 
   return (
     <nav className="navbar">
@@ -28,7 +28,10 @@ export default function Navbar() {
         ) : (
           <>
             <span className="navbar-user">Hi, {user.name} 👋</span>
-            <button className="nav-btn nav-btn-outline" onClick={logout}>
+            <button
+              className="nav-btn nav-btn-outline"
+              onClick={() => handleLogout()}
+            >
               Logout
             </button>
             <button className="cart-btn">🛒</button>
