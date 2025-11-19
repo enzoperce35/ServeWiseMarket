@@ -1,16 +1,27 @@
 class Product < ApplicationRecord
   belongs_to :seller, class_name: "User"
 
-  # ----------------------------
-  # VALIDATIONS
-  # ----------------------------
-  validates :name, presence: true
-  validates :price, numericality: { greater_than_or_equal_to: 0 }
-  validates :stock, numericality: { greater_than_or_equal_to: 0, only_integer: true }
-  validates :category, presence: true
+  # Pre-order validation
+  validates :availability_type, inclusion: { in: %w[on_hand pre_order] }
+  with_options if: :pre_order? do
+    validates :preorder_lead_time_hours, presence: true, numericality: { greater_than: 0 }
+    validates :next_available_date, presence: true
+  end
 
-  # Optional: Scope for filtering
-  scope :by_category, ->(category) { where(category: category) if category.present? }
-  scope :search, ->(text) { where("name ILIKE ? OR description ILIKE ?", "%#{text}%", "%#{text}%") if text.present? }
-  scope :price_range, ->(min, max) { where(price: min..max) if min && max }
+  # Status validation
+  validates :status, inclusion: { in: %w[active draft archived] }
+
+  # Convenience methods
+  def pre_order?
+    availability_type == "pre_order"
+  end
+
+  # Future ratings
+  has_many :product_ratings, dependent: :destroy
+  def average_rating
+    product_ratings.average(:score)&.round(2) || 0
+  end
+  def ratings_count
+    product_ratings.count
+  end
 end
