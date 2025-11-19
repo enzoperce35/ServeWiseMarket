@@ -1,0 +1,120 @@
+/* ====================================
+LOGIN PAGE & SIGNUP PAGE
+==================================== */
+
+.auth-page {
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+min-height: 80vh;
+padding: 20px;
+font-family: 'Arial', sans-serif;
+background-color: #f9f9f9;
+}
+
+.auth-page h2 {
+font-size: 2rem;
+margin-bottom: 1rem;
+color: #333;
+}
+
+.auth-page form {
+display: flex;
+flex-direction: column;
+width: 100%;
+max-width: 400px;
+background: #ffffff;
+padding: 30px;
+border-radius: 8px;
+box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+gap: 15px;
+}
+
+.auth-page input[type="text"],
+.auth-page input[type="password"],
+.auth-page select {
+padding: 12px 15px;
+font-size: 1rem;
+border-radius: 6px;
+border: 1px solid #dcdcdc;
+outline: none;
+transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-page input[type="text"]:focus,
+.auth-page input[type="password"]:focus,
+.auth-page select:focus {
+border-color: #ff5722;
+box-shadow: 0 0 5px rgba(255, 87, 34, 0.3);
+}
+
+.auth-page select {
+background-color: #fff;
+cursor: pointer;
+}
+
+/* Error messages */
+.form-errors {
+background-color: #ffe5e0;
+border: 1px solid #ff9c87;
+padding: 10px;
+border-radius: 6px;
+margin-bottom: 10px;
+}
+
+.error-message {
+color: #d32f2f;
+font-size: 0.9rem;
+margin: 2px 0;
+}
+
+/* Submit button */
+.auth-page button[type="submit"] {
+padding: 12px 15px;
+font-size: 1rem;
+font-weight: 600;
+border-radius: 6px;
+border: none;
+background-color: #ff5722;
+color: #ffffff;
+cursor: pointer;
+transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.auth-page button[type="submit"]:hover {
+background-color: #e64a19;
+transform: translateY(-1px);
+}
+
+.auth-page p {
+margin-top: 10px;
+text-align: center;
+font-size: 0.9rem;
+color: #555;
+}
+
+.auth-page p a {
+color: #ff5722;
+text-decoration: none;
+font-weight: 600;
+transition: color 0.2s ease;
+}
+
+.auth-page p a:hover {
+color: #e64a19;
+}
+
+/* =========================
+RESPONSIVE
+========================= */
+
+@media (max-width: 480px) {
+.auth-page form {
+ padding: 20px;
+}
+
+.auth-page h2 {
+ font-size: 1.6rem;
+}
+}

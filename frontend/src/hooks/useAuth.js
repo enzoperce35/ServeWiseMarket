@@ -1,33 +1,51 @@
 import { useState } from "react";
-import { signup, login, logout } from "../api/authApi";
+import axios from "axios";
+
+const BASE_URL = "http://localhost:3000/api/v1";
 
 export default function useAuth() {
-  const [authUser, setAuthUser] = useState(null);
+  const [user, setUser] = useState(null);
 
-  const handleSignup = async (formData) => {
-    const data = await signup(formData);
-    localStorage.setItem("token", data.token);
-    setAuthUser(data.user);
-    return data;
+  const fetchUser = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+  
+      const res = await axios.get(`${BASE_URL}/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+  
+      setUser(res.data.user);
+    } catch (err) {
+      console.log("Fetch user failed", err);
+      setUser(null); // clear user if fetch fails
+    }
   };
 
-  const handleLogin = async (formData) => {
-    const data = await login(formData);
-    localStorage.setItem("token", data.token);
-    setAuthUser(data.user);
-    return data;
+  const handleSignup = async (data) => {
+    try {
+      const payload = { ...data, role: "buyer" }; // Force buyer
+      const res = await axios.post(`${BASE_URL}/signup`, { user: payload });
+      localStorage.setItem("token", res.data.token);
+      setUser(res.data.user);
+      return true; // success
+    } catch (err) {
+      console.log("Signup error:", err.response?.data);
+      return false; // failure
+    }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    localStorage.removeItem("token");
-    setAuthUser(null);
+  const handleLogin = async ({ contact_number, password }) => {
+    try {
+      const res = await axios.post(`${BASE_URL}/login`, { contact_number, password });
+      localStorage.setItem("token", res.data.token);
+      setUser(res.data.user);
+      return true; // success
+    } catch (err) {
+      console.log("Login error:", err.response?.data);
+      return false; // failure
+    }
   };
 
-  return {
-    authUser,
-    handleSignup,
-    handleLogin,
-    handleLogout,
-  };
+  return { user, setUser, fetchUser, handleSignup, handleLogin };
 }

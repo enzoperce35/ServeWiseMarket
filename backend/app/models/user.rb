@@ -1,17 +1,35 @@
 class User < ApplicationRecord
   has_secure_password
 
+  # Name: required
   validates :name, presence: true
 
-  validates :contact_number,
-            presence: true,
-            uniqueness: true,
-            format: { with: /\A09\d{9}\z/, message: "must be a valid PH number (e.g., 09123456789)" }
+  # Contact number: required, PH format
+  validates :contact_number, presence: true, uniqueness: true,
+    format: { with: /\A09\d{9}\z/, message: "must be a valid PH number (e.g., 09123456789)" }
 
+  # Password: minimum 6 chars
+  validates :password, length: { minimum: 6 }, if: -> { new_record? || !password.nil? }
+
+  # Block: required, numbers only, max 2 chars
+  validates :block, presence: true,
+            numericality: { only_integer: true },
+            length: { maximum: 2 }
+
+  # Lot: required, numbers only, max 2 chars
+  validates :lot, presence: true,
+            numericality: { only_integer: true },
+            length: { maximum: 2 }
+
+  # Street: required, letters/numbers/symbols, max 30 chars
+  validates :street, presence: true,
+            length: { maximum: 30 },
+            format: { with: /\A[\w\s\-.]+\z/, message: "only allows letters, numbers, and symbols like '-', '.', 'Ave'" }
+
+  # District & Subphase: required
+  validates :district, presence: true
+  validates :subphase, presence: true
+
+  # Role: must be buyer or seller
   validates :role, inclusion: { in: %w[buyer seller] }
-
-  validates :block, :lot, :street, presence: true
-
-  # No validation for district or subphase
-  # No before_validation callback
 end

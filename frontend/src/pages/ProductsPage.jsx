@@ -1,26 +1,25 @@
 // src/pages/ProductsPage.jsx
 import React, { useEffect, useState } from "react";
+import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
 import Filters from "../components/Filters";
 import "../css/pages/ProductsPage.css";
 import { fetchProducts } from "../api/productApi";
-import { useAuthContext } from "../context/AuthContext";
 
 export default function ProductsPage() {
-  const { user } = useAuthContext();
-
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [filters, setFilters] = useState({
     category: "",
     search: "",
     minPrice: "",
-    maxPrice: ""
+    maxPrice: "",
   });
 
-  // Load products from backend
   const loadProducts = async () => {
     const data = await fetchProducts(filters);
     setProducts(data);
+    setFilteredProducts(data);
   };
 
   useEffect(() => {
@@ -28,21 +27,22 @@ export default function ProductsPage() {
   }, [filters]);
 
   return (
-    <div className="products-page">
-      <Filters filters={filters} setFilters={setFilters} products={products} />
+    <div className="products-page-wrapper">
+      {/* Navbar + Filters Container */}
+      <div className="header-filters-container">
+        <Navbar />
+        <div className="filters-container">
+          <Filters filters={filters} setFilters={setFilters} products={products} />
+        </div>
+      </div>
 
-      {/* If logged in, show greeting */}
-      {user && (
-        <p style={{ marginBottom: "10px", fontWeight: "bold" }}>
-          Welcome back, {user.name}!
-        </p>
-      )}
-
+      {/* Products Grid */}
       <div className="products-grid">
-        {products.length > 0 ? (
-          products.map((p) => <ProductCard key={p.id} product={p} />)
-        ) : (
-          <p className="no-products">No products found.</p>
+        {filteredProducts.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+        {filteredProducts.length === 0 && (
+          <div className="no-products">No products found.</div>
         )}
       </div>
     </div>
