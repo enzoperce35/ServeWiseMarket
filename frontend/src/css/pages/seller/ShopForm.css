@@ -1,0 +1,116 @@
+/* Apply border-box to all form elements */
+.shop-form,
+.shop-form input,
+.shop-form textarea,
+.shop-form button {
+  box-sizing: border-box;
+}
+
+/* Container */
+.shop-form {
+  width: 100%;
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Title */
+.shop-form h2 {
+  margin-bottom: 10px;
+  font-size: 24px;
+  font-weight: 600;
+  color: #222;
+  text-align: center;
+}
+
+/* Welcome text */
+.shop-form p {
+  margin-bottom: 20px;
+  text-align: center;
+  color: #555;
+}
+
+/* Inputs */
+.shop-form input,
+.shop-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: border 0.2s ease;
+  background: #fafafa;
+}
+
+/* Inputs focus */
+.shop-form input:focus,
+.shop-form textarea:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+/* Textarea height */
+.shop-form textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Buttons container */
+.form-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* Save button */
+.btn-save {
+  flex: 1;
+  padding: 12px;
+  background: #3b82f6;
+  border: none;
+  color: white;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-save:hover {
+  background: #2563eb;
+}
+
+/* Cancel button */
+.btn-cancel {
+  flex: 1;
+  padding: 12px;
+  background: #e5e7eb;
+  border: none;
+  color: #444;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background: #d1d5db;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .shop-form {
+    padding: 18px;
+  }
+
+  .form-buttons {
+    flex-direction: column;
+  }
+}

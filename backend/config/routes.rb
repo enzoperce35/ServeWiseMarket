@@ -7,10 +7,18 @@ Rails.application.routes.draw do
       delete '/logout', to: 'sessions#destroy'
       get '/me', to: 'users#me'
 
-      # Products
-      resources :products, only: [:index, :show, :create] do
+      # Public Products (for buyers)
+      resources :products, only: [:index, :show] do
         # Nested Ratings
         resources :ratings, only: [:index, :create], controller: 'product_ratings'
+      end
+
+      # Seller-specific products (dashboard)
+      namespace :seller do
+        resource :shop, only: [:show, :create, :update]
+        resources :products, only: [:index, :create, :update, :destroy]
+        # Optional: future shop settings routes
+        # resources :shops, only: [:show, :update]
       end
     end
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_19_233447) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_20_135416) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -33,7 +33,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_233447) do
     t.integer "stock", default: 0, null: false
     t.string "category"
     t.string "image_url"
-    t.bigint "seller_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "availability_type"
@@ -42,7 +41,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_233447) do
     t.integer "max_orders_per_day"
     t.string "status"
     t.boolean "featured"
-    t.index ["seller_id"], name: "index_products_on_seller_id"
+    t.bigint "shop_id", null: false
+    t.index ["shop_id"], name: "index_products_on_shop_id"
   end
 
   create_table "shops", force: :cascade do |t|
@@ -53,6 +53,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_233447) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "open", default: true, null: false
     t.index ["user_id"], name: "index_shops_on_user_id"
   end
 
@@ -73,6 +74,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_233447) do
 
   add_foreign_key "product_ratings", "products"
   add_foreign_key "product_ratings", "users"
-  add_foreign_key "products", "users", column: "seller_id"
+  add_foreign_key "products", "shops"
   add_foreign_key "shops", "users"
 end

@@ -1,0 +1,184 @@
+/* ================================
+   General Page Styles
+================================= */
+.seller-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: sans-serif;
+}
+
+.seller-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.seller-header h2 {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ================================
+   Buttons
+================================= */
+.seller-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s ease;
+}
+
+.seller-btn-primary {
+  background-color: #1d4ed8;
+  color: #fff;
+}
+
+.seller-btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.seller-btn-success {
+  background-color: #16a34a;
+  color: #fff;
+}
+
+.seller-btn-success:hover {
+  background-color: #22c55e;
+}
+
+.seller-btn-danger {
+  background-color: #dc2626;
+  color: #fff;
+}
+
+.seller-btn-danger:hover {
+  background-color: #ef4444;
+}
+
+.seller-btn-gray {
+  background-color: #6b7280;
+  color: #fff;
+}
+
+.seller-btn-gray:hover {
+  background-color: #4b5563;
+}
+
+/* ================================
+   Inputs & Form
+================================= */
+.seller-product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.seller-input {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+  width: 100%;
+}
+
+.seller-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.seller-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+/* ================================
+   Product Grid & Card
+================================= */
+.seller-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.seller-product-card {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.seller-product-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.seller-product-info h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.seller-product-info p {
+  font-size: 0.9rem;
+  margin: 0.25rem 0;
+}
+
+.seller-badge {
+  display: inline-block;
+  background-color: #facc15;
+  color: #111;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+/* ================================
+   Responsive
+================================= */
+@media (max-width: 768px) {
+  .seller-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .seller-product-card {
+    padding: 0.75rem;
+  }
+
+  .seller-product-img {
+    height: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .seller-product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .seller-btn {
+    width: 100%;
+  }
+
+  .seller-product-form {
+    padding: 0.75rem;
+  }
+}

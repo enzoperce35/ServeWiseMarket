@@ -1,7 +1,6 @@
-// src/components/Navbar.jsx
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuthContext } from "../context/AuthProvider";
+import { useAuthContext } from "../context/AuthProvider"; // useAuthContext here
 import "../css/components/Navbar.css";
 
 export default function Navbar() {
@@ -28,6 +27,15 @@ export default function Navbar() {
         ) : (
           <>
             <span className="navbar-user">Hi, {user.name} 👋</span>
+            {user.shop ? (
+              <Link to="/seller/products" className="nav-btn nav-btn-primary">
+                Seller Dashboard
+              </Link>
+            ) : (
+              <Link to="/seller/create-shop" className="nav-btn nav-btn-primary">
+                Create Shop
+              </Link>
+            )}
             <button
               className="nav-btn nav-btn-outline"
               onClick={() => handleLogout()}

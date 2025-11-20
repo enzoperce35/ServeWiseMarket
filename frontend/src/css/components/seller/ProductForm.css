@@ -1,0 +1,103 @@
+/* Container */
+.seller-product-form {
+  width: 100%;
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Form Title */
+.seller-product-form h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #222;
+}
+
+/* Inputs and Textareas */
+.seller-product-form input,
+.seller-product-form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  background: #fafafa;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  box-sizing: border-box;
+}
+
+/* Focus state */
+.seller-product-form input:focus,
+.seller-product-form textarea:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background: #fff;
+}
+
+/* Textarea height */
+.seller-product-form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Buttons container */
+.seller-product-form .flex {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+/* Primary Save Button */
+.seller-btn-primary {
+  flex: 1;
+  padding: 12px;
+  background: #3b82f6;
+  border: none;
+  color: white;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.seller-btn-primary:hover {
+  background: #2563eb;
+}
+
+/* Cancel Button */
+.seller-btn-gray {
+  flex: 1;
+  padding: 12px;
+  background: #e5e7eb;
+  border: none;
+  color: #444;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.seller-btn-gray:hover {
+  background: #d1d5db;
+}
+
+/* Responsive for small screens */
+@media (max-width: 480px) {
+  .seller-product-form {
+    padding: 18px;
+  }
+
+  .seller-product-form .flex {
+    flex-direction: column;
+  }
+}

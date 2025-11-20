@@ -17,7 +17,7 @@ export default function ProductCard({ product }) {
   return (
     <div className="product-card" onClick={addToCart}>
       <img
-        src={product.image_url || "https://via.placeholder.com/150"}
+        src={product.image_url || "/images/default-product.png"}
         alt={product.name}
       />
 

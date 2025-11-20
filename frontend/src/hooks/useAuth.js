@@ -1,4 +1,3 @@
-// src/hooks/useAuth.js
 import { useState } from "react";
 import axios from "axios";
 
@@ -17,7 +16,8 @@ export default function useAuth() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setUser(res.data.user);
+      // res.data should include user + shop
+      setUser(res.data.user); 
       return { status: "ok", user: res.data.user };
     } catch (err) {
       console.error("Fetch user failed:", err.response?.data || err.message);
@@ -26,14 +26,14 @@ export default function useAuth() {
     }
   };
 
-  // Signup
+  // Signup (force buyer role)
   const handleSignup = async (data) => {
     try {
-      const payload = { ...data, role: "buyer" }; // force buyer role
+      const payload = { ...data, role: "buyer" }; 
       const res = await axios.post(`${BASE_URL}/signup`, { user: payload });
 
       localStorage.setItem("token", res.data.token);
-      setUser(res.data.user);
+      setUser(res.data.user); // will not have shop yet
 
       return { status: "ok" };
     } catch (err) {
@@ -53,7 +53,7 @@ export default function useAuth() {
       });
 
       localStorage.setItem("token", res.data.token);
-      setUser(res.data.user);
+      setUser(res.data.user); // include shop if exists
 
       return { status: "ok" };
     } catch (err) {

@@ -1,17 +1,25 @@
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import useAuth from "../hooks/useAuth";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const auth = useAuth();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    auth.fetchUser(); // fetch logged-in user on mount
+    const fetch = async () => {
+      await auth.fetchUser(); // fetch user including shop
+      setLoading(false);
+    };
+    fetch();
   }, []);
 
-  // Provide all auth functions and user state
-  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ ...auth, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuthContext = () => useContext(AuthContext);
