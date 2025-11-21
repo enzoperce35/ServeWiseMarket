@@ -6,6 +6,7 @@ import ProductsPage from "./pages/ProductsPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import CreateShop from "./pages/seller/CreateShop";
+import ProductFormPage from "./pages/seller/ProductFormPage";
 
 
 // Seller pages
@@ -25,6 +26,8 @@ export default function App() {
           {/* Seller pages */}
           <Route path="/seller/create-shop" element={<CreateShop />} />
           <Route path="/seller/products" element={<Products />} />
+          <Route path="/seller/products/new" element={<ProductFormPage />} />
+          <Route path="/seller/products/:id/edit" element={<ProductFormPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

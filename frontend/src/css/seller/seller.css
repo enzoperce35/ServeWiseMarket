@@ -151,6 +151,51 @@
   margin-top: 0.5rem;
 }
 
+.add-product-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #28a745;
+  color: white;
+  font-size: 2rem;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+
+  /* Centering rules */
+  margin: 0 auto; /* horizontally center when full row */
+  align-self: center; /* center relative to grid row height */
+}
+
+.add-product-circle:hover {
+  transform: scale(1.1);
+}
+
+/* Make the whole card clickable */
+.clickable-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clickable-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  .add-product-circle {
+    width: 55px;
+    height: 55px;
+    font-size: 1.8rem;
+  }
+}
+
+
 /* ================================
    Responsive
 ================================= */
