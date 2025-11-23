@@ -7,7 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import CreateShop from "./pages/seller/CreateShop";
 import ProductFormPage from "./pages/seller/ProductFormPage";
-
+import ProductSettingsPage from "./pages/seller/ProductSettingsPage";
 
 // Seller pages
 import Products from "./pages/seller/Products";
@@ -27,7 +27,7 @@ export default function App() {
           <Route path="/seller/create-shop" element={<CreateShop />} />
           <Route path="/seller/products" element={<Products />} />
           <Route path="/seller/products/new" element={<ProductFormPage />} />
-          <Route path="/seller/products/:id/edit" element={<ProductFormPage />} />
+          <Route path="/seller/products/:id/edit" element={<ProductSettingsPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

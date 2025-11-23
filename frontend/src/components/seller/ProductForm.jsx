@@ -12,11 +12,7 @@ export default function ProductForm({ product, onSave, onCancel }) {
     category: "",
     image_url: "",
     stock: 0,
-    availability_type: "on_hand",
-    preorder_lead_time_hours: 0,
-    next_available_date: null,
-    max_orders_per_day: 0,
-    status: "active",
+    status: false,
     featured: false,
   });
 
@@ -46,11 +42,7 @@ export default function ProductForm({ product, onSave, onCancel }) {
       description: form.description || "",
       stock: form.stock || 0,
       image_url: form.image_url || DEFAULT_IMAGE,
-      availability_type: form.availability_type || "on_hand",
-      preorder_lead_time_hours: form.preorder_lead_time_hours || 0,
-      next_available_date: form.next_available_date || null,
-      max_orders_per_day: form.max_orders_per_day || 0,
-      status: form.status || "active",
+      status: form.status || false,
       featured: form.featured || false,
     };
     onSave(payload);

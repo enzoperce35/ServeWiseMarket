@@ -1,3 +1,4 @@
+# app/controllers/api/v1/seller/products_controller.rb
 module Api
   module V1
     module Seller
@@ -15,10 +16,6 @@ module Api
         # POST /api/v1/seller/products
         def create
           product = @shop.products.build(product_params)
-
-          # Set default status if not provided
-          product.status ||= "active"
-          product.availability_type ||= "on_hand"
 
           if product.save
             render json: product, status: :created
@@ -57,9 +54,18 @@ module Api
 
         def product_params
           params.require(:product).permit(
-            :name, :description, :price, :stock, :category, :image_url,
-            :availability_type, :preorder_lead_time_hours, :next_available_date,
-            :max_orders_per_day, :status, :featured
+            :name,
+            :description,
+            :price,
+            :stock,
+            :category,
+            :image_url,
+            :status,
+            :featured,
+            :delivery_date,
+            :delivery_time,
+            :cross_comm_delivery,
+            :cross_comm_charge
           )
         end
       end

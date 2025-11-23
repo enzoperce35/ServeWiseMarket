@@ -29,9 +29,9 @@ class User < ApplicationRecord
             length: { maximum: 30 },
             format: { with: /\A[\w\s\-.]+\z/, message: "only allows letters, numbers, and symbols like '-', '.', 'Ave'" }
 
-  # District & Subphase: required
-  validates :district, presence: true
-  validates :subphase, presence: true
+  # Community & Phase: required (strings, not integers)
+  validates :community, presence: true, length: { maximum: 50 }
+  validates :phase, presence: true, length: { maximum: 50 }
 
   # Role: must be buyer or seller
   validates :role, inclusion: { in: %w[buyer seller] }

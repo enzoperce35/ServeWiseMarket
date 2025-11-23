@@ -9,8 +9,8 @@ one:
   block: "A"
   lot: "12"
   street: "Main St"
-  district: "Homes"
-  subphase: "Phase 1"
+  community: "Sampaguita Homes"
+  phase: "Phase 1"
   verified: false
 
 two:
@@ -22,6 +22,6 @@ two:
   block: "B"
   lot: "5"
   street: "2nd Ave"
-  district: "West"
-  subphase: "Phase 2"
+  community: "Sampaguita West"
+  phase: "Phase 2"
   verified: false

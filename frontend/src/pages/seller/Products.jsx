@@ -1,13 +1,18 @@
-// src/pages/seller/Products.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import useProducts from "../../hooks/seller/useProducts";
+import { useAuthContext } from "../../context/AuthProvider"; // ✅ use context
 import ProductCard from "../../components/seller/ProductCard";
+import { updateProduct } from "../../api/seller/products";
 import "../../css/seller/seller.css";
 
 export default function Products() {
-  const { products, loading } = useProducts();
+  const { products, loading: productsLoading, setProducts } = useProducts();
+  const { user, loading: userLoading } = useAuthContext(); // ✅ shared user
   const navigate = useNavigate();
+
+  // Wait until both products and user are loaded
+  if (productsLoading || userLoading) return <p>Loading products...</p>;
 
   const handleEdit = (product) => {
     navigate(`/seller/products/${product.id}/edit`);
@@ -17,7 +22,21 @@ export default function Products() {
     navigate("/seller/products/new");
   };
 
-  if (loading) return <p>Loading products...</p>;
+  const handleStatusToggle = async (product) => {
+    const newStatus = !product.status;
+
+    try {
+      // update backend
+      const updatedProduct = await updateProduct(product.id, { status: newStatus });
+
+      // update local state
+      setProducts((prev) =>
+        prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
+      );
+    } catch (err) {
+      console.error("Failed to toggle status:", err);
+    }
+  };
 
   return (
     <div className="p-4 seller-page">
@@ -34,15 +53,13 @@ export default function Products() {
             <ProductCard
               key={product.id}
               product={product}
+              user={user} // ✅ pass the loaded user
               onClick={() => handleEdit(product)}
+              onStatusClick={() => handleStatusToggle(product)}
             />
           ))}
 
-          {/* Floating + button (optional if you still want it for existing products) */}
-          <button
-            className="add-product-circle"
-            onClick={handleCreate}
-          >
+          <button className="add-product-circle" onClick={handleCreate}>
             +
           </button>
         </div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_20_135416) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_23_011640) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -35,13 +35,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_135416) do
     t.string "image_url"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "availability_type"
-    t.integer "preorder_lead_time_hours"
-    t.date "next_available_date"
-    t.integer "max_orders_per_day"
-    t.string "status"
     t.boolean "featured"
     t.bigint "shop_id", null: false
+    t.datetime "delivery_date"
+    t.datetime "delivery_time"
+    t.boolean "cross_comm_delivery", default: false
+    t.integer "cross_comm_charge", default: 0
+    t.boolean "status", default: false, null: false
     t.index ["shop_id"], name: "index_products_on_shop_id"
   end
 
@@ -68,8 +68,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_20_135416) do
     t.boolean "verified"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "district", default: 0, null: false
-    t.integer "subphase", default: 0, null: false
+    t.string "community", default: "", null: false
+    t.string "phase", default: "", null: false
   end
 
   add_foreign_key "product_ratings", "products"

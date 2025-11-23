@@ -3,14 +3,15 @@ class Product < ApplicationRecord
   has_many :product_ratings, dependent: :destroy
 
   # Only show active products from open shops
-  scope :available, -> { joins(:shop).where(status: "active", shops: { open: true }) }
+  scope :available, -> { where(status: true) }
 
   # Optional filters
   scope :by_category, ->(category) { where(category: category) if category.present? }
-  scope :search, ->(term) { where("name ILIKE ?", "%#{term}%") if term.present? }
-  scope :price_range, ->(min, max) {
-    where("price >= ?", min) if min.present?
+
+  scope :search, ->(term) {
+    where("name ILIKE ?", "%#{term}%") if term.present?
   }
+
   scope :price_range, ->(min, max) {
     if min.present? && max.present?
       where(price: min..max)
@@ -21,20 +22,13 @@ class Product < ApplicationRecord
     end
   }
 
-  # Availability validation
-  validates :availability_type, inclusion: { in: %w[on_hand pre_order] }
-  with_options if: :pre_order? do
-    validates :preorder_lead_time_hours, presence: true, numericality: { greater_than: 0 }
-    validates :next_available_date, presence: true
-  end
-
   # Status validation
-  validates :status, inclusion: { in: %w[active draft archived] }
+  validates :status, inclusion: { in: [true, false] }
 
-  # Convenience flag
-  def pre_order?
-    availability_type == "pre_order"
-  end
+  # Delivery validations (optional, adjust if needed)
+  validates :cross_comm_charge,
+            numericality: { greater_than_or_equal_to: 0 },
+            allow_nil: true
 
   # Ratings helpers
   def average_rating

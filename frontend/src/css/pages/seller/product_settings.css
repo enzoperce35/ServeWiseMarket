@@ -1,0 +1,187 @@
+.settings-page {
+  max-width: 750px;
+  margin: 0 auto;
+  padding: 25px 20px;
+  font-family: "Inter", sans-serif;
+}
+
+.settings-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 25px;
+}
+
+.settings-section {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  cursor: pointer;
+  font-weight: 600;
+  background: #f9f9f9;
+}
+
+.section-body {
+  padding: 15px 20px;
+}
+
+.settings-item {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.settings-item label {
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.settings-item input,
+.settings-item textarea,
+.settings-item select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+.settings-item textarea {
+  height: 80px;
+  resize: vertical;
+}
+
+.toggle-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.delivery-grid {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.delivery-phrase {
+  font-weight: 500;
+}
+
+.delivery-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.community-column {
+  margin-left: auto;
+  text-align: right;
+}
+
+.save-btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: #0a7cff;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.save-btn:hover {
+  background: #0566d6;
+}
+
+input:disabled {
+  background: #f1f1f1;
+  opacity: 0.6;
+}
+
+.image-preview {
+  margin-top: 10px;
+  max-width: 200px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+.delete-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: #ff4d4f;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: #d9363e;
+}
+
+
+/* ----------------------------------------- */
+/* ✅ RESPONSIVE DESIGN */
+/* ----------------------------------------- */
+
+/* Tablet */
+@media (max-width: 768px) {
+
+  .delivery-grid {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "phrase community"
+      "phrase check1"
+      "phrase check2";
+  }
+
+  .delivery-phrase {
+    grid-area: phrase;
+  }
+
+  .community-column {
+    grid-area: community;
+    text-align: right;
+  }
+
+  .checkbox-1 { grid-area: check1; }
+  .checkbox-2 { grid-area: check2; }
+
+}
+
+/* Mobile */
+@media (max-width: 500px) {
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .delivery-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .community-column {
+    align-self: flex-end;
+    margin-top: 8px;
+  }
+}

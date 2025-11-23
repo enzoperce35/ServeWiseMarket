@@ -15,8 +15,8 @@ class Api::V1::SessionsController < ApplicationController
           name: user.name,
           contact_number: user.contact_number,
           role: user.role,
-          district: user.district,
-          subphase: user.subphase
+          community: user.community,
+          phase: user.phase
         },
         token: token
       }, status: :ok

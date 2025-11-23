@@ -22,8 +22,8 @@ sellers = 3.times.map do |i|
     block: "#{i + 1}",
     lot: "#{i + 1}",
     street: "Main Street",
-    district: "Homes",
-    subphase: "Phase 1"
+    community: "Sampaguita Homes",
+    phase: "Phase 1"
   )
 end
 puts "✅ Created #{sellers.count} sellers"
@@ -54,11 +54,8 @@ puts "Creating products..."
     image_url: "https://picsum.photos/300/200?random=#{i + 1}",
     description: "This is a sample description for Product #{i + 1}.",
     shop: sellers.sample.shop,  # <- assign shop, not seller
-    availability_type: %w[on_hand pre_order].sample,
     status: "active",
     stock: rand(1..20),
-    preorder_lead_time_hours: 2,
-    next_available_date: 1.day.from_now
   )
 end
 puts "✅ Created #{Product.count} products"
@@ -77,8 +74,8 @@ puts "Creating buyers..."
     block: "#{i + 1}",
     lot: "#{i + 1}",
     street: "Second Street",
-    district: "Homes",
-    subphase: "Phase 2"
+    community: "Homes",
+    phase: "Phase 2"
   )
 end
 puts "✅ Created 5 buyers"

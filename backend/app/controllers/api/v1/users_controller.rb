@@ -37,8 +37,16 @@ module Api
 
       def user_params
         params.require(:user).permit(
-          :name, :contact_number, :password, :password_confirmation,
-          :role, :district, :subphase, :block, :lot, :street
+          :name,
+          :contact_number,
+          :password,
+          :password_confirmation,
+          :role,
+          :community,   # ← updated
+          :phase,       # ← updated
+          :block,
+          :lot,
+          :street
         )
       end
 

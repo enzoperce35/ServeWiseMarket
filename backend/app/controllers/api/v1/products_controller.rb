@@ -2,10 +2,8 @@
 module Api
   module V1
     class ProductsController < ApplicationController
-      # No authentication needed for buyers
       skip_before_action :authenticate_user, only: [:index, :show]
 
-      # GET /api/v1/products
       def index
         products = Product.available
                           .by_category(params[:category])
@@ -16,7 +14,6 @@ module Api
         render json: products, status: :ok
       end
 
-      # GET /api/v1/products/:id
       def show
         product = Product.available.find(params[:id])
         render json: product, status: :ok

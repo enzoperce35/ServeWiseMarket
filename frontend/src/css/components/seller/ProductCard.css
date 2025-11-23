@@ -1,0 +1,95 @@
+.seller-product-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s;
+  background-color: #fff;
+}
+
+.clickable-card {
+  cursor: pointer;
+}
+
+.seller-product-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.seller-product-img-wrapper {
+  position: relative;
+}
+
+.seller-product-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+/* Status dot wrapper: bigger clickable area */
+.status-dot-wrapper {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+}
+
+/* The visible dot */
+.status-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid #aa7a7a;
+}
+
+.seller-product-info {
+  padding: 12px;
+}
+
+.seller-product-info h3 {
+  margin: 0 0 6px 0;
+  font-size: 1.1rem;
+}
+
+.seller-product-info p {
+  margin: 4px 0;
+  font-size: 0.95rem;
+}
+
+.seller-product-info {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.price-stock {
+  font-size: 0.95rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto; /* push row to bottom */
+}
+
+.delivery-label {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.community-checks {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  justify-content: flex-end;
+}
+
