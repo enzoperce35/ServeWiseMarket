@@ -43,14 +43,14 @@ export default function ProductSettingsPage() {
   ];
 
   const deliveryTimeSlots = [
-    "5am - 6am",
-    "7am - 8am",
-    "9am - 10am",
-    "11am - 12pm",
-    "1pm - 2pm",
-    "3pm - 4pm",
-    "5pm - 6pm",
-    "7pm - 8pm",
+    "5am - 5:30am",
+    "7am - 7:30am",
+    "9am - 9:30am",
+    "11am - 11:30am",
+    "1pm - 1:30pm",
+    "3pm - 3:30pm",
+    "5pm - 5:30pm",
+    "7pm - 7:30pm",
   ];
 
   // --- Helper functions ---
