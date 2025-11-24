@@ -5,7 +5,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 1rem;
-  font-family: sans-serif;
+  font-family: sans-serif; 
 }
 
 .seller-header {
@@ -195,7 +195,6 @@
   }
 }
 
-
 /* ================================
    Responsive
 ================================= */
@@ -214,16 +213,34 @@
   }
 }
 
-@media (max-width: 480px) {
+/* ================================
+   iPad Layout: 3 cards per row
+================================= */
+@media (min-width: 769px) and (max-width: 1024px) {
   .seller-product-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .seller-btn {
-    width: 100%;
-  }
-
-  .seller-product-form {
-    padding: 0.75rem;
+    grid-template-columns: repeat(3, 1fr); /* 3 cards in one row */
+    gap: 1rem; /* optional: adjust spacing */
   }
 }
+
+
+@media (max-width: 480px) {
+  .seller-product-grid {
+    grid-template-columns: repeat(2, 1fr); /* ✅ two cards per row */
+    gap: 0.75rem;                          /* optional: slightly smaller gap */
+  }
+
+  .seller-product-card {
+    padding: 0.5rem;                       /* optional: tighter padding for phones */
+  }
+
+  .seller-product-img {
+    height: 120px;                         /* optional: fit better on small screens */
+  }
+
+  .add-product-circle {
+    width: 40px;
+    height: 40px;
+  }
+}
+

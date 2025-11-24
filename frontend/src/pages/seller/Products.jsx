@@ -4,6 +4,7 @@ import useProducts from "../../hooks/seller/useProducts";
 import { useAuthContext } from "../../context/AuthProvider"; // ✅ use context
 import ProductCard from "../../components/seller/ProductCard";
 import { updateProduct } from "../../api/seller/products";
+import SellerNavbar from "../../components/seller/SellerNavbar"; // ✅ add this
 import "../../css/seller/seller.css";
 
 export default function Products() {
@@ -39,7 +40,10 @@ export default function Products() {
   };
 
   return (
-    <div className="p-4 seller-page">
+  <div className="seller-page">
+    <SellerNavbar />  {/* ✅ navbar added */}
+
+    <div className="p-4">
       {products.length === 0 ? (
         <div className="no-products-message">
           <p>You have no products yet. Click the button below to create your first product!</p>
@@ -53,7 +57,7 @@ export default function Products() {
             <ProductCard
               key={product.id}
               product={product}
-              user={user} // ✅ pass the loaded user
+              user={user}
               onClick={() => handleEdit(product)}
               onStatusClick={() => handleStatusToggle(product)}
             />
@@ -65,5 +69,7 @@ export default function Products() {
         </div>
       )}
     </div>
-  );
+  </div>
+);
+
 }

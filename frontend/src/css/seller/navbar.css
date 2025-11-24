@@ -1,0 +1,31 @@
+.seller-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e5e5e5;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin-bottom: 2rem;
+}
+
+.nav-icon {
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  color: #444;
+  transition: 0.2s ease;
+}
+
+.nav-icon:hover {
+  color: #111;
+}
+
+.nav-center h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+}

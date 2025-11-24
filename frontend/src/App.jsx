@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
 
-import Navbar from "./components/Navbar";
 import ProductsPage from "./pages/ProductsPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -12,6 +11,7 @@ import ProductSettingsPage from "./pages/seller/ProductSettingsPage";
 // Seller pages
 import Products from "./pages/seller/Products";
 import ShopPage from "./pages/seller/ShopPage";
+import OrdersPage from "./pages/seller/OrdersPage";
 
 export default function App() {
   return (
@@ -26,6 +26,8 @@ export default function App() {
           {/* Seller pages */}
           <Route path="/seller/create-shop" element={<CreateShop />} />
           <Route path="/seller/products" element={<Products />} />
+          <Route path="/seller/shop" element={<ShopPage />} />
+          <Route path="/seller/orders" element={<OrdersPage />} />
           <Route path="/seller/products/new" element={<ProductFormPage />} />
           <Route path="/seller/products/:id/edit" element={<ProductSettingsPage />} />
         </Routes>

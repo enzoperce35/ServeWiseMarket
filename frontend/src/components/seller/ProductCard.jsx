@@ -13,10 +13,9 @@ export default function ProductCard({ product, user, onClick, onStatusClick }) {
     setStatus(Boolean(product.status));
   }, [product.status]);
 
-  // ---- DELIVERY FORMATTER ----
   const formatDelivery = (product) => {
     const { delivery_date, delivery_time } = product;
-    if (!delivery_date && !delivery_time) return "Deliver: Any Time";
+    if (!delivery_date && !delivery_time) return "Any Time";
 
     let dateLabel = "";
     if (delivery_date) {
@@ -36,21 +35,19 @@ export default function ProductCard({ product, user, onClick, onStatusClick }) {
       timeLabel = `${startHour}${startAmpm} - ${endHour}${endAmpm}`;
     }
 
-    if (dateLabel && timeLabel) return `Deliver: ${dateLabel}, ${timeLabel}`;
-    if (dateLabel) return `Deliver: ${dateLabel}`;
-    return `Deliver: ${timeLabel}`;
+    if (dateLabel && timeLabel) return `${dateLabel}, ${timeLabel}`;
+    if (dateLabel) return `${dateLabel}`;
+    return `${timeLabel}`;
   };
 
   const deliveryLabel = formatDelivery(product);
 
-  // ---- STATUS COLOR ----
   const getStatusColor = () => {
     if (!status) return "#ccc";
     if (status && (product.delivery_date || product.delivery_time)) return "orange";
     return "green";
   };
 
-  // ---- STATUS TOGGLE ----
   const handleStatusClick = (e) => {
     e.stopPropagation();
     const newStatus = !status;
@@ -58,7 +55,6 @@ export default function ProductCard({ product, user, onClick, onStatusClick }) {
     onStatusClick?.({ ...product, status: newStatus });
   };
 
-  // ---- COMMUNITY CHECKS ----
   const shortenCommunity = (community) => {
     if (community === "Sampaguita Homes") return "Homes";
     if (community === "Sampaguita West") return "West";
@@ -93,22 +89,30 @@ export default function ProductCard({ product, user, onClick, onStatusClick }) {
         </span>
       </div>
 
-      <div className="seller-product-info">
+      <div className="product-name">
+        {/* Product Name */}
         <h3>{product.name}</h3>
 
-        <p className="price-stock">
-          <strong>Price:</strong> ₱{price.toFixed(2)} &nbsp; | &nbsp;
-          <strong>Stock:</strong> {stock}
-        </p>
+        {/* Price & Stock separate container */}
+        <div className="price-stock-container">
+          <p className="price-stock">
+            <strong>Price:</strong> ₱{price.toFixed(2)}
+          </p>
+          <p className="price-stock">
+            <strong>Stock:</strong> {stock}
+          </p>
+        </div>
 
         {product.availability_type === "pre_order" && (
           <p><strong>Next Available:</strong> {nextAvailable}</p>
         )}
 
-        {/* Bottom row: delivery left, community right */}
+        {/* Delivery & Community bottom container */}
         <div className="bottom-row">
-          <p className="delivery-label">{deliveryLabel}</p>
-
+          <p className="delivery-label">
+            <span>Deliver:</span><br />
+            <span className="delivery-date">{deliveryLabel}</span>
+          </p>
           {user?.community && (
             <div className="community-checks">
               <span>{userCommunity} {getCheckIcon(userCommunity)}</span>
