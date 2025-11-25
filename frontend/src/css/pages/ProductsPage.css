@@ -23,49 +23,6 @@
   margin-top: 20px; /* space between navbar and filters */
 }
 
-/* --- Filters --- */
-.filters {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 0 10px;
-}
-
-/* Dropdown / Select */
-.filters select {
-  padding: 0.5rem 0.7rem;
-  border: 1px solid #dcdcdc;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
-/* Search Input */
-.filters input[type="text"] {
-  flex: 1;
-  min-width: 180px;
-  padding: 0.5rem 0.7rem;
-  border-radius: 6px;
-  border: 1px solid #dcdcdc;
-  font-size: 0.9rem;
-}
-
-/* Apply button */
-.filters button {
-  padding: 0.5rem 1rem;
-  background: #ff5722;
-  border: none;
-  color: #ffffff;
-  font-size: 0.9rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.filters button:hover {
-  background: #e64a19;
-}
-
 /* --- Products Grid --- */
 .products-grid {
   display: grid;
