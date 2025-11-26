@@ -35,8 +35,10 @@ export default function useAuth() {
 
       localStorage.setItem("token", res.data.token);
 
-      // 🔥 immediately fetch with shop info (if created)
-      return await fetchUser();
+      // Fetch user after signup
+      await fetchUser();
+
+      return { status: "ok" }; // <-- THIS IS THE FIX
     } catch (err) {
       return { status: "error", errors: err.response?.data?.errors || [err.message] };
     }
