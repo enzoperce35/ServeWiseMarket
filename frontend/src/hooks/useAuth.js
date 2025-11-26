@@ -10,37 +10,35 @@ export default function useAuth() {
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) {
+        setUser(null);
+        return;
+      }
 
       const res = await axios.get(`${BASE_URL}/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // res.data should include user + shop
-      setUser(res.data.user); 
-      return { status: "ok", user: res.data.user };
+      setUser(res.data.user); // includes shop if exists
+      return res.data.user;
     } catch (err) {
       console.error("Fetch user failed:", err.response?.data || err.message);
       setUser(null);
-      return { status: "error", errors: ["Failed to fetch user"] };
     }
   };
 
-  // Signup (force buyer role)
+  // Signup
   const handleSignup = async (data) => {
     try {
-      const payload = { ...data, role: "buyer" }; 
+      const payload = { ...data, role: "buyer" };
       const res = await axios.post(`${BASE_URL}/signup`, { user: payload });
 
       localStorage.setItem("token", res.data.token);
-      setUser(res.data.user); // will not have shop yet
 
-      return { status: "ok" };
+      // 🔥 immediately fetch with shop info (if created)
+      return await fetchUser();
     } catch (err) {
-      return {
-        status: "error",
-        errors: err.response?.data?.errors || [err.message || "Signup failed"]
-      };
+      return { status: "error", errors: err.response?.data?.errors || [err.message] };
     }
   };
 
@@ -49,22 +47,19 @@ export default function useAuth() {
     try {
       const res = await axios.post(`${BASE_URL}/login`, {
         contact_number,
-        password
+        password,
       });
 
       localStorage.setItem("token", res.data.token);
-      setUser(res.data.user); // include shop if exists
 
-      return { status: "ok" };
+      // 🔥 instead of using stale user, fetch complete user again
+      const freshUser = await fetchUser();
+      return { status: "ok", user: freshUser };
     } catch (err) {
-      return {
-        status: "error",
-        errors: err.response?.data?.errors || ["Invalid login credentials"]
-      };
+      return { status: "error", errors: ["Invalid login credentials"] };
     }
   };
 
-  // Logout
   const handleLogout = (navigate) => {
     localStorage.removeItem("token");
     setUser(null);
