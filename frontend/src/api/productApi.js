@@ -1,5 +1,4 @@
-// src/api/productApi.js
-import axiosClient from "./axiosClient";
+import axiosClient from "./axiosClient"; // ✅ default import
 
 // filters = { category, search, minPrice, maxPrice }
 export const fetchProducts = async (filters = {}) => {
@@ -11,6 +10,7 @@ export const fetchProducts = async (filters = {}) => {
     if (filters.minPrice) params.min_price = filters.minPrice;
     if (filters.maxPrice) params.max_price = filters.maxPrice;
 
+    // Call the correct endpoint (axiosClient baseURL already includes /api/v1)
     const response = await axiosClient.get("/products", { params });
     return response.data;
   } catch (err) {

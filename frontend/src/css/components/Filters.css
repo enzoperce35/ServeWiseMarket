@@ -1,4 +1,7 @@
-/* Top Bar (Search + Filter Button) */
+/* ================================
+   TOP BAR (Search + Filter Button)
+================================ */
+
 .filters {
   display: flex;
   align-items: center;
@@ -17,84 +20,132 @@
   color: #333;
 }
 
-/* Modal Overlay */
+
+/* ================================
+   MODAL OVERLAY
+================================ */
+
 .filter-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.45);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 2000;
+  backdrop-filter: blur(2px);
 }
 
-/* Modal Box */
+
+/* ================================
+   MODAL BOX
+================================ */
+
 .filter-modal {
-  background: white;
-  width: 300px;
-  max-width: 90%;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  max-height: 90vh;
+  background: #fff;
+  width: 320px;
+  max-width: 92%;
+  padding: 22px;
+  border-radius: 14px;
+  box-shadow: 0 5px 24px rgba(0,0,0,0.22);
+  max-height: 88vh;
   overflow-y: auto;
   font-family: Arial, sans-serif;
 }
 
 .filter-modal h2 {
   margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 1.3rem;
+  margin-bottom: 18px;
+  font-size: 1.35rem;
   text-align: center;
+  font-weight: 600;
+  color: #222;
 }
 
-/* Checkbox Groups */
+
+/* ================================
+   GROUP TITLES
+================================ */
+
+.filter-section-title {
+  margin: 15px 0 8px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #444;
+}
+
+
+/* ================================
+   CHECKBOX GRID
+================================ */
+
 .checkbox-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 6px 10px;
-  margin-bottom: 10px;
+  gap: 8px 10px;
+  margin-bottom: 30px;
 }
 
 .checkbox-options label {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-weight: normal;
   cursor: pointer;
+  font-size: 0.9rem;
 }
 
 .filter-modal input[type="checkbox"] {
-  transform: scale(1.05);
+  transform: scale(1.1);
   cursor: pointer;
 }
 
-/* Input & Select Styles */
+
+/* ================================
+   INPUTS & SELECTS
+================================ */
+
 .filter-modal input[type="text"],
 .filter-modal input[type="number"],
 .filter-modal select {
   width: 100%;
-  padding: 6px 10px;
-  margin-bottom: 10px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
   border-radius: 6px;
   border: 1px solid #ccc;
-  font-size: 0.95rem;
+  font-size: 0.93rem;
+  background: #fafafa;
   box-sizing: border-box;
 }
 
-/* Modal Actions (Buttons) */
-.modal-actions {
-  margin-top: 15px;
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
+.filter-modal input:focus,
+.filter-modal select:focus {
+  outline: none;
+  border-color: #4CAF50;
 }
 
-.apply-btn, .close-btn {
-  padding: 8px 12px;
+
+/* ================================
+   MODAL ACTION BUTTONS
+================================ */
+
+.modal-actions {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding-top: 12px;
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.apply-btn, .close-btn, .reset-btn {
+  flex: 1;
+  padding: 10px 12px;
   border-radius: 6px;
   border: none;
   cursor: pointer;
@@ -109,7 +160,7 @@
 }
 
 .apply-btn:hover {
-  background: #45a049;
+  background: #43a047;
 }
 
 .close-btn {
@@ -120,9 +171,27 @@
   background: #ccc;
 }
 
-/* Responsive */
+.reset-btn {
+  background: #ffb74d;
+  color: #000;
+}
+
+.reset-btn:hover {
+  background: #ffa726;
+}
+
+
+/* ================================
+   MOBILE RESPONSIVE
+================================ */
+
 @media (max-width: 480px) {
   .checkbox-options {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  }
+
+  .filter-modal {
+    width: 94%;
+    padding: 18px;
   }
 }
