@@ -4,8 +4,7 @@
 
 .navbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column; /* allow stacking of top and bottom rows */
   padding: 0 1.5rem 1rem;
   background-color: #ffffff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
@@ -13,6 +12,24 @@
   top: 0;
   z-index: 1000;
   font-family: 'Arial', sans-serif;
+}
+
+/* --- Top Row --- */
+.navbar-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  flex-wrap: nowrap; /* force single row */
+}
+
+/* --- Bottom Row (mobile only) --- */
+.navbar-bottom {
+  display: none; /* hidden by default */
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: 0.5rem;
 }
 
 /* --- Logo --- */
@@ -26,6 +43,14 @@
 .navbar-logo a {
   color: inherit;
   text-decoration: none;
+}
+
+.navbar-logo img,
+.navbar-logo-img {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
 /* --- Navbar Right --- */
@@ -79,44 +104,39 @@
 
 /* --- User Info --- */
 .navbar-user {
-  margin-right: 0.5rem;
   font-weight: 500;
   color: #333333;
 }
 
-/* --- Cart Button --- */
+/* --- Cart/Basket Button --- */
 .cart-btn {
-  background-color: #ff5722;
-  border: none;
-  color: #ffffff;
-  padding: 0.5rem 0.7rem;
-  border-radius: 6px;
+  background-color: transparent; /* remove orange background */
+  border: none; /* remove border */
+  color: #333333; /* optional icon color */
+  padding: 0.25rem; /* small padding around icon */
   cursor: pointer;
-  font-size: 1.1rem;
-  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
 }
 
 .cart-btn:hover {
-  background-color: #e64a19;
+  color: #ff5722; /* optional hover effect */
 }
 
-/* Logo Image */
-.navbar-logo img,
-.navbar-logo-img {
-  height: 80px;
-  width: auto;
-  object-fit: contain;
-  display: block;
+/* Icon inside cart button */
+.cart-btn .icon {
+  height: 1.2rem; /* adjust size */
+  width: 1.2rem;
 }
 
 /* ====================================
    RESPONSIVE
 ==================================== */
 
-/* Tablet — medium screens */
-/* Tablet — medium screens */
+/* Tablet & Mobile */
 @media (max-width: 768px) {
-  /* Logo scales down */
   .navbar-logo img,
   .navbar-logo-img {
     height: 60px;
@@ -130,46 +150,56 @@
     gap: 0.4rem;
   }
 
-  /* Buttons scale to match reduced navbar/logo */
   .nav-btn,
   .nav-btn-primary,
   .nav-btn-outline {
     padding: 0.45rem 0.8rem;
     font-size: 0.85rem;
-
-    /* width control to align proportionally with logo */
-    max-width: 140px; /* tablet-friendly */
+    max-width: 140px;
   }
 
   .cart-btn {
-    padding: 0.4rem 0.6rem;
+    padding: 0.2rem;
     font-size: 0.9rem;
-    max-width: 45px;
+  }
+
+  /* Show bottom row on tablets */
+  .navbar-bottom {
+    display: flex;
   }
 }
 
-/* Mobile */
+/* Mobile — small screens */
 @media (max-width: 480px) {
-  /* Smaller logo */
   .navbar-logo img,
   .navbar-logo-img {
     height: 40px;
   }
 
-  /* Buttons align visually with logo width */
   .nav-btn,
   .nav-btn-primary,
   .nav-btn-outline {
     padding: 0.3rem 0.6rem;
     font-size: 0.7rem;
-
-    max-width: 110px; /* smaller to match logo width on small screens */
-    width: 100%;      /* keeps layout consistent */
+    max-width: 110px;
+    width: 100%;
   }
 
   .cart-btn {
-    padding: 0.25rem 0.45rem;
+    padding: 0.2rem;
     font-size: 0.8rem;
-    max-width: 40px;
+  }
+
+  /* Keep top row single line on mobile */
+  .navbar-top {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* bottom row spacing */
+  .navbar-bottom {
+    margin-top: 0.3rem;
   }
 }
