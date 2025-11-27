@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuthContext } from "../context/AuthProvider"; // useAuthContext here
+import brandLogo from "../assets/images/brand-logo.png";
 import "../css/components/Navbar.css";
 
 export default function Navbar() {
@@ -8,10 +9,10 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <div className="navbar-left">
-        <h2 className="navbar-logo">
-          <Link to="/">ServeWise Market</Link>
-        </h2>
+      <div className="navbar-logo">
+        <Link to="/">
+          <img src={brandLogo} className="navbar-logo-img" alt="logo" />
+        </Link>
       </div>
 
       <div className="navbar-right">
@@ -21,7 +22,7 @@ export default function Navbar() {
               Login
             </Link>
             <Link to="/signup" className="nav-btn nav-btn-primary">
-              Sign Up
+              SignUp
             </Link>
           </>
         ) : (

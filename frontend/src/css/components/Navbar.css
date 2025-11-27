@@ -6,7 +6,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.8rem 1.5rem;
+  padding: 0 1.5rem 1rem;
   background-color: #ffffff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
   position: sticky;
@@ -100,33 +100,76 @@
   background-color: #e64a19;
 }
 
+/* Logo Image */
+.navbar-logo img,
+.navbar-logo-img {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
 /* ====================================
    RESPONSIVE
 ==================================== */
 
+/* Tablet — medium screens */
+/* Tablet — medium screens */
 @media (max-width: 768px) {
+  /* Logo scales down */
+  .navbar-logo img,
+  .navbar-logo-img {
+    height: 60px;
+  }
+
   .navbar {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 0.8rem 1rem;
+    padding: 0.7rem 1rem;
   }
 
   .navbar-right {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    gap: 0.4rem;
   }
 
-  .navbar-logo {
-    font-size: 1.3rem;
-  }
-
+  /* Buttons scale to match reduced navbar/logo */
   .nav-btn,
   .nav-btn-primary,
   .nav-btn-outline {
-    flex: 1 1 48%;
-    text-align: center;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.85rem;
+
+    /* width control to align proportionally with logo */
+    max-width: 140px; /* tablet-friendly */
+  }
+
+  .cart-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.9rem;
+    max-width: 45px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  /* Smaller logo */
+  .navbar-logo img,
+  .navbar-logo-img {
+    height: 40px;
+  }
+
+  /* Buttons align visually with logo width */
+  .nav-btn,
+  .nav-btn-primary,
+  .nav-btn-outline {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+
+    max-width: 110px; /* smaller to match logo width on small screens */
+    width: 100%;      /* keeps layout consistent */
+  }
+
+  .cart-btn {
+    padding: 0.25rem 0.45rem;
+    font-size: 0.8rem;
+    max-width: 40px;
   }
 }
