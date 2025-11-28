@@ -1,141 +1,175 @@
 /* ===============================
    PRODUCT CARD
 =============================== */
-  .product-card {
-    border: 1px solid rgba(0,0,0,0.08); /* subtle outline */
-    background: #fff;
-    border-radius: 9px;
-    padding: .6rem;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    position: relative;
-    height: auto;
-  }
-  
-  .product-card:hover {
-    transform: scale(1.03);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
-  }
-  
-  /* Product Image */
-  .product-card img {
-    width: 100%;
-    height: 200px;       /* fixed height keeps grid uniform */
-    object-fit: cover;   /* 🔥 fills card, crops excess */
-    border-radius: 8px;
-  }
-  
-  /* Product Info Container */
-  .product-info {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0; /* fixes disappearing text in flex */
-  }
-  
-  /* Product Name — 2-line ellipsis */
-  .product-name {
+.product-card {
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  border-radius: 9px;
+  padding: .6rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  height: auto;
+}
+
+.product-card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* Product Image */
+.product-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Product Info */
+.product-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Product Name (2-line ellipsis) */
+.product-name {
   font-size: 1.5rem;
   font-weight: 600;
   line-height: 1.8rem;
   margin-top: 1.2rem;
   margin-bottom: 0.1rem;
-
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  word-break: break-word;
+}
+
+/* Delivery Info */
+.delivery {
+  font-size: 1.1rem;
+  color: #777;
+  margin-bottom: 0.7rem;
+}
+
+.delivery span {
+  font-weight: 600;
+  color: #1e90ff;
+}
+
+/* Price */
+.product-price {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #ff7a00;
+  margin-top: 0.2rem;
+}
+
+/* Inactive tag */
+.inactive-label {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(255, 0, 0, 0.85);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.delivery-time {
+  color: #007bff;
+  font-weight: 600;
+}
+
+.image-container {
+  position: relative;
+}
+
+.add-to-cart {
+  background: linear-gradient(180deg, #ffffff, #eaeaea);
+  border: 1px solid #825353;
+  padding: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  
+  width: 50%;
+  margin: 0.5rem auto 0; /* centers horizontally */
+  text-align: center;
+  display: block;
+}
+
+.add-to-cart:hover {
+  background: linear-gradient(180deg, #f7f7f7, #dcdcdc);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+}
+
+.add-to-cart:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* Hide button on user's own products */
+.product-card.own-product .add-to-cart {
+  display: none;
+}
+
+/* ===============================
+   Tablet
+=============================== */
+@media (max-width: 820px) {
+  .product-card img {
+    max-height: 130px;
+    height: 120px;
   }
 
-  /* Delivery Info */
-  .delivery {
+  .product-name {
     font-size: 1.1rem;
-    color: #777;
-    margin-bottom: 0.7rem;
-  }
-  
-  .delivery span {
-    font-weight: 600;
-    color: #1e90ff;
-  }
-  
-  /* Product Price */
-  .product-price {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #ff7a00;
-    margin-top: 0.2rem;
-  }
-  
-  /* Inactive Label */
-  .inactive-label {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    background: rgba(255, 0, 0, 0.85);
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-  }
-  
-  .delivery-time {
-    color: #007bff; /* 🔵 blue text */
-    font-weight: 600;
+    line-height: 1.3rem;
+    margin-top: 15px;
   }
 
-  /* ===============================
-     Tablet ADJUSTMENTS
-  =============================== */
-  @media (max-width: 820px) {
-    .product-card img {
-      max-height: 130px;
-      height: 120px;
-    }
-  
-    .product-name {
-      font-size: 1.1rem;
-      line-height: 1.3rem;
-      margin-top: 15px;
-    }
-  
-    .delivery {
-      font-size: 0.8rem;
-    }
-  
-    .product-price {
-      font-size: 1rem;
-    }
+  .delivery {
+    font-size: 0.8rem;
   }
-  
-  /* ===============================
-     MOBILE ADJUSTMENTS
-  =============================== */
-  @media (max-width: 480px) {
-    .product-card img {
-      max-height: 130px;
-      height: 100px;
-    }
-  
-    .product-name {
-      font-size: .9rem;
-      line-height: 1.2rem;
-      margin-bottom: 0;
-    }
-  
-    .delivery {
-      font-size: 0.8rem;
-      margin-bottom: 0.3rem;
-    }
-  
-    .product-price {
-      font-size: .8rem;
-      margin-bottom: 0;
-    }
+
+  .product-price {
+    font-size: 1rem;
   }
-  
+}
+
+/* ===============================
+   Mobile
+=============================== */
+@media (max-width: 480px) {
+  .product-card img {
+    max-height: 130px;
+    height: 100px;
+  }
+
+  .product-name {
+    font-size: .9rem;
+    line-height: 1.2rem;
+    margin-bottom: 0;
+  }
+
+  .delivery {
+    font-size: 0.8rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .product-price {
+    font-size: .8rem;
+    margin-bottom: 0;
+  }
+}

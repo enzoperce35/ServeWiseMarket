@@ -21,21 +21,18 @@ export default function ProductCard({ product }) {
   let formattedDate = "";
   let formattedTime = "";
 
-  // 🟡  TIME — clean formatting
   if (rawTime) {
     formattedTime = rawTime
       .toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-      .replace(":00", "") // 3:00PM -> 3PM
-      .replace(" ", "");  // 3 PM -> 3PM
+      .replace(":00", "")
+      .replace(" ", "");
   }
 
-  // 🟡 DATE Logic
   if (!rawDate && !rawTime) {
-    formattedDate = "In 30 minutes"; // null date + null time
+    formattedDate = "In 30 minutes";
   } else if (rawDate && rawDate.toDateString() === todayString && !rawTime) {
-    formattedDate = "In 30 minutes"; // today but no time
+    formattedDate = "In 30 minutes";
   } else if (rawDate) {
-    // Tomorrow check
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -49,14 +46,33 @@ export default function ProductCard({ product }) {
     }
   }
 
-  // 🔥 Final Output Formatting
   const deliveryDisplay =
     formattedDate && formattedTime
       ? `${formattedDate}, ${formattedTime}`
       : formattedDate || formattedTime;
 
+  // Price adjustment if cross community + has charge
+  let crossCommCharge = 0;
+  let finalPrice = product.price;
+
+  if (
+    product.cross_comm_delivery &&
+    product.cross_comm_charge > 0 &&
+    user?.community !== product.shop?.user?.community
+  ) {
+    crossCommCharge = product.cross_comm_charge;
+    finalPrice = parseFloat(product.price) + parseFloat(crossCommCharge);
+  }
+
+  const isMyProduct =
+    user?.contact_number === product.shop?.user?.contact_number;
+
   return (
-    <div className={`product-card ${product.status ? "" : "inactive"}`} onClick={addToCart}>
+    <div
+      className={`product-card ${product.status ? "" : "inactive"}`}
+      onClick={!isMyProduct ? addToCart : undefined}
+    >
+
       <img src={product.image_url || "/images/default-product.png"} alt={product.name} />
 
       <div className="product-info">
@@ -68,8 +84,22 @@ export default function ProductCard({ product }) {
           </p>
         )}
 
-        <p className="product-price">₱{product.price}</p>
+        <p className="product-price">
+          ₱{product.price}
+          {crossCommCharge > 0 && (
+            <span className="delivery-charge">
+              {" + ₱" + crossCommCharge + " delivery charge"}
+            </span>
+          )}
+        </p>
       </div>
+
+      {/* 🔥 Hide Add to Cart if it's the user's own product */}
+      {!isMyProduct && (
+        <button className="add-to-cart" onClick={addToCart}>
+          Add to Cart
+        </button>
+      )}
 
       {!product.status && <p className="inactive-label">Inactive</p>}
     </div>
