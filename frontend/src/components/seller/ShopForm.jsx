@@ -1,7 +1,6 @@
-// src/pages/seller/ShopForm.jsx
 import { useState } from "react";
 import { useAuthContext } from "../../context/AuthProvider";
-import "../../css/pages/seller/ShopForm.css"
+import "../../css/pages/seller/ShopForm.css";
 
 export default function ShopForm({ shop, onSave, onCancel }) {
   const { user } = useAuthContext();
@@ -9,16 +8,27 @@ export default function ShopForm({ shop, onSave, onCancel }) {
   const [form, setForm] = useState({
     name: shop?.name || "",
     description: shop?.description || "",
-    image_url: shop?.image_url || ""
   });
+
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    // clear error as user types
+    setErrors({ ...errors, [e.target.name]: "" });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(form);   // <-- FIXED
+
+    let newErrors = {};
+    if (!form.name.trim()) newErrors.name = "Shop name is required.";
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
+
+    onSave(form); // call save if no errors
   };
 
   return (
@@ -31,32 +41,27 @@ export default function ShopForm({ shop, onSave, onCancel }) {
         placeholder="Shop Name"
         value={form.name}
         onChange={handleChange}
+        className={errors.name ? "input-error" : ""}
       />
+      {errors.name && <p className="error-text">{errors.name}</p>}
 
       <textarea
         name="description"
         placeholder="Shop Description"
         value={form.description}
         onChange={handleChange}
+        className={errors.description ? "input-error" : ""}
       />
-
-      <input
-        name="image_url"
-        placeholder="Cover Image URL"
-        value={form.image_url}
-        onChange={handleChange}
-      />
+      {errors.description && (
+        <p className="error-text">{errors.description}</p>
+      )}
 
       <div className="form-buttons">
         <button type="submit" className="btn-save">
           {shop ? "Update Shop" : "Create Shop"}
         </button>
 
-        <button
-          type="button"
-          className="btn-cancel"
-          onClick={onCancel}
-        >
+        <button type="button" className="btn-cancel" onClick={onCancel}>
           Cancel
         </button>
       </div>

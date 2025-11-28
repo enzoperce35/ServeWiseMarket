@@ -104,6 +104,18 @@
   background: #d1d5db;
 }
 
+.error-text {
+  color: #e11d48;       /* red color */
+  font-size: 0.85rem;
+  margin-top: -10px;    /* closer to field */
+  margin-bottom: 10px;
+}
+
+/* Red border on invalid inputs */
+.input-error {
+  border-color: #e11d48 !important;
+}
+
 /* Mobile */
 @media (max-width: 480px) {
   .shop-form {
