@@ -66,14 +66,14 @@
   height: 100%;
 }
 
-.product-name {
+.seller-product-name {
   margin: 0 0 4px 0;
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.1;
 }
 
-.product-name h3 {
+.seller-product-name h3 {
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.1;
@@ -135,7 +135,7 @@
    Ultra-Small Mobile (<480px)
 ================================= */
 @media (max-width: 480px) {
-  .product-name,
+  .seller-product-name,
   .price-stock,
   .delivery-label,
   .community-checks {
@@ -156,7 +156,7 @@
     padding: 4px;
   }
 
-  .product-name {
+  .seller-product-name {
     font-size: 0.8rem;
     font-weight: 600;
     line-height: 0;

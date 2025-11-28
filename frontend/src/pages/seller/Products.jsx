@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import useProducts from "../../hooks/seller/useProducts";
 import { useAuthContext } from "../../context/AuthProvider"; // ✅ use context
-import ProductCard from "../../components/seller/ProductCard";
+import SellerCard from "../../components/seller/SellerCard";
 import { updateProduct } from "../../api/seller/products";
 import SellerNavbar from "../../components/seller/SellerNavbar"; // ✅ add this
 import "../../css/seller/seller.css";
@@ -54,7 +54,7 @@ export default function Products() {
       ) : (
         <div className="seller-product-grid">
           {products.map((product) => (
-            <ProductCard
+            <SellerCard
               key={product.id}
               product={product}
               user={user}

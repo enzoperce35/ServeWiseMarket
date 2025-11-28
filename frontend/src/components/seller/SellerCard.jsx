@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import "../../css/components/seller/ProductCard.css";
+import "../../css/components/seller/SellerCard.css";
 
-export default function ProductCard({ product, user, onClick, onStatusClick }) {
+export default function SellerCard({ product, user, onClick, onStatusClick }) {
   const [status, setStatus] = useState(Boolean(product.status));
 
   const price = Number(product.price || 0);
@@ -89,7 +89,7 @@ export default function ProductCard({ product, user, onClick, onStatusClick }) {
         </span>
       </div>
 
-      <div className="product-name">
+      <div className="seller-product-name">
         {/* Product Name */}
         <h3>{product.name}</h3>
 
