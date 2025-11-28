@@ -2,6 +2,8 @@ default: &default
   adapter: postgresql
   encoding: unicode
   pool: 5
+  host: localhost       # connect via TCP instead of socket
+  port: 5432            # optional if default
 
 development:
   <<: *default
@@ -16,3 +18,5 @@ production:
   database: servewise_market_production
   username: <%= ENV["PG_USERNAME"] %>
   password: <%= ENV["PG_PASSWORD"] %>
+  host: <%= ENV["PG_HOST"] %>   # optional for production
+  port: <%= ENV["PG_PORT"] || 5432 %>

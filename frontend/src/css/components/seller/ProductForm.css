@@ -91,6 +91,12 @@
   background: #d1d5db;
 }
 
+.error-message {
+  color: red;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
 /* Responsive for small screens */
 @media (max-width: 480px) {
   .seller-product-form {

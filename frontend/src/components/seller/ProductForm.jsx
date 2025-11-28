@@ -2,102 +2,115 @@
 import React, { useState, useEffect } from "react";
 import "../../css/components/seller/ProductForm.css";
 
-const DEFAULT_IMAGE = "https://via.placeholder.com/300x200.png?text=Product+Image";
+const CATEGORY_OPTIONS = [
+  "merienda",
+  "lutong ulam",
+  "lutong gulay",
+  "rice meal",
+  "pasta",
+  "almusal",
+  "dessert",
+  "delicacy",
+  "specialty",
+  "frozen",
+  "pulutan",
+  "refreshment",
+];
 
 export default function ProductForm({ product, onSave, onCancel }) {
   const [form, setForm] = useState({
     name: "",
-    description: "",
-    price: 0,
+    price: "",
     category: "",
-    image_url: "",
-    stock: 0,
-    status: false,
-    featured: false,
   });
+
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (product) {
       setForm({
-        ...form,
-        ...product,
-        image_url: product.image_url || DEFAULT_IMAGE,
+        name: product.name || "",
+        price: product.price || "",
+        category: product.category || "",
       });
     }
   }, [product]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
+    setErrors((prev) => ({ ...prev, [name]: "" })); // clear error on change
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    if (!form.name.trim()) newErrors.name = "Product name is required.";
+    if (!form.price && form.price !== 0) newErrors.price = "Price is required.";
+    else if (form.price < 0) newErrors.price = "Price cannot be negative.";
+    if (!form.category) newErrors.category = "Category is required.";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // ensure defaults
-    const payload = {
-      ...form,
-      description: form.description || "",
-      stock: form.stock || 0,
-      image_url: form.image_url || DEFAULT_IMAGE,
-      status: form.status || false,
-      featured: form.featured || false,
-    };
-    onSave(payload);
+    if (!validate()) return;
+
+    onSave(form);
   };
 
   return (
     <form onSubmit={handleSubmit} className="seller-product-form">
-      <input
-        type="text"
-        name="name"
-        value={form.name}
-        onChange={handleChange}
-        placeholder="Product Name"
-        required
-        className="seller-input"
-      />
+      {/* Product Name */}
+      <div className="form-group">
+        <input
+          type="text"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          placeholder="Product Name"
+          className="seller-input"
+        />
+        {errors.name && <p className="error-message">{errors.name}</p>}
+      </div>
 
-      <textarea
-        name="description"
-        value={form.description}
-        onChange={handleChange}
-        placeholder="Product Description"
-        className="seller-input"
-      />
+      {/* Price */}
+      <div className="form-group">
+        <input
+          type="number"
+          name="price"
+          value={form.price}
+          onChange={handleChange}
+          placeholder="Price"
+          min="0"
+          step="0.01"
+          className="seller-input"
+        />
+        {errors.price && <p className="error-message">{errors.price}</p>}
+      </div>
 
-      <input
-        type="number"
-        name="price"
-        value={form.price}
-        onChange={handleChange}
-        placeholder="Price"
-        min="0"
-        step="0.01"
-        className="seller-input"
-        required
-      />
-
-      <input
-        type="text"
-        name="category"
-        value={form.category}
-        onChange={handleChange}
-        placeholder="Category"
-        className="seller-input"
-        required
-      />
-
-      <input
-        type="text"
-        name="image_url"
-        value={form.image_url}
-        onChange={handleChange}
-        placeholder="Image URL"
-        className="seller-input"
-      />
+      {/* Category */}
+      <div className="form-group">
+        <select
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          className="seller-input"
+        >
+          <option value="" disabled>
+            Select Category
+          </option>
+          {CATEGORY_OPTIONS.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
+        {errors.category && <p className="error-message">{errors.category}</p>}
+      </div>
 
       <div className="flex space-x-2 mt-2">
         <button type="submit" className="seller-btn seller-btn-primary">
