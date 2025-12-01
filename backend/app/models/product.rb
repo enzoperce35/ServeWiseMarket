@@ -2,6 +2,11 @@ class Product < ApplicationRecord
   belongs_to :shop
   has_many :product_ratings, dependent: :destroy
 
+  PLACEHOLDER_URL = "https://via.placeholder.com/300x200.png?text=Product+Image"
+
+  # ----------------------
+  # Scopes
+  # ----------------------
   # Only show active products from open shops
   scope :available, -> { where(status: true) }
 
@@ -22,15 +27,20 @@ class Product < ApplicationRecord
     end
   }
 
-  # Status validation
+  # ----------------------
+  # Validations
+  # ----------------------
   validates :status, inclusion: { in: [true, false] }
-
-  # Delivery validations (optional, adjust if needed)
   validates :cross_comm_charge,
             numericality: { greater_than_or_equal_to: 0 },
             allow_nil: true
+  validates :delivery_date_gap,
+            numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validates :preorder_delivery, inclusion: { in: [true, false] } # new validation
 
+  # ----------------------
   # Ratings helpers
+  # ----------------------
   def average_rating
     product_ratings.average(:score)&.round(2) || 0
   end
@@ -39,8 +49,9 @@ class Product < ApplicationRecord
     product_ratings.count
   end
 
-  PLACEHOLDER_URL = "https://via.placeholder.com/300x200.png?text=Product+Image"
-
+  # ----------------------
+  # Callbacks
+  # ----------------------
   before_validation :normalize_image_url
 
   private

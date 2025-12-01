@@ -11,7 +11,7 @@ export default function SellerCard({ product, user, onClick, onStatusClick }) {
 
   useEffect(() => {
     setStatus(Boolean(product.status));
-  }, [product.status]);
+    }, [product.status]);
 
   const formatDelivery = (product) => {
     const { delivery_date, delivery_time } = product;

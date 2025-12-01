@@ -9,13 +9,13 @@ export default function useProducts() {
 
   const loadProducts = useCallback(async () => {
     if (!user?.shop) {
-      setProducts([]); // No shop → no products
+      setProducts([]); 
       return;
     }
 
     setLoading(true);
     try {
-      const data = await fetchSellerProducts(); // API call to /api/v1/seller/products
+      const data = await fetchSellerProducts(); 
       setProducts(data);
     } catch (err) {
       console.error("Failed to fetch seller products:", err);
@@ -25,11 +25,10 @@ export default function useProducts() {
     }
   }, [user]);
 
-  // Load products when user or shop changes
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
 
-  // Expose products and a reload function
-  return { products, loading, reload: loadProducts };
+  // now we return setProducts so Products.jsx can update state
+  return { products, loading, reload: loadProducts, setProducts };
 }

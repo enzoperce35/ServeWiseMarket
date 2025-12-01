@@ -27,7 +27,6 @@ const CATEGORIES = [
 ];
 
 const TIMESLOTS = [
-  "5am - 5:30am",
   "6am - 6:30am",
   "7am - 7:30am",
   "8am - 8:30am",
@@ -90,10 +89,8 @@ export default function ProductSettingsPage() {
         const found = prods.find((p) => p.id === parseInt(id));
         setProduct({
           ...found,
-          delivery_date: todayStr,    // always today
-          delivery_time: null,        // always null
-          delivery_time_label: "",    // always empty
-          pre_order_delivery: true,
+          delivery_date: found.delivery_date || todayStr,
+          delivery_time_label: "", // you can compute from delivery_time if needed
         });
       } else {
         setProduct({
@@ -104,10 +101,10 @@ export default function ProductSettingsPage() {
           category: "",
           image_url: "",
           status: true,
-          delivery_date: todayStr,    // always today
+          delivery_date: todayStr,
           delivery_time: null,
           delivery_time_label: "",
-          pre_order_delivery: true,
+          preorder_delivery: false, // default unchecked
           cross_comm_delivery: false,
           cross_comm_charge: 0,
         });
@@ -121,11 +118,34 @@ export default function ProductSettingsPage() {
     return <p className="loading">Loading...</p>;
 
   const saveProduct = async () => {
+    let gap = 0;
+
+    if (product.preorder_delivery && product.delivery_date) {
+      const today = new Date();
+      const deliveryDate = new Date(product.delivery_date);
+
+      const todayDateOnly = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+      );
+      const deliveryDateOnly = new Date(
+        deliveryDate.getFullYear(),
+        deliveryDate.getMonth(),
+        deliveryDate.getDate()
+      );
+
+      const diffTime = deliveryDateOnly - todayDateOnly; // difference in ms
+      gap = Math.max(Math.floor(diffTime / (1000 * 60 * 60 * 24)), 0);
+    }
+
     const body = {
       ...product,
       shop_id: shop.id,
-      delivery_date: product.pre_order_delivery ? product.delivery_date : null,
-      delivery_time: product.pre_order_delivery ? product.delivery_time : null,
+      delivery_date: product.preorder_delivery ? product.delivery_date : null,
+      delivery_time: product.preorder_delivery ? product.delivery_time : null,
+      delivery_date_gap: gap,
+      preorder_delivery: product.preorder_delivery,
     };
 
     if (id) await updateProduct(id, body);
@@ -154,16 +174,14 @@ export default function ProductSettingsPage() {
       ? "Deliver to Sampaguita Homes"
       : "Deliver to Sampaguita West";
 
-  // Disable past timeslots if delivery date is today or null
   const getDisabledTimes = () => {
-    if (!product.pre_order_delivery) return TIMESLOTS.map(() => true);
+    if (!product.preorder_delivery) return TIMESLOTS.map(() => true);
 
     const today = new Date();
     const selectedDate = product.delivery_date
       ? new Date(product.delivery_date)
       : today;
 
-    // If selected date is not today, all slots enabled
     if (selectedDate.toDateString() !== today.toDateString())
       return TIMESLOTS.map(() => false);
 
@@ -224,9 +242,13 @@ export default function ProductSettingsPage() {
             <label>Price (₱)</label>
             <input
               type="number"
-              min="0"
-              value={product.price || 0}
-              onChange={(e) => update("price", parseFloat(e.target.value) || 0)}
+               min="0"
+               value={product.price !== null && product.price !== undefined ? product.price : ""}
+               placeholder="0" // shows 0 as a placeholder
+               onChange={(e) => {
+                 const val = e.target.value;
+                update("price", val === "" ? null : parseFloat(val));
+               }}
             />
           </div>
 
@@ -251,8 +273,12 @@ export default function ProductSettingsPage() {
             <input
               type="number"
               min="0"
-              value={product.stock || 0}
-              onChange={(e) => update("stock", parseInt(e.target.value) || 0)}
+              value={product.stock !== null && product.stock !== undefined ? product.stock : ""}
+              placeholder="0"
+              onChange={(e) => {
+                const val = e.target.value;
+                update("stock", val === "" ? null : parseInt(val));
+              }}
             />
           </div>
         </div>
@@ -264,15 +290,14 @@ export default function ProductSettingsPage() {
           <h3>Delivery Time</h3>
         </div>
         <div className="section-body">
-          {/* Pre-Order Delivery Checkbox */}
           <div className="cross-delivery-row">
             <label>Pre-Order Delivery</label>
             <input
               type="checkbox"
-              checked={product.pre_order_delivery ?? true}
+              checked={product.preorder_delivery ?? false}
               onChange={(e) => {
                 const checked = e.target.checked;
-                update("pre_order_delivery", checked);
+                update("preorder_delivery", checked);
                 if (!checked) {
                   update("delivery_date", null);
                   update("delivery_time", null);
@@ -293,7 +318,7 @@ export default function ProductSettingsPage() {
               type="date"
               value={product.delivery_date || new Date().toISOString().split("T")[0]}
               onChange={(e) => update("delivery_date", e.target.value)}
-              disabled={!product.pre_order_delivery}
+              disabled={!product.preorder_delivery}
               min={new Date().toISOString().split("T")[0]}
             />
           </div>
@@ -310,7 +335,7 @@ export default function ProductSettingsPage() {
                   slotToDate(label, new Date(product.delivery_date))
                 );
               }}
-              disabled={!product.pre_order_delivery}
+              disabled={!product.preorder_delivery}
             >
               <option value="">Select time slot</option>
               {TIMESLOTS.map((slot, index) => (
@@ -345,10 +370,17 @@ export default function ProductSettingsPage() {
             <input
               type="number"
               disabled={!product.cross_comm_delivery}
-              value={product.cross_comm_charge || 0}
-              onChange={(e) =>
-                update("cross_comm_charge", parseInt(e.target.value) || 0)
+              value={
+                product.cross_comm_charge !== null &&
+                product.cross_comm_charge !== undefined
+                  ? product.cross_comm_charge
+                  : ""
               }
+              placeholder="0"
+              onChange={(e) => {
+                const val = e.target.value;
+                update("cross_comm_charge", val === "" ? null : parseInt(val));
+              }}
             />
           </div>
         </div>

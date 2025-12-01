@@ -62,10 +62,12 @@ module Api
             :image_url,
             :status,
             :featured,
+            :delivery_date_gap,
             :delivery_date,
             :delivery_time,
             :cross_comm_delivery,
-            :cross_comm_charge
+            :cross_comm_charge,
+            :preorder_delivery # newly added
           )
         end
       end

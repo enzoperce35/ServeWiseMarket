@@ -15,7 +15,9 @@ module Api
 
         render json: products.as_json(
           only: [:id, :name, :description, :price, :stock, :category, :image_url,
-                 :delivery_date, :delivery_time, :cross_comm_delivery, :cross_comm_charge, :status],
+                 :delivery_date, :delivery_time, :delivery_date_gap,
+                 :preorder_delivery, # newly added
+                 :cross_comm_delivery, :cross_comm_charge, :status],
           include: {
             shop: {
               only: [:id, :name, :status],
@@ -35,7 +37,9 @@ module Api
 
         render json: product.as_json(
           only: [:id, :name, :description, :price, :stock, :category, :image_url,
-                 :delivery_date, :delivery_time, :cross_comm_delivery, :cross_comm_charge, :status],
+                 :delivery_date, :delivery_time, :delivery_date_gap,
+                 :preorder_delivery, # newly added
+                 :cross_comm_delivery, :cross_comm_charge, :status],
           include: {
             shop: {
               only: [:id, :name, :status],
