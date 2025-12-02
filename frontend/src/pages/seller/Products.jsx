@@ -5,43 +5,13 @@ import { useAuthContext } from "../../context/AuthProvider";
 import SellerCard from "../../components/seller/SellerCard";
 import { updateProduct } from "../../api/seller/products";
 import SellerNavbar from "../../components/seller/SellerNavbar";
+import { isExpired } from "../../utils/deliveryDateTime";
 import "../../css/seller/seller.css";
 
 export default function Products() {
   const { products, loading: productsLoading, setProducts } = useProducts();
   const { user, loading: userLoading } = useAuthContext();
   const navigate = useNavigate();
-
-  // Helper: check if a product is expired (robust ISO time parsing)
-  const isExpired = (product) => {
-    if (!product.preorder_delivery) return false;
-
-    const now = new Date();
-
-    // Parse delivery_date as date-only
-    const [year, month, day] = product.delivery_date
-      .split("T")[0]
-      .split("-")
-      .map(Number);
-
-    // Default time
-    let hours = 0,
-      minutes = 0,
-      seconds = 0;
-
-    // Parse delivery_time (supports ISO or HH:MM:SS)
-    if (product.delivery_time) {
-      const timeDate = new Date(product.delivery_time);
-      hours = timeDate.getHours();
-      minutes = timeDate.getMinutes();
-      seconds = timeDate.getSeconds();
-    }
-
-    // Combine date + time into local datetime
-    const combined = new Date(year, month - 1, day, hours, minutes, seconds);
-
-    return now > combined;
-  };
 
   // Effect: check and update expired products
   useEffect(() => {

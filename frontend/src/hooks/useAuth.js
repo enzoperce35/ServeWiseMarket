@@ -1,3 +1,4 @@
+// src/hooks/useAuth.js
 import { useState } from "react";
 import axios from "axios";
 
@@ -6,7 +7,6 @@ const BASE_URL = "http://localhost:3000/api/v1";
 export default function useAuth() {
   const [user, setUser] = useState(null);
 
-  // Fetch current logged-in user if token exists
   const fetchUser = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -16,10 +16,10 @@ export default function useAuth() {
       }
 
       const res = await axios.get(`${BASE_URL}/me`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      setUser(res.data.user); // includes shop if exists
+      setUser(res.data.user);
       return res.data.user;
     } catch (err) {
       console.error("Fetch user failed:", err.response?.data || err.message);
@@ -27,37 +27,25 @@ export default function useAuth() {
     }
   };
 
-  // Signup
   const handleSignup = async (data) => {
     try {
       const payload = { ...data, role: "buyer" };
       const res = await axios.post(`${BASE_URL}/signup`, { user: payload });
-
       localStorage.setItem("token", res.data.token);
-
-      // Fetch user after signup
       await fetchUser();
-
-      return { status: "ok" }; // <-- THIS IS THE FIX
+      return { status: "ok" };
     } catch (err) {
       return { status: "error", errors: err.response?.data?.errors || [err.message] };
     }
   };
 
-  // Login
   const handleLogin = async ({ contact_number, password }) => {
     try {
-      const res = await axios.post(`${BASE_URL}/login`, {
-        contact_number,
-        password,
-      });
-
+      const res = await axios.post(`${BASE_URL}/login`, { contact_number, password });
       localStorage.setItem("token", res.data.token);
-
-      // 🔥 instead of using stale user, fetch complete user again
       const freshUser = await fetchUser();
       return { status: "ok", user: freshUser };
-    } catch (err) {
+    } catch {
       return { status: "error", errors: ["Invalid login credentials"] };
     }
   };
@@ -68,12 +56,33 @@ export default function useAuth() {
     if (navigate) navigate("/login");
   };
 
+  const updateUserShop = async (updates) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.put(`${BASE_URL}/seller/shop`, updates, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Update local user context
+      setUser((prev) => ({
+        ...prev,
+        shop: { ...prev.shop, ...updates },
+      }));
+
+      return res.data;
+    } catch (err) {
+      console.error("Failed to update shop:", err.response?.data || err.message);
+      throw err;
+    }
+  };
+
   return {
     user,
     setUser,
     fetchUser,
     handleSignup,
     handleLogin,
-    handleLogout
+    handleLogout,
+    updateUserShop,
   };
 }

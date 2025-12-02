@@ -1,7 +1,9 @@
+/* ----------------------------
+   Navbar container
+---------------------------- */
 .seller-navbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column; /* allow status row below main row */
   background: white;
   padding: 12px 18px;
   border-bottom: 1px solid #e5e5e5;
@@ -11,12 +13,22 @@
   margin-bottom: 2rem;
 }
 
+/* ----------------------------
+   Top main row (Home, ShopName, Orders)
+---------------------------- */
+.nav-main-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
 .nav-icon {
   width: 28px;
   height: 28px;
   cursor: pointer;
   color: #444;
-  transition: 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .nav-icon:hover {
@@ -28,4 +40,108 @@
   font-weight: 600;
   margin: 0;
   text-align: center;
+  cursor: pointer;
+}
+
+/* ----------------------------
+   Toggle (optional previous toggle switch)
+---------------------------- */
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.toggle-switch {
+  width: 45px;
+  height: 24px;
+  background: #ccc;
+  border-radius: 20px;
+  position: relative;
+  transition: 0.25s ease;
+}
+
+.toggle-switch.on {
+  background: #4ade80;
+}
+
+.toggle-switch.off {
+  background: #f87171;
+}
+
+.toggle-handle {
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: left 0.25s ease;
+}
+
+.toggle-switch.on .toggle-handle {
+  left: 23px;
+}
+
+.toggle-label {
+  font-size: 14px;
+  color: #222;
+  font-weight: 500;
+}
+
+/* ----------------------------
+   New status row: OPEN / CLOSED pill
+---------------------------- */
+.nav-status-row {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+  background: #f9f9f9;
+  gap: 12px;
+}
+
+.status-pill {
+  padding: 6px 16px;
+  border-radius: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+}
+
+.status-pill.open {
+  background-color: #4ade80; /* green */
+  color: white;
+}
+
+.status-pill.closed {
+  background-color: #f87171; /* red */
+  color: white;
+}
+
+.status-pill:hover {
+  opacity: 0.85;
+  transform: scale(1.05);
+}
+
+/* ----------------------------
+   Responsive adjustments
+---------------------------- */
+@media (max-width: 480px) {
+  .nav-center h2 {
+    font-size: 16px;
+  }
+
+  .status-pill {
+    padding: 5px 12px;
+    font-size: 13px;
+  }
+
+  .nav-icon {
+    width: 24px;
+    height: 24px;
+  }
 }
