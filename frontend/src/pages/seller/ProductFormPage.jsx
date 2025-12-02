@@ -33,13 +33,29 @@ export default function ProductFormPage() {
 
   const handleSave = async (productData) => {
     try {
-      const payload = { ...productData, shop_id: shop.id };
+      let payload = { ...productData, shop_id: shop.id };
+
+      // ---------------------------
+      // ONLY SET ON CREATE (no product yet)
+      // ---------------------------
+      if (!product) {
+        const now = new Date();
+        now.setHours(20, 0, 0, 0); // 8:00 PM today
+
+        const delivery_date = now.toISOString().split("T")[0]; // YYYY-MM-DD
+        const delivery_time = now.toISOString(); // full ISO timestamp
+
+        payload.delivery_date = delivery_date;
+        payload.delivery_time = delivery_time;
+      }
+
       if (product) {
         await updateProduct(product.id, payload);
       } else {
         await createProduct(payload);
       }
-      navigate("/seller/products"); // go back to products list
+
+      navigate("/seller/products");
     } catch (err) {
       console.error("Error saving product:", err);
     }

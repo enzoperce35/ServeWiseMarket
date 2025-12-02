@@ -34,8 +34,6 @@ export const getDeliveryDateTime = (product) => {
  * @returns {boolean}
  */
 export const isExpired = (product) => {
-  if (!product?.preorder_delivery) return false; // Not a preorder → never expires
-
   const combinedDate = getDeliveryDateTime(product);
   if (!combinedDate) return false; // delivery_date missing
 

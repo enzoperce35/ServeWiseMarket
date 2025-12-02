@@ -71,7 +71,6 @@ export default function ProductSettingsPage() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Safe update function
   const update = (key, value) => {
     setProduct((prev) => ({ ...prev, [key]: value }));
   };
@@ -82,17 +81,37 @@ export default function ProductSettingsPage() {
       const s = await fetchShop();
       setShop(s);
 
-      const todayStr = new Date().toISOString().split("T")[0]; // today yyyy-mm-dd
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+
+      const eightPM = new Date(today);
+      eightPM.setHours(20, 0, 0, 0);
 
       if (id) {
         const prods = await fetchSellerProducts();
         const found = prods.find((p) => p.id === parseInt(id));
+
+        // If preorder is OFF, auto-apply today's 8pm
+        const baseDeliveryDate = found.preorder_delivery
+          ? found.delivery_date || todayStr
+          : todayStr;
+
+        const baseDeliveryTime = found.preorder_delivery
+          ? found.delivery_time
+          : eightPM;
+
+        const baseLabel = found.preorder_delivery
+          ? found.delivery_time_label || ""
+          : "8pm - 8:30pm";
+
         setProduct({
           ...found,
-          delivery_date: found.delivery_date || todayStr,
-          delivery_time_label: "", // you can compute from delivery_time if needed
+          delivery_date: baseDeliveryDate,
+          delivery_time: baseDeliveryTime,
+          delivery_time_label: baseLabel,
         });
       } else {
+        // CREATE MODE — no extra visible field, but internal default 8pm when preorder is OFF
         setProduct({
           name: "",
           description: "",
@@ -101,10 +120,10 @@ export default function ProductSettingsPage() {
           category: "",
           image_url: "",
           status: true,
+          preorder_delivery: false,
           delivery_date: todayStr,
-          delivery_time: null,
-          delivery_time_label: "",
-          preorder_delivery: false, // default unchecked
+          delivery_time: eightPM,
+          delivery_time_label: "8pm - 8:30pm",
           cross_comm_delivery: false,
           cross_comm_charge: 0,
         });
@@ -117,35 +136,48 @@ export default function ProductSettingsPage() {
   if (loading || !product || !shop || !user)
     return <p className="loading">Loading...</p>;
 
+  // SAVE PRODUCT
   const saveProduct = async () => {
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+
+    let deliveryDate = product.delivery_date;
+    let deliveryTime = product.delivery_time;
+    //let deliveryLabel = product.delivery_time_label;
+
+    // If preorder is OFF — ALWAYS force 8pm today
+    if (!product.preorder_delivery) {
+      deliveryDate = todayStr;
+
+      const eightPM = new Date(today);
+      eightPM.setHours(20, 0, 0, 0);
+
+      deliveryTime = eightPM;
+      //deliveryLabel = "8pm - 8:30pm";
+    }
+
+    // Compute gap only when preorder ON
     let gap = 0;
-
-    if (product.preorder_delivery && product.delivery_date) {
-      const today = new Date();
-      const deliveryDate = new Date(product.delivery_date);
-
-      const todayDateOnly = new Date(
-        today.getFullYear(),
-        today.getMonth(),
-        today.getDate()
+    if (product.preorder_delivery && deliveryDate) {
+      const d1 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const d2Source = new Date(deliveryDate);
+      const d2 = new Date(
+        d2Source.getFullYear(),
+        d2Source.getMonth(),
+        d2Source.getDate()
       );
-      const deliveryDateOnly = new Date(
-        deliveryDate.getFullYear(),
-        deliveryDate.getMonth(),
-        deliveryDate.getDate()
-      );
-
-      const diffTime = deliveryDateOnly - todayDateOnly; // difference in ms
-      gap = Math.max(Math.floor(diffTime / (1000 * 60 * 60 * 24)), 0);
+      const diff = d2 - d1;
+      gap = Math.max(Math.floor(diff / (1000 * 60 * 60 * 24)), 0);
     }
 
     const body = {
       ...product,
       shop_id: shop.id,
-      delivery_date: product.preorder_delivery ? product.delivery_date : null,
-      delivery_time: product.preorder_delivery ? product.delivery_time : null,
-      delivery_date_gap: gap,
       preorder_delivery: product.preorder_delivery,
+      delivery_date: deliveryDate,
+      delivery_time: deliveryTime,
+      //delivery_time_label: deliveryLabel,
+      delivery_date_gap: gap,
     };
 
     if (id) await updateProduct(id, body);
@@ -154,6 +186,7 @@ export default function ProductSettingsPage() {
     navigate("/seller/products");
   };
 
+  // Delete handler
   const deleteProductHandler = async () => {
     if (!window.confirm("Delete this product permanently?")) return;
     await deleteProduct(id);
@@ -186,7 +219,7 @@ export default function ProductSettingsPage() {
       return TIMESLOTS.map(() => false);
 
     const now = new Date();
-    const minTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+    const minTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour ahead
 
     return TIMESLOTS.map((slot) => {
       const slotDate = slotToDate(slot, selectedDate);
@@ -242,13 +275,17 @@ export default function ProductSettingsPage() {
             <label>Price (₱)</label>
             <input
               type="number"
-               min="0"
-               value={product.price !== null && product.price !== undefined ? product.price : ""}
-               placeholder="0" // shows 0 as a placeholder
-               onChange={(e) => {
-                 const val = e.target.value;
+              min="0"
+              value={
+                product.price !== null && product.price !== undefined
+                  ? product.price
+                  : ""
+              }
+              placeholder="0"
+              onChange={(e) => {
+                const val = e.target.value;
                 update("price", val === "" ? null : parseFloat(val));
-               }}
+              }}
             />
           </div>
 
@@ -273,7 +310,11 @@ export default function ProductSettingsPage() {
             <input
               type="number"
               min="0"
-              value={product.stock !== null && product.stock !== undefined ? product.stock : ""}
+              value={
+                product.stock !== null && product.stock !== undefined
+                  ? product.stock
+                  : ""
+              }
               placeholder="0"
               onChange={(e) => {
                 const val = e.target.value;
@@ -298,15 +339,19 @@ export default function ProductSettingsPage() {
               onChange={(e) => {
                 const checked = e.target.checked;
                 update("preorder_delivery", checked);
+
+                const today = new Date();
+                const todayStr = today.toISOString().split("T")[0];
+
+                const eightPM = new Date(today);
+                eightPM.setHours(20, 0, 0, 0);
+
                 if (!checked) {
-                  update("delivery_date", null);
-                  update("delivery_time", null);
-                  update("delivery_time_label", "");
+                  update("delivery_date", todayStr);
+                  update("delivery_time", eightPM);
+                  update("delivery_time_label", "8pm - 8:30pm");
                 } else if (!product.delivery_date) {
-                  update(
-                    "delivery_date",
-                    new Date().toISOString().split("T")[0]
-                  );
+                  update("delivery_date", todayStr);
                 }
               }}
             />
@@ -316,7 +361,11 @@ export default function ProductSettingsPage() {
             <label>Delivery Date</label>
             <input
               type="date"
-              value={product.delivery_date || new Date().toISOString().split("T")[0]}
+              value={
+                product.preorder_delivery
+                  ? product.delivery_date
+                  : new Date().toISOString().split("T")[0]
+              }
               onChange={(e) => update("delivery_date", e.target.value)}
               disabled={!product.preorder_delivery}
               min={new Date().toISOString().split("T")[0]}
@@ -326,7 +375,7 @@ export default function ProductSettingsPage() {
           <div className="settings-item">
             <label>Delivery Time</label>
             <select
-              value={product.delivery_time_label || ""}
+              value={product.preorder_delivery ? product.delivery_time_label : ""}
               onChange={(e) => {
                 const label = e.target.value;
                 update("delivery_time_label", label);
