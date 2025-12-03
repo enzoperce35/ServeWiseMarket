@@ -2,13 +2,15 @@
    Base Card Styles
 ================================= */
 .seller-product-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
-  background-color: #fff;
-  transition: box-shadow 0.2s;
+  justify-content: space-between;
+  position: relative; /* ✅ needed for dot */
+  z-index: 10; /* lower than navbar */
 }
 
 .clickable-card {
@@ -46,7 +48,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 20;
+  z-index: 11; /* slightly above card but under navbar (20) */
 }
 
 .status-dot {
@@ -82,6 +84,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap; /* single line */
+  margin: 9px 0 4px;
 }
 
 
@@ -89,7 +92,7 @@
   display: flex;
   flex-direction: row;
   gap: 0.5rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0rem;
 }
 
 .price-stock {
@@ -131,6 +134,17 @@
   justify-content: flex-end;
 }
 
+/* Subtle background colors for card */
+.preorder-card {
+  background-color: rgba(157, 40, 8, 0.1); /* subtle orange */
+  border: 2px solid rgb(241, 204, 135);
+}
+
+.instant-card {
+  background-color: rgba(32, 84, 26, 0.1); /* subtle green */
+  border: 2px solid rgb(160, 209, 160);
+}
+
 /* ================================
    Ultra-Small Mobile (<480px)
 ================================= */
@@ -144,7 +158,7 @@
   }
   
   .seller-product-card {
-    padding: 0.25rem;
+    padding: 0.3rem;
     border-radius: 5px;
   }
 

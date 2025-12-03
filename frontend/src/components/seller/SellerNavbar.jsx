@@ -10,52 +10,60 @@ export default function SellerNavbar() {
 
   const shopName = user?.shop?.name || "My Shop";
 
-  // UI state for shop open/closed
-  const [shopOpen, setShopOpen] = useState(user?.shop?.open ?? false);
+  const now = new Date();
+  const today = now.toDateString();
+  const hour = now.getHours();
 
-  // Track first toggle today
-  const [hasFirstToggleToday, setHasFirstToggleToday] = useState(() => {
-    const saved = localStorage.getItem("firstToggleDate");
-    const today = new Date().toDateString();
-    return saved === today;
+  const isAfter6AM = hour >= 6; // can toggle after 6AM
+  const isWithinToggleHours = hour >= 6 && hour < 20;
+
+  // Detect if today's forced-close was already done
+  const forcedClosedAlready = localStorage.getItem("forcedClosedDate") === today;
+
+  // Detect if first toggle today was already done
+  const firstToggleAlready = localStorage.getItem("firstToggleDate") === today;
+
+  // UI shop open state
+  const [shopOpen, setShopOpen] = useState(() => {
+    // After 6AM → force CLOSED ONCE per day
+    if (isAfter6AM && !forcedClosedAlready) {
+      return false;
+    }
+    return user?.shop?.open ?? false;
   });
 
-  // Only update shopOpen from user on mount
+  // Save today's forced-close so it doesn't happen again this day
   useEffect(() => {
-    setShopOpen(user?.shop?.open ?? false);
-  }, []); // empty deps to avoid resetting on every user update
+    if (isAfter6AM && !forcedClosedAlready) {
+      localStorage.setItem("forcedClosedDate", today);
+    }
+  }, []);
 
-  const markFirstToggleToday = () => {
-    const today = new Date().toDateString();
-    localStorage.setItem("firstToggleDate", today);
-    setHasFirstToggleToday(true);
-  };
-
-  const hour = new Date().getHours();
-  const isWithinToggleHours = hour >= 6 && hour < 20;
+  // State for first toggle
+  const [hasFirstToggleToday, setHasFirstToggleToday] = useState(firstToggleAlready);
 
   const handleToggle = () => {
     if (!isWithinToggleHours) return;
 
-    let newState = shopOpen;
+    let newState;
 
-    // First toggle after 6AM always sets open = true
-    if (!hasFirstToggleToday && hour >= 6) {
+    // FIRST toggle of the day after 6AM → FORCE OPEN
+    if (!hasFirstToggleToday && isAfter6AM) {
       newState = true;
-      markFirstToggleToday();
+      localStorage.setItem("firstToggleDate", today);
+      setHasFirstToggleToday(true);
     } else {
+      // Subsequent toggles → normal toggle
       newState = !shopOpen;
     }
 
     setShopOpen(newState);
-
-    // Update backend
     updateUserShop({ open: newState });
   };
 
   return (
     <nav className="seller-navbar">
-      {/* Top row: Home, ShopName, Orders */}
+
       <div className="nav-main-row">
         <div className="nav-left" onClick={() => navigate("/")}>
           <HomeIcon className="nav-icon" />
@@ -70,7 +78,6 @@ export default function SellerNavbar() {
         </div>
       </div>
 
-      {/* Bottom row: OPEN / CLOSED toggle/status */}
       {isWithinToggleHours && (
         <div className="nav-status-row">
           <div
