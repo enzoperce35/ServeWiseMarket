@@ -441,6 +441,14 @@ export default function ProductSettingsPage() {
           {id ? "Save Changes" : "Add Product"}
         </button>
 
+        {/* Cancel button */}
+        <button
+          className="cancel-btn"
+          onClick={() => navigate(-1)}
+          >
+          Cancel
+        </button>
+
         {id && (
           <button className="delete-btn" onClick={deleteProductHandler}>
             Delete Product

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getDeliveryLabel } from "../../utils/deliveryDateTime";
 import "../../css/components/seller/SellerCard.css";
 
 export default function SellerCard({ product, user, onClick, onStatusClick }) {
@@ -13,48 +14,7 @@ export default function SellerCard({ product, user, onClick, onStatusClick }) {
     setStatus(Boolean(product.status));
   }, [product.status]);
 
-  const getDeliveryLabel = () => {
-    if (!product.preorder_delivery) return "in 30 minutes";
-
-    const dDate = product.delivery_date ? new Date(product.delivery_date) : null;
-    const dTime = product.delivery_time ? new Date(product.delivery_time) : null;
-    if (!dDate) return "Schedule not set";
-
-    const today = new Date().setHours(0, 0, 0, 0);
-    const delDay = new Date(dDate).setHours(0, 0, 0, 0);
-    if (delDay < today) return "Unavailable";
-
-    const diffDays = (delDay - today) / (1000 * 60 * 60 * 24);
-    let dayLabel =
-      diffDays === 0
-        ? "Today"
-        : diffDays === 1
-        ? "Tomorrow"
-        : dDate.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          });
-
-    if (!product.delivery_time || dTime.getHours() === 0) return dayLabel;
-
-    const hour = dTime.getHours();
-    const minute = dTime.getMinutes();
-    const endMins = (minute + 30) % 60;
-
-    const formatTime = (h, m) => {
-      const ampm = h >= 12 ? "pm" : "am";
-      const stdH = h % 12 || 12;
-      const stdM = m > 0 ? `:${m.toString().padStart(2, "0")}` : "";
-      return `${stdH}${stdM}${ampm}`;
-    };
-
-    const first = formatTime(hour, minute);
-    const second = formatTime(hour, endMins);
-
-    return `${dayLabel} ${first}-${second}`;
-  };
-
-  const deliveryLabel = getDeliveryLabel();
+  const deliveryLabel = getDeliveryLabel(product);
 
   const getStatusColor = () => {
     if (!status) return "#ccc";
