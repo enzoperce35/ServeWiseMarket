@@ -21,20 +21,17 @@ export default function Products() {
       for (const product of products) {
         if (!isExpired(product)) continue;
 
-        // Calculate new delivery_date: today + (delivery_gap + 1)
         const daysToAdd = (product.delivery_gap ?? 0) + 1;
         const newDeliveryDate = new Date();
         newDeliveryDate.setDate(newDeliveryDate.getDate() + daysToAdd);
 
         const updatedProductData = {
           delivery_date: newDeliveryDate.toISOString(),
-          status: false, // automatically mark as inactive
-          // delivery_time stays unchanged
+          status: false,
         };
 
         try {
           const updatedProduct = await updateProduct(product.id, updatedProductData);
-
           setProducts((prev) =>
             prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
           );
@@ -47,14 +44,8 @@ export default function Products() {
     checkAndUpdateExpired();
   }, [products, setProducts]);
 
-  // Navigation handlers
-  const handleEdit = (product) => {
-    navigate(`/seller/products/${product.id}/edit`);
-  };
-
-  const handleCreate = () => {
-    navigate("/seller/products/new");
-  };
+  const handleEdit = (product) => navigate(`/seller/products/${product.id}/edit`);
+  const handleCreate = () => navigate("/seller/products/new");
 
   const handleStatusToggle = async (product) => {
     const newStatus = !product.status;
@@ -69,17 +60,50 @@ export default function Products() {
     }
   };
 
-  // Conditional rendering
   if (productsLoading || userLoading) {
     return <p>Loading products...</p>;
   }
+
+  // ============================================
+  // ⭐ APPLY SORTING BEFORE RENDERING
+  // ============================================
+  const sortedProducts = [...products].sort((a, b) => {
+    // 1. Active products first
+    if (a.status !== b.status) {
+      return a.status ? -1 : 1;
+    }
+
+    // IF BOTH ARE ACTIVE
+    if (a.status === true && b.status === true) {
+      // 2a. Both non-preorder → sort by updated_at DESC
+      if (!a.preorder_delivery && !b.preorder_delivery) {
+        return new Date(b.updated_at) - new Date(a.updated_at);
+      }
+
+      // 2b. Both preorder → sort by delivery_time ASC
+      if (a.preorder_delivery && b.preorder_delivery) {
+        return new Date(a.delivery_time) - new Date(b.delivery_time);
+      }
+
+      // Non-preorder first (user expectation)
+      if (!a.preorder_delivery && b.preorder_delivery) return -1;
+      if (a.preorder_delivery && !b.preorder_delivery) return 1;
+    }
+
+    // 3. Inactive products → sort by updated_at DESC
+    if (a.status === false && b.status === false) {
+      return new Date(b.updated_at) - new Date(a.updated_at);
+    }
+
+    return 0;
+  });
 
   return (
     <div className="seller-page">
       <SellerNavbar />
 
       <div className="p-4">
-        {products.length === 0 ? (
+        {sortedProducts.length === 0 ? (
           <div className="no-products-message">
             <p>You have no products yet. Click the button below to create your first product!</p>
             <button className="add-product-button" onClick={handleCreate}>
@@ -88,7 +112,7 @@ export default function Products() {
           </div>
         ) : (
           <div className="seller-product-grid">
-            {products.map((product) => (
+            {sortedProducts.map((product) => (
               <SellerCard
                 key={product.id}
                 product={product}
