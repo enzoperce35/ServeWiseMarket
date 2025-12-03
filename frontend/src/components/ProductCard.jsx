@@ -69,8 +69,11 @@ export default function ProductCard({ product }) {
 
   return (
     <div
-      className={`product-card ${product.status ? "" : "inactive"}`}
-      onClick={!isMyProduct ? addToCart : undefined}
+      className={`product-card 
+      ${product.status ? "" : "inactive"} 
+      ${product.preorder_delivery ? "regular" : "preorder"}
+     `}
+     onClick={!isMyProduct ? addToCart : undefined}
     >
 
       <img src={product.image_url || "/images/default-product.png"} alt={product.name} />
@@ -89,6 +92,9 @@ export default function ProductCard({ product }) {
           {crossCommCharge > 0 && (
             <span className="delivery-charge">
               {" + ₱" + crossCommCharge + " delivery charge"}
+              {product.shop?.user?.community && (
+                <> ({product.shop.user.community.split(" ").slice(-1)[0]})</>
+              )}
             </span>
           )}
         </p>
@@ -97,7 +103,7 @@ export default function ProductCard({ product }) {
       {/* 🔥 Hide Add to Cart if it's the user's own product */}
       {!isMyProduct && (
         <button className="add-to-cart" onClick={addToCart}>
-          Add to Cart
+          Add to Tray
         </button>
       )}
 
