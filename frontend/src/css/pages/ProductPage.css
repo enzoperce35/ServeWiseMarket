@@ -1,0 +1,151 @@
+.product-page {
+  padding: 20px;
+  max-width: 700px;
+  margin: 0 auto;
+  position: relative; /* for back button positioning */
+}
+
+.product-page-image {
+  width: 100%;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.product-page-content {
+  margin-top: 16px;
+}
+
+.product-title {
+  font-size: 28px;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.shop-link {
+  font-size: 14px;
+  color: #007aff;
+  text-decoration: none;
+}
+
+.shop-link:hover {
+  text-decoration: underline;
+}
+
+.product-description {
+  margin: 12px 0;
+  color: #444;
+  line-height: 1.4;
+}
+
+.product-meta p {
+  margin: 6px 0;
+  font-size: 16px;
+}
+
+.add-to-tray-btn {
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  border: none;
+  background: #ff5c00;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.add-to-tray-btn:hover {
+  background: #e04f00;
+}
+
+.divider {
+  margin: 20px 0;
+  border: none;
+  border-top: 1px solid #ddd;
+}
+
+.reviews-header {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.rating-item {
+  margin: 12px 0;
+  padding: 10px 12px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.rating-user {
+  font-weight: 600;
+}
+
+.rating-comment {
+  margin-top: 4px;
+  color: #555;
+}
+
+/* --- Back Button Styling --- */
+.back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  color: #333;
+  cursor: pointer;
+  transition: background 0.2s;
+  z-index: 10;
+}
+
+.back-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.shop-link-btn {
+  font-size: 14px;
+  color: #007aff;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.shop-link-btn:hover {
+  color: #005bb5;
+}
+
+.ratings-section {
+  margin-top: 24px;
+}
+
+.reviews-header {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.rating-item {
+  margin: 12px 0;
+  padding: 10px 12px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.rating-user {
+  font-weight: 600;
+  color: #333;
+}
+
+.rating-comment {
+  margin-top: 4px;
+  color: #555;
+  line-height: 1.4;
+}
+

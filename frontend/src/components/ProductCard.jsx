@@ -1,12 +1,16 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthProvider";
 import { getDeliveryLabel } from "../utils/deliveryDateTime";
+import { isOwner, getPriceString } from "../utils/userProducts";
 import "../css/components/ProductCard.css";
 
 export default function ProductCard({ product }) {
   const { user } = useAuthContext();
+  const navigate = useNavigate();
 
-  const addToCart = () => {
+  const addToCart = (e) => {
+    e.stopPropagation(); // prevent card click redirect
     if (!user) {
       alert("Please log in to add items to cart.");
       return;
@@ -15,33 +19,24 @@ export default function ProductCard({ product }) {
   };
 
   const deliveryDisplay = getDeliveryLabel(product);
+  const priceString = getPriceString(product, user);
 
-  // Price adjustment if cross community + has charge
-  let crossCommCharge = 0;
-  let finalPrice = product.price;
-
-  if (
-    product.cross_comm_delivery &&
-    product.cross_comm_charge > 0 &&
-    user?.community !== product.shop?.user?.community
-  ) {
-    crossCommCharge = product.cross_comm_charge;
-    finalPrice = parseFloat(product.price) + parseFloat(crossCommCharge);
-  }
-
-  const isMyProduct =
-    user?.contact_number === product.shop?.user?.contact_number;
+  const handleCardClick = () => {
+    navigate(`/product/${product.id}`);
+  };
 
   return (
     <div
       className={`product-card 
-      ${product.status ? "" : "inactive"} 
-      ${product.preorder_delivery ? "regular" : "preorder"}
-     `}
-     onClick={!isMyProduct ? addToCart : undefined}
+        ${product.status ? "" : "inactive"} 
+        ${product.preorder_delivery ? "regular" : "preorder"}
+      `}
+      onClick={handleCardClick}
     >
-
-      <img src={product.image_url || "/images/default-product.png"} alt={product.name} />
+      <img
+        src={product.image_url || "/images/default-product.png"}
+        alt={product.name}
+      />
 
       <div className="product-info">
         <h3 className="product-name">{product.name}</h3>
@@ -52,21 +47,11 @@ export default function ProductCard({ product }) {
           </p>
         )}
 
-        <p className="product-price">
-          ₱{product.price}
-          {crossCommCharge > 0 && (
-            <span className="delivery-charge">
-              {" + ₱" + crossCommCharge + " delivery charge"}
-              {product.shop?.user?.community && (
-                <> ({product.shop.user.community.split(" ").slice(-1)[0]})</>
-              )}
-            </span>
-          )}
-        </p>
+        <p className="product-price">{priceString}</p>
       </div>
 
-      {/* 🔥 Hide Add to Cart if it's the user's own product */}
-      {!isMyProduct && (
+      {/* Hide Add to Tray if owner */}
+      {!isOwner(user, product) && (
         <button className="add-to-cart" onClick={addToCart}>
           Add to Tray
         </button>

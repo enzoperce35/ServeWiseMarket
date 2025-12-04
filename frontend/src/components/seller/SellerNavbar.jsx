@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../context/AuthProvider";
 import { HomeIcon, ShoppingBagIcon } from "@heroicons/react/24/outline";
@@ -13,47 +13,28 @@ export default function SellerNavbar() {
   const now = new Date();
   const today = now.toDateString();
   const hour = now.getHours();
-
-  const isAfter6AM = hour >= 6; // can toggle after 6AM
   const isWithinToggleHours = hour >= 6 && hour < 20;
 
-  // Detect if today's forced-close was already done
-  const forcedClosedAlready = localStorage.getItem("forcedClosedDate") === today;
+  // Check if first click already done today
+  const firstClickDoneToday = localStorage.getItem("firstClickDate") === today;
 
-  // Detect if first toggle today was already done
-  const firstToggleAlready = localStorage.getItem("firstToggleDate") === today;
-
-  // UI shop open state
+  // Initialize shopOpen state
   const [shopOpen, setShopOpen] = useState(() => {
-    // After 6AM → force CLOSED ONCE per day
-    if (isAfter6AM && !forcedClosedAlready) {
-      return false;
-    }
+    // After 6AM, default CLOSED until first click
+    if (hour >= 6 && !firstClickDoneToday) return false;
     return user?.shop?.open ?? false;
   });
-
-  // Save today's forced-close so it doesn't happen again this day
-  useEffect(() => {
-    if (isAfter6AM && !forcedClosedAlready) {
-      localStorage.setItem("forcedClosedDate", today);
-    }
-  }, []);
-
-  // State for first toggle
-  const [hasFirstToggleToday, setHasFirstToggleToday] = useState(firstToggleAlready);
 
   const handleToggle = () => {
     if (!isWithinToggleHours) return;
 
     let newState;
 
-    // FIRST toggle of the day after 6AM → FORCE OPEN
-    if (!hasFirstToggleToday && isAfter6AM) {
+    // First click after 6AM → force OPEN
+    if (!firstClickDoneToday && hour >= 6 && !shopOpen) {
       newState = true;
-      localStorage.setItem("firstToggleDate", today);
-      setHasFirstToggleToday(true);
+      localStorage.setItem("firstClickDate", today);
     } else {
-      // Subsequent toggles → normal toggle
       newState = !shopOpen;
     }
 
@@ -63,7 +44,6 @@ export default function SellerNavbar() {
 
   return (
     <nav className="seller-navbar">
-
       <div className="nav-main-row">
         <div className="nav-left" onClick={() => navigate("/")}>
           <HomeIcon className="nav-icon" />
