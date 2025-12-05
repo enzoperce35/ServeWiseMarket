@@ -5,7 +5,7 @@ import { getDeliveryLabel } from "../utils/deliveryDateTime";
 import { isOwner, getPriceString } from "../utils/userProducts";
 import "../css/components/ProductCard.css";
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, clickable = true }) {
   const { user } = useAuthContext();
   const navigate = useNavigate();
 
@@ -22,7 +22,9 @@ export default function ProductCard({ product }) {
   const priceString = getPriceString(product, user);
 
   const handleCardClick = () => {
-    navigate(`/product/${product.id}`);
+    if (clickable) {
+      navigate(`/product/${product.id}`);
+    }
   };
 
   return (
@@ -32,6 +34,7 @@ export default function ProductCard({ product }) {
         ${product.preorder_delivery ? "regular" : "preorder"}
       `}
       onClick={handleCardClick}
+      style={{ cursor: clickable ? "pointer" : "default" }} // change cursor if not clickable
     >
       <img
         src={product.image_url || "/images/default-product.png"}

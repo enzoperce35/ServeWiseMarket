@@ -1,24 +1,83 @@
+/* ====================================
+   SHOP PAGE
+==================================== */
+
 .user-shop-page {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 5px;
   font-family: 'Helvetica', sans-serif;
   color: #333;
+  display: flex;
+  flex-direction: column; /* allows footer to stick */
+  min-height: 100vh; /* full viewport height */
 }
 
-.user-shop-page-back-btn {
-  padding: 8px 16px;
-  margin-bottom: 20px;
-  background-color: #f5f5f5;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
+/* --- Shop Header & Image Container --- */
 .user-shop-page-header {
   margin-bottom: 20px;
+  text-align: center;
 }
 
+.user-shop-page-image-container {
+  position: relative; /* for back button overlay */
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto 10px auto;
+}
+
+.user-shop-page-image {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 12px; /* square with rounded corners */
+}
+
+.user-shop-page-image-placeholder {
+  width: 100%;
+  height: 250px;
+  background: linear-gradient(135deg, #d9d9d9, #c2c2c2);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  font-weight: bold;
+  color: #555;
+  text-transform: uppercase;
+}
+
+.user-shop-page-image-placeholder-text {
+  font-size: 2rem;
+  font-weight: bold;
+  line-height: 1.2;
+  word-break: break-word;
+  text-shadow: 0px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Back Button Overlay --- */
+.user-shop-page-back-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  color: #333;
+  cursor: pointer;
+  transition: background 0.2s;
+  z-index: 10;
+}
+
+.user-shop-page-back-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* --- Shop Info --- */
 .user-shop-page-title {
   font-size: 2rem;
   font-weight: bold;
@@ -43,29 +102,37 @@
   color: red;
 }
 
-.user-shop-page-info p {
-  margin: 3px 0;
+/* --- Owner Info --- */
+.user-shop-page-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-shop-page-info-item {
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  color: #333;
+}
+
+.user-shop-page-info-icon {
+  margin-right: 8px;
+  font-size: 1.2rem;
+  width: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Products --- */
+.user-shop-page-products {
+  flex: 1; /* grows to push footer down */
 }
 
 .user-shop-page-products-header {
   font-size: 1.5rem;
   margin-bottom: 10px;
-}
-
-.user-shop-page-products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 20px;
-}
-
-.user-shop-page-product-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
-  padding: 10px;
-  text-align: center;
-  background-color: #fff;
-  transition: box-shadow 0.2s ease;
 }
 
 .user-shop-page-product-card:hover {
@@ -104,6 +171,24 @@
   color: #444;
 }
 
+.user-shop-page-product-status.available {
+  color: green;
+}
+
+.user-shop-page-product-status.unavailable {
+  color: red;
+}
+
+.user-shop-page-featured-badge {
+  display: inline-block;
+  margin-top: 8px;
+  background-color: #ffcc00;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
 .user-shop-page-no-products {
   margin-top: 20px;
   font-style: italic;
@@ -115,4 +200,29 @@
   text-align: center;
   font-size: 1.2rem;
   color: #777;
+}
+
+/* --- Footer: Owner Info --- */
+.user-shop-page-footer {
+  margin-top: auto; /* sticky at bottom */
+  padding: 50px 15px;
+  background-color: #fff;
+  border-top: 1px solid #eee;
+}
+
+/* ====================================
+   RESPONSIVE
+==================================== */
+
+
+@media (max-width: 768px) {
+  .user-shop-page {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-shop-page-info {
+    align-items: flex-start;
+  }
 }

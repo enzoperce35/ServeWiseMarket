@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
+import ProductCard from "../../components/ProductCard";
 import "../../css/components/seller/ShopPage.css";
 
 export default function ShopPage() {
@@ -12,11 +13,24 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Format full address
+  // Format full address: blk. X - lot Y, Street st., phase Z, Community
   const formatAddress = (user) => {
     if (!user) return "N/A";
     const { block, lot, street, phase, community } = user;
-    return [block, lot, street, phase, community].filter(Boolean).join(", ");
+
+    const blockLot = [block && `blk. ${block}`, lot && `lot ${lot}`]
+      .filter(Boolean)
+      .join(" - ");
+
+    const rest = [
+      street && `${street} st.`,
+      phase && `${phase}`.toLowerCase(),
+      community,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    return [blockLot, rest].filter(Boolean).join(", ");
   };
 
   useEffect(() => {
@@ -39,62 +53,100 @@ export default function ShopPage() {
     loadShop();
   }, [shopId]);
 
-  if (loading) return <p className="loading">Loading shop...</p>;
-  if (errorMessage) return <p className="not-found">{errorMessage}</p>;
+  if (loading) return <p className="user-shop-page-loading">Loading shop...</p>;
+  if (errorMessage) return <p className="user-shop-page-not-found">{errorMessage}</p>;
+
+  // Deterministic color gradient based on shop ID
+  const generateGradientFromId = (id) => {
+    if (!id) return "linear-gradient(135deg, #ccc, #aaa)";
+
+    const hash = Array.from(String(id)).reduce(
+      (acc, char) => acc + char.charCodeAt(0),
+      0
+    );
+
+    const color1 = `hsl(${hash % 360}, 70%, 60%)`;
+    const color2 = `hsl(${(hash * 7) % 360}, 70%, 45%)`;
+
+    return `linear-gradient(135deg, ${color1}, ${color2})`;
+  };
+
+  // Filter only AVAILABLE products
+  const availableProducts = shop.products?.filter((p) => p.status) || [];
 
   return (
-    <div className="shop-page">
-      {/* Back Button */}
-      <button className="back-btn" onClick={() => navigate(-1)}>
-        ← Back
-      </button>
-
+    <div className="user-shop-page">
+      
       {/* Shop Header */}
-      <div className="shop-header">
-        {shop.image_url && (
-          <img src={shop.image_url} alt={shop.name} className="shop-image" />
+      <div className="user-shop-page-header">
+        <div className="user-shop-page-image-container">
+          {/* Back Button Overlay */}
+          <button
+            className="user-shop-page-back-btn"
+            onClick={() => navigate(-1)}
+          >
+            ← Back
+          </button>
+
+          {shop.image_url ? (
+            <img
+              src={shop.image_url}
+              alt={shop.name}
+              className="user-shop-page-image"
+            />
+          ) : (
+            <div
+              className="user-shop-page-image-placeholder"
+              style={{ background: generateGradientFromId(shop.id) }}
+            >
+              <span className="user-shop-page-image-placeholder-text">
+                {shop.name}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {shop.description && (
+          <p className="user-shop-page-description">{shop.description}</p>
         )}
-        <h1 className="shop-title">{shop.name}</h1>
-        {shop.description && <p className="shop-description">{shop.description}</p>}
-        <p className={`shop-status ${shop.open ? "open" : "closed"}`}>
+
+        <p className={`user-shop-page-status ${shop.open ? "open" : "closed"}`}>
           {shop.open ? "Open" : "Closed"}
         </p>
       </div>
 
-      {/* Owner Info */}
-      {shop.user && (
-        <div className="shop-owner-info">
-          <h2>Owner Information</h2>
-          <p><strong>Name:</strong> {shop.user.name}</p>
-          <p><strong>Contact:</strong> {shop.user.contact_number || "N/A"}</p>
-          <p><strong>Address:</strong> {formatAddress(shop.user)}</p>
-        </div>
-      )}
-
       {/* Products */}
-      {shop.products?.length > 0 ? (
-        <div className="shop-products">
-          <h2>Products</h2>
-          <div className="products-grid">
-            {shop.products.map((product) => (
+      {availableProducts.length > 0 ? (
+        <div className="user-shop-page-products">
+          <h2 className="user-shop-page-products-header">Available</h2>
+
+          <div className="products-grid"> {/* Styled from css/pages/ProductsPage */}
+            {availableProducts.map((product) => (
               <div key={product.id} className="product-card">
-                <img
-                  src={product.image_url || "/images/default-product.png"}
-                  alt={product.name}
-                  className="product-image"
-                />
-                <h3 className="product-name">{product.name}</h3>
-                <p className="product-price">₱{Number(product.price).toFixed(2)}</p>
-                <p className={`product-status ${product.status ? "available" : "unavailable"}`}>
-                  {product.status ? "Available" : "Unavailable"}
-                </p>
-                {product.featured && <span className="featured-badge">Featured</span>}
+                <ProductCard product={product} clickable={false} /> {/* Styled from css/components/ProductCard */}
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <p className="no-products">No products listed yet.</p>
+        <p className="user-shop-page-no-products">No available products at the moment.</p>
+      )}
+
+      {/* Footer: Owner Info */}
+      {shop.user && (
+        <footer className="user-shop-page-footer">
+          <div className="user-shop-page-info">
+            <p className="user-shop-page-info-item">
+              <span className="user-shop-page-info-icon">📍</span>
+              {formatAddress(shop.user)}
+            </p>
+
+            <p className="user-shop-page-info-item">
+              <span className="user-shop-page-info-icon">📞</span>
+              {shop.user.contact_number || "N/A"}
+            </p>
+          </div>
+        </footer>
       )}
     </div>
   );
