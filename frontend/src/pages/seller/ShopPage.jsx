@@ -12,6 +12,13 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Format full address
+  const formatAddress = (user) => {
+    if (!user) return "N/A";
+    const { block, lot, street, phase, community } = user;
+    return [block, lot, street, phase, community].filter(Boolean).join(", ");
+  };
+
   useEffect(() => {
     const loadShop = async () => {
       try {
@@ -32,78 +39,62 @@ export default function ShopPage() {
     loadShop();
   }, [shopId]);
 
-  if (loading) return <p className="user-shop-page-loading">Loading shop...</p>;
-  if (errorMessage) return <p className="user-shop-page-not-found">{errorMessage}</p>;
-
-  const formatAddress = (user) => {
-    if (!user) return "N/A";
-    const { block, lot, street, phase, community } = user;
-    return [block, lot, street, phase, community].filter(Boolean).join(", ");
-  };
+  if (loading) return <p className="loading">Loading shop...</p>;
+  if (errorMessage) return <p className="not-found">{errorMessage}</p>;
 
   return (
-    <div className="user-shop-page">
+    <div className="shop-page">
       {/* Back Button */}
-      <button
-        className="user-shop-page-back-btn"
-        onClick={() => navigate(-1)}
-      >
+      <button className="back-btn" onClick={() => navigate(-1)}>
         ← Back
       </button>
 
       {/* Shop Header */}
-      <div className="user-shop-page-header">
-        <h1 className="user-shop-page-title">{shop.name}</h1>
-        {shop.description && (
-          <p className="user-shop-page-description">{shop.description}</p>
+      <div className="shop-header">
+        {shop.image_url && (
+          <img src={shop.image_url} alt={shop.name} className="shop-image" />
         )}
-        <p
-          className={`user-shop-page-status ${
-            shop.open ? "open" : "closed"
-          }`}
-        >
+        <h1 className="shop-title">{shop.name}</h1>
+        {shop.description && <p className="shop-description">{shop.description}</p>}
+        <p className={`shop-status ${shop.open ? "open" : "closed"}`}>
           {shop.open ? "Open" : "Closed"}
         </p>
       </div>
 
-      {/* Shop Info */}
-      <div className="user-shop-page-info">
-        <p><strong>Owner:</strong> {shop.user?.name || "N/A"}</p>
-        <p><strong>Address:</strong> {formatAddress(shop.user)}</p>
-        <p><strong>Contact:</strong> {shop.user?.contact_number || "N/A"}</p>
-      </div>
+      {/* Owner Info */}
+      {shop.user && (
+        <div className="shop-owner-info">
+          <h2>Owner Information</h2>
+          <p><strong>Name:</strong> {shop.user.name}</p>
+          <p><strong>Contact:</strong> {shop.user.contact_number || "N/A"}</p>
+          <p><strong>Address:</strong> {formatAddress(shop.user)}</p>
+        </div>
+      )}
 
       {/* Products */}
       {shop.products?.length > 0 ? (
-        <div className="user-shop-page-products">
-          <h2 className="user-shop-page-products-header">Products</h2>
-          <div className="user-shop-page-products-grid">
-            {shop.products.map((p) => (
-              <div
-                key={p.id}
-                className="user-shop-page-product-card"
-              >
-                {p.image_url ? (
-                  <img
-                    src={p.image_url}
-                    alt={p.name}
-                    className="user-shop-page-product-image"
-                  />
-                ) : (
-                  <div className="user-shop-page-product-placeholder">
-                    <span>{shop.name}</span>
-                  </div>
-                )}
-                <h3 className="user-shop-page-product-name">{p.name}</h3>
-                <p className="user-shop-page-product-price">
-                  ₱{Number(p.price).toFixed(2)}
+        <div className="shop-products">
+          <h2>Products</h2>
+          <div className="products-grid">
+            {shop.products.map((product) => (
+              <div key={product.id} className="product-card">
+                <img
+                  src={product.image_url || "/images/default-product.png"}
+                  alt={product.name}
+                  className="product-image"
+                />
+                <h3 className="product-name">{product.name}</h3>
+                <p className="product-price">₱{Number(product.price).toFixed(2)}</p>
+                <p className={`product-status ${product.status ? "available" : "unavailable"}`}>
+                  {product.status ? "Available" : "Unavailable"}
                 </p>
+                {product.featured && <span className="featured-badge">Featured</span>}
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <p className="user-shop-page-no-products">No products listed yet.</p>
+        <p className="no-products">No products listed yet.</p>
       )}
     </div>
   );
