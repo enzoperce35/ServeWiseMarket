@@ -1,0 +1,118 @@
+.user-shop-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Helvetica', sans-serif;
+  color: #333;
+}
+
+.user-shop-page-back-btn {
+  padding: 8px 16px;
+  margin-bottom: 20px;
+  background-color: #f5f5f5;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.user-shop-page-header {
+  margin-bottom: 20px;
+}
+
+.user-shop-page-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.user-shop-page-description {
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+  color: #555;
+}
+
+.user-shop-page-status {
+  font-weight: bold;
+}
+
+.user-shop-page-status.open {
+  color: green;
+}
+
+.user-shop-page-status.closed {
+  color: red;
+}
+
+.user-shop-page-info p {
+  margin: 3px 0;
+}
+
+.user-shop-page-products-header {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.user-shop-page-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.user-shop-page-product-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 10px;
+  text-align: center;
+  background-color: #fff;
+  transition: box-shadow 0.2s ease;
+}
+
+.user-shop-page-product-card:hover {
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+}
+
+.user-shop-page-product-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.user-shop-page-product-placeholder {
+  width: 100%;
+  height: 150px;
+  background-color: #f0f0f0;
+  color: #777;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.user-shop-page-product-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.user-shop-page-product-price {
+  font-size: 1rem;
+  color: #444;
+}
+
+.user-shop-page-no-products {
+  margin-top: 20px;
+  font-style: italic;
+  color: #777;
+}
+
+.user-shop-page-loading,
+.user-shop-page-not-found {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #777;
+}

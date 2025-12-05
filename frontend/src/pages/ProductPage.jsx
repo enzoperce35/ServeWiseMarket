@@ -1,3 +1,4 @@
+// src/pages/ProductPage.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthProvider";
@@ -7,7 +8,7 @@ import { isOwner, getPriceString } from "../utils/userProducts";
 import "../css/pages/ProductPage.css";
 
 export default function ProductPage() {
-  const { id } = useParams();
+  const { id } = useParams(); // product ID
   const { user } = useAuthContext();
   const navigate = useNavigate();
 
@@ -21,7 +22,6 @@ export default function ProductPage() {
         const pRes = await axiosClient.get(`/products/${id}`);
         setProduct(pRes.data);
 
-        // Fetch ratings
         const rRes = await axiosClient.get(`/products/${id}/ratings`);
         setRatings(rRes.data || []);
       } catch (err) {
@@ -48,14 +48,11 @@ export default function ProductPage() {
     alert(`Added ${product.name} to tray!`);
   };
 
-  const averageRating =
-    ratings.length > 0
-      ? (ratings.reduce((acc, r) => acc + r.rating, 0) / ratings.length).toFixed(1)
-      : null;
+  // Safely get shop ID
+  const shopId = product.shop_id || product.shop?.id;
 
   return (
     <div className="product-page">
-      {/* Back button */}
       <button className="back-btn" onClick={() => navigate(-1)}>
         ← Back
       </button>
@@ -70,46 +67,39 @@ export default function ProductPage() {
         <h1 className="product-title">{product.name}</h1>
 
         {/* Visit Shop button */}
-        {!isOwner(user, product) && (
+        {!isOwner(user, product) && shopId && (
           <button
             className="shop-link-btn"
-            onClick={() => navigate("/seller/shop")}
+            onClick={() => navigate(`/shop/${shopId}`)}
           >
-            Visit {product.shop?.name}
+            Visit Shop
           </button>
         )}
 
         <p className="product-description">{product.description}</p>
 
         <div className="product-meta">
-          <p className="price">
-            <strong>{priceString}</strong>
-          </p>
+          <p className="price"><strong>{priceString}</strong></p>
+          <p className="stock">Stock: <strong>{product.stock}</strong></p>
+          <p className="delivery">Delivery: <span>{deliveryDisplay}</span></p>
 
-          <p className="stock">
-            Stock: <strong>{product.stock}</strong>
-          </p>
-
-          <p className="delivery">
-            Delivery: <span>{deliveryDisplay}</span>
-          </p>
-
-          {averageRating && (
+          {ratings.length > 0 && (
             <p className="average-rating">
-              ⭐ Average Rating: <strong>{averageRating}</strong> ({ratings.length} review
-              {ratings.length > 1 ? "s" : ""})
+              ⭐ Average Rating:{" "}
+              <strong>
+                {(ratings.reduce((acc, r) => acc + r.rating, 0) / ratings.length).toFixed(1)}
+              </strong>{" "}
+              ({ratings.length} review{ratings.length > 1 ? "s" : ""})
             </p>
           )}
         </div>
 
-        {/* Add to Tray */}
         {!isOwner(user, product) && (
           <button className="add-to-tray-btn" onClick={addToCart}>
             Add to Tray
           </button>
         )}
 
-        {/* Individual Ratings */}
         {ratings.length > 0 && (
           <div className="ratings-section">
             <h2 className="reviews-header">Reviews</h2>

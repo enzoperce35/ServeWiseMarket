@@ -50,7 +50,17 @@ export default function SellerNavbar() {
         </div>
 
         <div className="nav-center" style={{ cursor: "pointer" }}>
-          <h2 onClick={() => navigate("/seller/shop")}>{shopName}</h2>
+          <h2
+            onClick={() => {
+              if (user?.shop?.id) {
+                navigate(`/shop/${user.shop.id}`);
+              } else {
+                alert("You don't have a shop yet.");
+              }
+             }}
+            >
+              {shopName}
+          </h2>
         </div>
 
         <div className="nav-right" onClick={() => navigate("/seller/orders")}>

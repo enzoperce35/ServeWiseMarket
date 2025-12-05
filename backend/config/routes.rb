@@ -13,6 +13,9 @@ Rails.application.routes.draw do
         resources :ratings, only: [:index, :create], controller: 'product_ratings'
       end
 
+      # Public shops for buyers
+      resources :shops, only: [:show]
+
       # Seller-specific products (dashboard)
       namespace :seller do
         resource :shop, only: [:show, :create, :update]

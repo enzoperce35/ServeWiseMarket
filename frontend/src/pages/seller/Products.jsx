@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import useProducts from "../../hooks/seller/useProducts";
 import { useAuthContext } from "../../context/AuthProvider";
@@ -13,17 +13,36 @@ export default function Products() {
   const { user, loading: userLoading } = useAuthContext();
   const navigate = useNavigate();
 
-  // Effect: check and update expired products
-  useEffect(() => {
-    const checkAndUpdateExpired = async () => {
-      if (!products || products.length === 0) return;
+  // Prevent infinite loops
+  const expiredCheckDone = useRef(false);
 
+  // ============================================
+  // ⭐ FIXED: Run expired check only once
+  // ============================================
+  useEffect(() => {
+    if (!products || products.length === 0) return;
+    if (expiredCheckDone.current) return; // prevent loop
+
+    expiredCheckDone.current = true; // mark as done
+
+    const checkAndUpdateExpired = async () => {
       for (const product of products) {
         if (!isExpired(product)) continue;
 
         const daysToAdd = (product.delivery_gap ?? 0) + 1;
+
+        // Normalize date to avoid microsecond changes
         const newDeliveryDate = new Date();
+        newDeliveryDate.setHours(0, 0, 0, 0);
         newDeliveryDate.setDate(newDeliveryDate.getDate() + daysToAdd);
+
+        const currentDelivery = new Date(product.delivery_date);
+        currentDelivery.setHours(0, 0, 0, 0);
+
+        // 🚫 Do NOT update if delivery_date is already the same
+        if (newDeliveryDate.getTime() === currentDelivery.getTime()) {
+          continue;
+        }
 
         const updatedProductData = {
           delivery_date: newDeliveryDate.toISOString(),
@@ -32,6 +51,7 @@ export default function Products() {
 
         try {
           const updatedProduct = await updateProduct(product.id, updatedProductData);
+
           setProducts((prev) =>
             prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
           );
@@ -65,33 +85,25 @@ export default function Products() {
   }
 
   // ============================================
-  // ⭐ APPLY SORTING BEFORE RENDERING
+  // ⭐ SORTING LOGIC (unchanged)
   // ============================================
   const sortedProducts = [...products].sort((a, b) => {
-    // 1. Active products first
-    if (a.status !== b.status) {
-      return a.status ? -1 : 1;
-    }
+    if (a.status !== b.status) return a.status ? -1 : 1;
 
-    // IF BOTH ARE ACTIVE
-    if (a.status === true && b.status === true) {
-      // 2a. Both non-preorder → sort by updated_at DESC
+    if (a.status && b.status) {
       if (!a.preorder_delivery && !b.preorder_delivery) {
         return new Date(b.updated_at) - new Date(a.updated_at);
       }
 
-      // 2b. Both preorder → sort by delivery_time ASC
       if (a.preorder_delivery && b.preorder_delivery) {
         return new Date(a.delivery_time) - new Date(b.delivery_time);
       }
 
-      // Non-preorder first (user expectation)
       if (!a.preorder_delivery && b.preorder_delivery) return -1;
       if (a.preorder_delivery && !b.preorder_delivery) return 1;
     }
 
-    // 3. Inactive products → sort by updated_at DESC
-    if (a.status === false && b.status === false) {
+    if (!a.status && !b.status) {
       return new Date(b.updated_at) - new Date(a.updated_at);
     }
 

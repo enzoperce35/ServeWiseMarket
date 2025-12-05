@@ -131,6 +131,12 @@
   width: 1.2rem;
 }
 
+.shop-closed {
+  border-color: #666;
+  background-color: #faf8f8; /* gray background */
+  color: #646363; /* gray text */
+}
+
 /* ====================================
    RESPONSIVE
 ==================================== */

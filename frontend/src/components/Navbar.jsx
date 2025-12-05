@@ -33,7 +33,7 @@ export default function Navbar() {
           ) : (
             <>
               {user.shop ? (
-                <Link to="/seller/products" className="nav-btn nav-btn-primary">
+                <Link to="/seller/products" className={`nav-btn nav-btn-primary ${user.shop.open ? "" : "shop-closed"}`}>
                   Shop
                 </Link>
               ) : (

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Auto-remove stale server.pid
+rm -f tmp/pids/server.pid
+
+# Start Rails server
+bin/rails server

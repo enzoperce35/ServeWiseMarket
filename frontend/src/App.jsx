@@ -27,7 +27,7 @@ export default function App() {
           {/* Seller pages */}
           <Route path="/seller/create-shop" element={<CreateShop />} />
           <Route path="/seller/products" element={<Products />} />
-          <Route path="/seller/shop" element={<ShopPage />} />
+          <Route path="/shop/:shopId" element={<ShopPage />} />
           <Route path="/seller/orders" element={<OrdersPage />} />
           <Route path="/seller/products/new" element={<ProductFormPage />} />
           <Route path="/seller/products/:id/edit" element={<ProductSettingsPage />} />
