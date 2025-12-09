@@ -9,16 +9,22 @@ module Api
 
         # GET /api/v1/seller/shop
         def show
-          update_shop_status(@shop)
-          render json: @shop, status: :ok
+          if @shop
+            update_shop_status(@shop)
+            render json: { shop: @shop }, status: :ok
+          else
+            render json: { shop: nil }, status: :ok
+          end
         end
 
         # PUT /api/v1/seller/shop
         def update
+          return render json: { error: "No shop exists" }, status: :unprocessable_entity unless @shop
+
           handle_open_toggle(@shop, shop_params[:open]) if shop_params[:open].present?
 
           if @shop.update(shop_params)
-            render json: @shop, status: :ok
+            render json: { shop: @shop }, status: :ok
           else
             render json: { errors: @shop.errors.full_messages }, status: :unprocessable_entity
           end
@@ -32,7 +38,7 @@ module Api
 
           shop = current_user.build_shop(shop_params)
           if shop.save
-            render json: shop, status: :created
+            render json: { shop: shop }, status: :created
           else
             render json: { errors: shop.errors.full_messages }, status: :unprocessable_entity
           end
@@ -42,7 +48,7 @@ module Api
 
         def set_shop
           @shop = current_user.shop
-          render json: { error: "Shop not found" }, status: :not_found unless @shop
+          # no 404 here; just leave @shop nil if it doesn't exist
         end
 
         def shop_params
