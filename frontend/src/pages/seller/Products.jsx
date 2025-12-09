@@ -5,7 +5,7 @@ import { useAuthContext } from "../../context/AuthProvider";
 import SellerCard from "../../components/seller/SellerCard";
 import { updateProduct } from "../../api/seller/products";
 import SellerNavbar from "../../components/seller/SellerNavbar";
-import { isExpired } from "../../utils/deliveryDateTime";
+import { isExpired, getDeliveryDateTime } from "../../utils/deliveryDateTime";
 import "../../css/seller/seller.css";
 
 export default function Products() {
@@ -13,39 +13,36 @@ export default function Products() {
   const { user, loading: userLoading } = useAuthContext();
   const navigate = useNavigate();
 
-  // Prevent infinite loops
   const expiredCheckDone = useRef(false);
 
-  // ============================================
-  // ⭐ FIXED: Run expired check only once
-  // ============================================
+  // ============================================================
+  // ⭐ EXPIRED CHECK — now using combined date + time
+  // ============================================================
   useEffect(() => {
     if (!products || products.length === 0) return;
-    if (expiredCheckDone.current) return; // prevent loop
+    if (expiredCheckDone.current) return;
 
-    expiredCheckDone.current = true; // mark as done
+    expiredCheckDone.current = true;
 
     const checkAndUpdateExpired = async () => {
       for (const product of products) {
+
         if (!isExpired(product)) continue;
 
         const daysToAdd = (product.delivery_gap ?? 0) + 1;
 
-        // Normalize date to avoid microsecond changes
-        const newDeliveryDate = new Date();
-        newDeliveryDate.setHours(0, 0, 0, 0);
-        newDeliveryDate.setDate(newDeliveryDate.getDate() + daysToAdd);
+        // ⭐ NEW: get next delivery date INCLUDING same time
+        const newDeliveryDate = getDeliveryDateTime(product, daysToAdd);
 
-        const currentDelivery = new Date(product.delivery_date);
-        currentDelivery.setHours(0, 0, 0, 0);
+        const currentDelivery = getDeliveryDateTime(product);
 
-        // 🚫 Do NOT update if delivery_date is already the same
+        // 🚫 Prevent redundant update if same date/time
         if (newDeliveryDate.getTime() === currentDelivery.getTime()) {
           continue;
         }
-
+        
         const updatedProductData = {
-          delivery_date: newDeliveryDate.toISOString(),
+          delivery_date: newDeliveryDate.toLocaleDateString("en-CA"),
           status: false,
         };
 
@@ -84,9 +81,9 @@ export default function Products() {
     return <p>Loading products...</p>;
   }
 
-  // ============================================
+  // ============================================================
   // ⭐ SORTING LOGIC (unchanged)
-  // ============================================
+  // ============================================================
   const sortedProducts = [...products].sort((a, b) => {
     if (a.status !== b.status) return a.status ? -1 : 1;
 

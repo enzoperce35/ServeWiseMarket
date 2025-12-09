@@ -1,69 +1,96 @@
-// src/utils/deliveryDateTime.js
+// ===============================================================
+// ⭐ GENERAL TIME PARSER — safely handles HH:mm, HH:mm:ss, AM/PM, timestamps
+// ===============================================================
+const parseTime = (timeStr) => {
+  if (!timeStr) return { hours: 0, minutes: 0 };
 
-/**
- * Returns a JavaScript Date object representing the combined delivery date and time
- * in local time.
- * @param {Object} product - { delivery_date: "YYYY-MM-DD", delivery_time: "HH:mm" }
- * @returns {Date|null} - Date object or null if delivery_date missing
- */
-export const getDeliveryDateTime = (product) => {
-  if (!product?.delivery_date) return null;
+  let t = timeStr.trim();
 
-  const [year, month, day] = product.delivery_date.split("T")[0].split("-").map(Number);
-
-  let hours = 0, minutes = 0, seconds = 0;
-
-  if (product.delivery_time) {
-    const [h, m] = product.delivery_time.split(":").map(Number);
-    hours = h || 0;
-    minutes = m || 0;
+  // Case: full timestamp "2025-12-10T08:30:00Z"
+  if (t.includes("T")) {
+    const d = new Date(t);
+    if (!isNaN(d)) return { hours: d.getHours(), minutes: d.getMinutes() };
   }
 
-  // Construct date in local time
-  return new Date(year, month - 1, day, hours, minutes, seconds);
+  // AM/PM
+  const isPM = /pm$/i.test(t);
+  const isAM = /am$/i.test(t);
+  t = t.replace(/am|pm/i, "").trim();
+
+  // Replace "." → ":" (e.g. "8.30")
+  t = t.replace(".", ":");
+
+  const [h, m] = t.split(":").map(Number);
+  let hours = h || 0;
+  let minutes = m || 0;
+
+  // AM/PM adjust
+  if (isPM && hours < 12) hours += 12;
+  if (isAM && hours === 12) hours = 0;
+
+  return { hours, minutes };
 };
 
-/**
- * Returns a human-readable delivery label for the product
- * @param {Object} product
- * @returns {string} e.g., "Today 8am-8:30am", "Tomorrow 6pm-6:30pm", or "in 30 minutes"
- */
+// ===============================================================
+// ⭐ NEW HELPER: Combined Delivery Date + Time
+// ===============================================================
+export const getDeliveryDateTime = (product, addDays = 0) => {
+  if (!product?.delivery_date) return null;
+
+  // Extract date
+  const [year, month, day] = product.delivery_date.split("T")[0]
+    .split("-")
+    .map(Number);
+
+  // Extract time
+  const { hours, minutes } = parseTime(product.delivery_time);
+
+  const d = new Date(year, month - 1, day, hours, minutes, 0);
+
+  if (addDays !== 0) d.setDate(d.getDate() + addDays);
+
+  return d;
+};
+
+
+// ===============================================================
+// LABEL (unchanged, still readable)
+// ===============================================================
 export const getDeliveryLabel = (product) => {
   if (!product) return "";
-
   if (!product.preorder_delivery) return "in 30 minutes";
 
-  const deliveryDate = product.delivery_date ? new Date(product.delivery_date) : null;
-  const deliveryTime = product.delivery_time ? new Date(product.delivery_time) : null;
-
-  if (!deliveryDate) return "Schedule not set";
+  const fullDate = getDeliveryDateTime(product);
+  if (!fullDate) return "Schedule not set";
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const delDay = new Date(deliveryDate);
+  const delDay = new Date(fullDate);
   delDay.setHours(0, 0, 0, 0);
 
   if (delDay < today) return "Unavailable";
 
-  const diffDays = (delDay - today) / (1000 * 60 * 60 * 24);
-  let dayLabel =
+  const diffDays = (delDay - today) / 86400000;
+
+  const dayLabel =
     diffDays === 0
       ? "Today"
       : diffDays === 1
       ? "Tomorrow"
-      : delDay.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      : delDay.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
 
-  if (!deliveryTime || deliveryTime.getHours() === 0) return dayLabel;
-
-  const startHour = deliveryTime.getHours();
-  const startMinute = deliveryTime.getMinutes();
+  const startHour = fullDate.getHours();
+  const startMinute = fullDate.getMinutes();
   const endMinute = (startMinute + 30) % 60;
 
   const formatTime = (h, m) => {
     const ampm = h >= 12 ? "pm" : "am";
     const stdH = h % 12 || 12;
-    const stdM = m > 0 ? `:${m.toString().padStart(2, "0")}` : "";
+    const stdM = m ? `:${m.toString().padStart(2, "0")}` : "";
     return `${stdH}${stdM}${ampm}`;
   };
 
@@ -73,16 +100,12 @@ export const getDeliveryLabel = (product) => {
   return `${dayLabel} ${first}-${second}`;
 };
 
-
-/**
- * Returns true if a product's delivery datetime has passed.
- * @param {Object} product
- * @returns {boolean}
- */
+// ===============================================================
+// EXPIRY CHECK (cleaner now)
+// ===============================================================
 export const isExpired = (product) => {
-  const combinedDate = getDeliveryDateTime(product);
-  if (!combinedDate) return false;
+  const date = getDeliveryDateTime(product);
+  if (!date) return false;
 
-  const now = new Date();
-  return now.getTime() > combinedDate.getTime();
-}
+  return Date.now() > date.getTime();
+};
