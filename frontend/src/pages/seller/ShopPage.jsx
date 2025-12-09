@@ -13,7 +13,6 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Format full address: blk. X - lot Y, Street st., phase Z, Community
   const formatAddress = (user) => {
     if (!user) return "N/A";
     const { block, lot, street, phase, community } = user;
@@ -56,52 +55,34 @@ export default function ShopPage() {
   if (loading) return <p className="user-shop-page-loading">Loading shop...</p>;
   if (errorMessage) return <p className="user-shop-page-not-found">{errorMessage}</p>;
 
-  // Deterministic color gradient based on shop ID
   const generateGradientFromId = (id) => {
     if (!id) return "linear-gradient(135deg, #ccc, #aaa)";
-
-    const hash = Array.from(String(id)).reduce(
-      (acc, char) => acc + char.charCodeAt(0),
-      0
-    );
-
+    const hash = Array.from(String(id)).reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const color1 = `hsl(${hash % 360}, 70%, 60%)`;
     const color2 = `hsl(${(hash * 7) % 360}, 70%, 45%)`;
-
     return `linear-gradient(135deg, ${color1}, ${color2})`;
   };
 
-  // Filter only AVAILABLE products
-  const availableProducts = shop.products?.filter((p) => p.status) || [];
+  // Filter only available products (Product.stock > 0)
+  const availableProducts = shop.products?.filter((p) => p.stock > 0) || [];
 
   return (
     <div className="user-shop-page">
-      
       {/* Shop Header */}
       <div className="user-shop-page-header">
         <div className="user-shop-page-image-container">
-          {/* Back Button Overlay */}
-          <button
-            className="user-shop-page-back-btn"
-            onClick={() => navigate(-1)}
-          >
+          <button className="user-shop-page-back-btn" onClick={() => navigate(-1)}>
             ← Back
           </button>
 
           {shop.image_url ? (
-            <img
-              src={shop.image_url}
-              alt={shop.name}
-              className="user-shop-page-image"
-            />
+            <img src={shop.image_url} alt={shop.name} className="user-shop-page-image" />
           ) : (
             <div
               className="user-shop-page-image-placeholder"
               style={{ background: generateGradientFromId(shop.id) }}
             >
-              <span className="user-shop-page-image-placeholder-text">
-                {shop.name}
-              </span>
+              <span className="user-shop-page-image-placeholder-text">{shop.name}</span>
             </div>
           )}
         </div>
@@ -119,11 +100,10 @@ export default function ShopPage() {
       {availableProducts.length > 0 ? (
         <div className="user-shop-page-products">
           <h2 className="user-shop-page-products-header">Available</h2>
-
-          <div className="products-grid"> {/* Styled from css/pages/ProductsPage */}
+          <div className="products-grid">
             {availableProducts.map((product) => (
               <div key={product.id} className="product-card">
-                <ProductCard product={product} clickable={false} /> {/* Styled from css/components/ProductCard */}
+                <ProductCard product={product} clickable={false} />
               </div>
             ))}
           </div>
@@ -140,7 +120,6 @@ export default function ShopPage() {
               <span className="user-shop-page-info-icon">📍</span>
               {formatAddress(shop.user)}
             </p>
-
             <p className="user-shop-page-info-item">
               <span className="user-shop-page-info-icon">📞</span>
               {shop.user.contact_number || "N/A"}

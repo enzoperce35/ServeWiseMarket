@@ -32,13 +32,14 @@ export default function useAuth() {
     try {
       const payload = { ...data, role: "buyer" };
       const res = await axios.post(`${BASE_URL}/signup`, { user: payload });
-      localStorage.setItem("token", res.data.token);
-      await fetchUser();
+  
+      localStorage.setItem("token", res.data.token); // now token exists
+      await fetchUser(); // fetch current user with token
       return { status: "ok" };
     } catch (err) {
       return { status: "error", errors: err.response?.data?.errors || [err.message] };
     }
-  };
+  };  
 
   const handleLogin = async ({ contact_number, password }) => {
     try {

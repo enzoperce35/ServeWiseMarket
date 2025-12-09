@@ -9,27 +9,21 @@ module Api
 
         # GET /api/v1/seller/shop
         def show
-          update_shop_status(@shop) # auto-close if needed
+          update_shop_status(@shop)
           render json: @shop, status: :ok
         end
 
         # PUT /api/v1/seller/shop
         def update
-          # Handle manual toggle first
-          if shop_params[:open].present?
-            handle_open_toggle(@shop, shop_params[:open])
-          end
+          handle_open_toggle(@shop, shop_params[:open]) if shop_params[:open].present?
 
           if @shop.update(shop_params)
-            # Skip auto-close because this is a manual toggle
-            update_shop_status(@shop, manual_toggle: true)
             render json: @shop, status: :ok
           else
             render json: { errors: @shop.errors.full_messages }, status: :unprocessable_entity
           end
         end
 
-        # Optional: create shop for first time
         # POST /api/v1/seller/shop
         def create
           if current_user.shop
