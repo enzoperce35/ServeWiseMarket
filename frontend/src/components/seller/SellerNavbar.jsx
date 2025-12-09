@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../context/AuthProvider";
 import { HomeIcon, ShoppingBagIcon } from "@heroicons/react/24/outline";
@@ -11,35 +11,28 @@ export default function SellerNavbar() {
   const shopName = user?.shop?.name || "My Shop";
 
   const now = new Date();
-  const today = now.toDateString();
   const hour = now.getHours();
   const isWithinToggleHours = hour >= 6 && hour < 20;
 
-  // Check if first click already done today
-  const firstClickDoneToday = localStorage.getItem("firstClickDate") === today;
+  const [shopOpen, setShopOpen] = useState(user?.shop?.open ?? false);
 
-  // Initialize shopOpen state
-  const [shopOpen, setShopOpen] = useState(() => {
-    // After 6AM, default CLOSED until first click
-    if (hour >= 6 && !firstClickDoneToday) return false;
-    return user?.shop?.open ?? false;
-  });
+  // Keep local state in sync with user context
+  useEffect(() => {
+    setShopOpen(user?.shop?.open ?? false);
+  }, [user?.shop?.open]);
 
-  const handleToggle = () => {
+  const handleToggle = async () => {
     if (!isWithinToggleHours) return;
 
-    let newState;
-
-    // First click after 6AM → force OPEN
-    if (!firstClickDoneToday && hour >= 6 && !shopOpen) {
-      newState = true;
-      localStorage.setItem("firstClickDate", today);
-    } else {
-      newState = !shopOpen;
-    }
-
+    const newState = !shopOpen;
     setShopOpen(newState);
-    updateUserShop({ open: newState });
+
+    try {
+      // Backend handles user_opened_at automatically
+      await updateUserShop({ open: newState });
+    } catch (err) {
+      console.error("Failed to update shop:", err);
+    }
   };
 
   return (
@@ -57,9 +50,9 @@ export default function SellerNavbar() {
               } else {
                 alert("You don't have a shop yet.");
               }
-             }}
-            >
-              {shopName}
+            }}
+          >
+            {shopName}
           </h2>
         </div>
 

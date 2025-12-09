@@ -12,7 +12,7 @@ export default function useAuth() {
       const token = localStorage.getItem("token");
       if (!token) {
         setUser(null);
-        return;
+        return null;
       }
 
       const res = await axios.get(`${BASE_URL}/me`, {
@@ -24,6 +24,7 @@ export default function useAuth() {
     } catch (err) {
       console.error("Fetch user failed:", err.response?.data || err.message);
       setUser(null);
+      return null;
     }
   };
 
@@ -59,17 +60,17 @@ export default function useAuth() {
   const updateUserShop = async (updates) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.put(`${BASE_URL}/seller/shop`, updates, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
 
-      // Update local user context
-      setUser((prev) => ({
-        ...prev,
-        shop: { ...prev.shop, ...updates },
-      }));
+      // Send update to backend
+      await axios.put(
+        `${BASE_URL}/seller/shop`,
+        { shop: updates }, // must be nested under 'shop'
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      return res.data;
+      // Refresh user context to get latest shop state
+      const freshUser = await fetchUser();
+      return freshUser;
     } catch (err) {
       console.error("Failed to update shop:", err.response?.data || err.message);
       throw err;

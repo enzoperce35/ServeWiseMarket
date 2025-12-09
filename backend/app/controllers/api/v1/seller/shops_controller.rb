@@ -2,14 +2,34 @@ module Api
   module V1
     module Seller
       class ShopsController < ApplicationController
+        include ShopStatusUpdater
+
         before_action :authenticate_user
-        before_action :set_shop, only: [:update, :show]
+        before_action :set_shop, only: [:show, :update]
 
         # GET /api/v1/seller/shop
         def show
+          update_shop_status(@shop) # auto-close if needed
           render json: @shop, status: :ok
         end
 
+        # PUT /api/v1/seller/shop
+        def update
+          # Handle manual toggle first
+          if shop_params[:open].present?
+            handle_open_toggle(@shop, shop_params[:open])
+          end
+
+          if @shop.update(shop_params)
+            # Skip auto-close because this is a manual toggle
+            update_shop_status(@shop, manual_toggle: true)
+            render json: @shop, status: :ok
+          else
+            render json: { errors: @shop.errors.full_messages }, status: :unprocessable_entity
+          end
+        end
+
+        # Optional: create shop for first time
         # POST /api/v1/seller/shop
         def create
           if current_user.shop
@@ -21,15 +41,6 @@ module Api
             render json: shop, status: :created
           else
             render json: { errors: shop.errors.full_messages }, status: :unprocessable_entity
-          end
-        end
-
-        # PUT /api/v1/seller/shop
-        def update
-          if @shop.update(shop_params)
-            render json: @shop, status: :ok
-          else
-            render json: { errors: @shop.errors.full_messages }, status: :unprocessable_entity
           end
         end
 
