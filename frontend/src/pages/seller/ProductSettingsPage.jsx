@@ -16,7 +16,7 @@ const CATEGORIES = [
   "almusal", "dessert", "delicacy", "specialty", "frozen", "pulutan", "refreshment",
 ];
 
-// TIMESLOTS helper function
+// TIMESLOTS helper
 const parseAMPM = (t) => {
   const [_, h, ap] = t.match(/(\d+)(am|pm)/i) || [];
   let hour = parseInt(h);
@@ -41,9 +41,7 @@ export default function ProductSettingsPage() {
   const [shop, setShop] = useState(null);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // State for retractable Basic Information section
-  const [basicOpen, setBasicOpen] = useState(false); // closed by default
+  const [basicInfoOpen, setBasicInfoOpen] = useState(false); // collapsible section
 
   const update = (key, value) => {
     setProduct((prev) => ({ ...prev, [key]: value }));
@@ -56,22 +54,18 @@ export default function ProductSettingsPage() {
 
       const today = new Date();
       const todayStr = today.toISOString().split("T")[0];
-
       const eightPM = new Date(today);
       eightPM.setHours(20, 0, 0, 0);
 
       if (id) {
         const prods = await fetchSellerProducts();
         const found = prods.find((p) => p.id === parseInt(id));
-
         const baseDeliveryDate = found.delivery_date
           ? new Date(found.delivery_date).toISOString().split("T")[0]
           : todayStr;
-
         const baseDeliveryTime = found.preorder_delivery
           ? found.delivery_time
           : eightPM;
-
         const baseLabel = found.preorder_delivery
           ? found.delivery_time_label || ""
           : "8pm - 8:30pm";
@@ -170,45 +164,27 @@ export default function ProductSettingsPage() {
     <div className="settings-page">
       <h2 className="settings-title">{id ? "Edit Product" : "Create Product"}</h2>
 
-      {/* BASIC INFO - Retractable */}
+      {/* BASIC INFO (collapsible) */}
       <div className="settings-section">
-        <div
-          className="section-header"
-          onClick={() => setBasicOpen(!basicOpen)}
-          style={{ cursor: "pointer" }}
-        >
+        <div className="section-header" onClick={()=>setBasicInfoOpen(!basicInfoOpen)}>
           <h3>{product.name}</h3>
-          <span>{basicOpen ? "▼" : "►"}</span>
+          <span>{basicInfoOpen ? "-" : "+"}</span>
         </div>
-        {basicOpen && (
+        {basicInfoOpen && (
           <div className="section-body">
             <div className="settings-item">
               <label>Product Name</label>
-              <input
-                type="text"
-                value={product.name || ""}
-                onChange={(e) => update("name", e.target.value)}
-              />
+              <input type="text" value={product.name || ""} onChange={e => update("name", e.target.value)} />
             </div>
             <div className="settings-item">
               <label>Description</label>
-              <textarea
-                value={product.description || ""}
-                onChange={(e) => update("description", e.target.value)}
-              />
+              <textarea value={product.description || ""} onChange={e => update("description", e.target.value)} />
             </div>
             <div className="settings-item">
               <label>Category</label>
-              <select
-                value={product.category || ""}
-                onChange={(e) => update("category", e.target.value)}
-              >
+              <select value={product.category || ""} onChange={e => update("category", e.target.value)}>
                 <option value="">Select category</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c.toUpperCase()}
-                  </option>
-                ))}
+                {CATEGORIES.map(c => <option key={c} value={c}>{c.toUpperCase()}</option>)}
               </select>
             </div>
             <div className="settings-item">
@@ -218,17 +194,13 @@ export default function ProductSettingsPage() {
                 min="0"
                 value={product.price ?? ""}
                 placeholder="0"
-                onChange={(e) =>
-                  update("price", e.target.value === "" ? null : parseFloat(e.target.value))
-                }
+                onChange={e => update("price", e.target.value === "" ? null : parseFloat(e.target.value))}
               />
             </div>
             <div className="settings-item">
               <label>Product Image</label>
               <input type="file" onChange={handleImageUpload} />
-              {product.image_url && (
-                <img src={product.image_url} className="image-preview" />
-              )}
+              {product.image_url && <img src={product.image_url} className="image-preview" />}
             </div>
           </div>
         )}
@@ -245,9 +217,7 @@ export default function ProductSettingsPage() {
               min="0"
               value={product.stock ?? ""}
               placeholder="0"
-              onChange={(e) =>
-                update("stock", e.target.value === "" ? null : parseInt(e.target.value))
-              }
+              onChange={e => update("stock", e.target.value === "" ? null : parseInt(e.target.value))}
             />
           </div>
         </div>
@@ -257,25 +227,23 @@ export default function ProductSettingsPage() {
       <div className="settings-section">
         <div className="section-header"><h3>Delivery Time</h3></div>
         <div className="section-body">
-          {/* Pre-Order Checkbox */}
           <div className="cross-delivery-row">
             <label>Pre-Order Delivery</label>
             <input
               type="checkbox"
               checked={product.preorder_delivery ?? false}
-              onChange={(e) => {
+              onChange={e => {
                 const checked = e.target.checked;
                 update("preorder_delivery", checked);
                 const today = new Date();
                 const todayStr = today.toISOString().split("T")[0];
-                const defaultTime = new Date(today.getTime() + 30 * 60 * 1000);
-                if (!checked) {
+                const defaultTime = new Date(today.getTime() + 30*60*1000);
+                if(!checked){
                   update("delivery_date", todayStr);
                   update("delivery_time", defaultTime);
                   update("delivery_time_label", "");
                 } else {
-                  const currentDate = product.delivery_date || todayStr;
-                  update("delivery_date", currentDate);
+                  update("delivery_date", product.delivery_date || todayStr);
                 }
               }}
             />
@@ -286,13 +254,7 @@ export default function ProductSettingsPage() {
             Delivery Date:{" "}
             <span>
               {product.delivery_date
-                ? (new Date(product.delivery_date).toDateString() === new Date().toDateString()
-                    ? "Today"
-                    : new Date(product.delivery_date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      }))
+                ? (new Date(product.delivery_date).toDateString() === new Date().toDateString() ? "Today" : new Date(product.delivery_date).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}))
                 : "Today"}
             </span>
           </label>
@@ -303,7 +265,7 @@ export default function ProductSettingsPage() {
               const today = new Date();
               const dayDate = new Date(today);
               dayDate.setDate(today.getDate() + i);
-              const dayLabel = dayDate.toLocaleDateString("en-US", { weekday: "short" });
+              const dayLabel = dayDate.toLocaleDateString("en-US",{weekday:"short"});
               const selectedDate = product.delivery_date || today.toISOString().split("T")[0];
               const isSelected = selectedDate === dayDate.toISOString().split("T")[0];
               return (
@@ -311,12 +273,28 @@ export default function ProductSettingsPage() {
                   key={i}
                   className={`weekday-box ${isSelected ? "selected" : ""}`}
                   onClick={() => {
-                    if (!product.preorder_delivery) return;
-                    update("delivery_date", dayDate.toISOString().split("T")[0]);
+                    const clickedDateStr = dayDate.toISOString().split("T")[0];
+                    update("delivery_date", clickedDateStr);
+                    if(clickedDateStr === new Date().toISOString().split("T")[0]){
+                      // today: default first available slot
+                      const now = new Date();
+                      const availableSlots = [6,7,8,9,10,11,12,1,2,3,4,5,6,7,8]
+                        .map((h,j)=>{
+                          const pm = j>=6;
+                          const lbl = `${h}${pm?"pm":"am"} - ${h}:30${pm?"pm":"am"}`;
+                          const dt = slotToDate(lbl,dayDate);
+                          return dt >= new Date(now.getTime()+60*60*1000)?lbl:null;
+                        }).filter(Boolean);
+                      const defaultSlot = availableSlots[0] || "";
+                      update("delivery_time_label", defaultSlot);
+                      update("delivery_time", slotToDate(defaultSlot,dayDate));
+                    } else {
+                      // other days: All Day
+                      update("delivery_time_label","");
+                      update("delivery_time",new Date(dayDate.setHours(0,0,0,0)));
+                    }
                   }}
-                >
-                  {dayLabel}
-                </div>
+                >{dayLabel}</div>
               );
             })}
           </div>
@@ -325,48 +303,50 @@ export default function ProductSettingsPage() {
           <label className="delivery-date-label">
             Delivery Time:{" "}
             <span>
-              {!product.preorder_delivery
-                ? "In 30 minutes"
-                : product.delivery_time_label || ""}
+              {product.preorder_delivery
+                ? (product.delivery_time_label || "All Day")
+                : "In 30 minutes"}
             </span>
           </label>
-
           <div className={`time-picker ${!product.preorder_delivery ? "disabled" : ""}`}>
-            {[6,7,8,9,10,11,12,1,2,3,4,5,6,7,8].map((hour, i) => {
-              const isPM = i >= 6;
+            {[6,7,8,9,10,11,12,1,2,3,4,5,6,7,8].map((hour,i)=>{
+              const isPM = i>=6;
               const displayHour = hour;
-              const label = `${displayHour}${isPM ? "pm" : "am"} - ${displayHour}:30${isPM ? "pm" : "am"}`;
-
+              const label = `${displayHour}${isPM?"pm":"am"} - ${displayHour}:30${isPM?"pm":"am"}`;
               const now = new Date();
               const todayStr = now.toISOString().split("T")[0];
               const selectedDate = product.delivery_date || todayStr;
-              const slotDate = slotToDate(label, new Date(selectedDate));
-              const isPastTime = selectedDate === todayStr && slotDate < new Date(now.getTime() + 60*60*1000);
-
-              // Highlight the number box on page load according to product.delivery_time
-              const productHour = product.delivery_time ? new Date(product.delivery_time).getHours() % 12 || 12 : null;
-              const productIsPM = product.delivery_time ? new Date(product.delivery_time).getHours() >= 12 : false;
-              const isSelected =
-                product.preorder_delivery &&
-                productHour === displayHour &&
-                productIsPM === isPM &&
-                !isPastTime;
+              const slotDate = slotToDate(label,new Date(selectedDate));
+              const isPastTime = selectedDate === todayStr && slotDate < new Date(now.getTime()+60*60*1000);
+              let isSelected = false;
+              if(selectedDate===todayStr){
+                const availableSlots = [6,7,8,9,10,11,12,1,2,3,4,5,6,7,8]
+                  .map((h,j)=>{
+                    const pm = j>=6;
+                    const lbl = `${h}${pm?"pm":"am"} - ${h}:30${pm?"pm":"am"}`;
+                    const dt = slotToDate(lbl,new Date(selectedDate));
+                    return dt >= new Date(now.getTime()+60*60*1000)?lbl:null;
+                  }).filter(Boolean);
+                const defaultSlot = availableSlots[0] || "";
+                isSelected = label === (product.delivery_time_label || defaultSlot);
+              } else {
+                isSelected = label === product.delivery_time_label;
+              }
 
               return (
                 <div
                   key={i}
-                  className={`time-box ${isSelected ? "selected" : ""} ${!product.preorder_delivery || isPastTime ? "disabled" : ""}`}
-                  onClick={() => {
-                  if (!product.preorder_delivery || isPastTime) return;
-                    update("delivery_time_label", label);
-                    update("delivery_time", slotToDate(label, new Date(product.delivery_date)));
+                  className={`time-box ${isSelected?"selected":""} ${!product.preorder_delivery || isPastTime?"disabled":""}`}
+                  onClick={()=>{
+                    if(!product.preorder_delivery || isPastTime) return;
+                    update("delivery_time_label",label);
+                    update("delivery_time",slotToDate(label,new Date(product.delivery_date)));
                   }}
-                >
-                  {displayHour}
-                </div>
+                >{displayHour}</div>
               );
             })}
           </div>
+
         </div>
       </div>
 

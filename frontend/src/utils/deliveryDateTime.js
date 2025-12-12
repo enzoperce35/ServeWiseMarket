@@ -83,6 +83,11 @@ export const getDeliveryLabel = (product) => {
           day: "numeric",
         });
 
+  // If delivery time is exactly midnight, return only the day label
+  if (fullDate.getHours() === 0 && fullDate.getMinutes() === 0) {
+    return dayLabel;
+  }
+
   const startHour = fullDate.getHours();
   const startMinute = fullDate.getMinutes();
   const endMinute = (startMinute + 30) % 60;
@@ -99,6 +104,7 @@ export const getDeliveryLabel = (product) => {
 
   return `${dayLabel} ${first}-${second}`;
 };
+
 
 // ===============================================================
 // EXPIRY CHECK (cleaner now)
