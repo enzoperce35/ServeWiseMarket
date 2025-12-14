@@ -102,9 +102,16 @@ export const getDeliveryLabel = (product) => {
   const first = formatTime(startHour, startMinute);
   const second = formatTime(startHour, endMinute);
 
-  return `${dayLabel} ${first}-${second}`;
+  return `${dayLabel}, ${first}-${second}`;
 };
 
+export const localDateString = (date) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 // ===============================================================
 // EXPIRY CHECK (cleaner now)

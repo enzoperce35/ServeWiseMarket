@@ -9,6 +9,7 @@ import {
 import { fetchShop } from "../../api/seller/shops";
 import { useAuthContext } from "../../context/AuthProvider";
 import "../../css/pages/seller/product_settings.css";
+import { localDateString } from "../../utils/deliveryDateTime";
 
 // CONSTANTS
 const CATEGORIES = [
@@ -53,7 +54,7 @@ export default function ProductSettingsPage() {
       setShop(s);
 
       const today = new Date();
-      const todayStr = today.toISOString().split("T")[0];
+      const todayStr = localDateString(today);
       const eightPM = new Date(today);
       eightPM.setHours(20, 0, 0, 0);
 
@@ -61,7 +62,7 @@ export default function ProductSettingsPage() {
         const prods = await fetchSellerProducts();
         const found = prods.find((p) => p.id === parseInt(id));
         const baseDeliveryDate = found.delivery_date
-          ? new Date(found.delivery_date).toISOString().split("T")[0]
+          ? localDateString(new Date(found.delivery_date))
           : todayStr;
         const baseDeliveryTime = found.preorder_delivery
           ? found.delivery_time
@@ -103,7 +104,7 @@ export default function ProductSettingsPage() {
 
   const saveProduct = async () => {
     const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
+    const todayStr = localDateString(today);
 
     let deliveryDate = product.delivery_date;
     let deliveryTime = product.delivery_time;
@@ -236,7 +237,7 @@ export default function ProductSettingsPage() {
                 const checked = e.target.checked;
                 update("preorder_delivery", checked);
                 const today = new Date();
-                const todayStr = today.toISOString().split("T")[0];
+                const todayStr = localDateString(today);
                 const defaultTime = new Date(today.getTime() + 30*60*1000);
                 if(!checked){
                   update("delivery_date", todayStr);
@@ -266,16 +267,16 @@ export default function ProductSettingsPage() {
               const dayDate = new Date(today);
               dayDate.setDate(today.getDate() + i);
               const dayLabel = dayDate.toLocaleDateString("en-US",{weekday:"short"});
-              const selectedDate = product.delivery_date || today.toISOString().split("T")[0];
-              const isSelected = selectedDate === dayDate.toISOString().split("T")[0];
+              const selectedDate = product.delivery_date || localDateString(today);
+              const isSelected = selectedDate === localDateString(dayDate);
               return (
                 <div
                   key={i}
                   className={`weekday-box ${isSelected ? "selected" : ""}`}
                   onClick={() => {
-                    const clickedDateStr = dayDate.toISOString().split("T")[0];
+                    const clickedDateStr = localDateString(dayDate);
                     update("delivery_date", clickedDateStr);
-                    if(clickedDateStr === new Date().toISOString().split("T")[0]){
+                    if(clickedDateStr === localDateString(new Date())){
                       // today: default first available slot
                       const now = new Date();
                       const availableSlots = [6,7,8,9,10,11,12,1,2,3,4,5,6,7,8]
@@ -314,7 +315,7 @@ export default function ProductSettingsPage() {
               const displayHour = hour;
               const label = `${displayHour}${isPM?"pm":"am"} - ${displayHour}:30${isPM?"pm":"am"}`;
               const now = new Date();
-              const todayStr = now.toISOString().split("T")[0];
+              const todayStr = localDateString(now);
               const selectedDate = product.delivery_date || todayStr;
               const slotDate = slotToDate(label,new Date(selectedDate));
               const isPastTime = selectedDate === todayStr && slotDate < new Date(now.getTime()+60*60*1000);
