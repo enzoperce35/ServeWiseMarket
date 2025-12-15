@@ -4,7 +4,7 @@ class User < ApplicationRecord
   # Associations
   has_one :shop, dependent: :destroy
 
-  has_one :cart
+  has_one :cart, dependent: :destroy
 
   has_many :orders
 

@@ -8,6 +8,8 @@ import CreateShop from "./pages/seller/CreateShop";
 import ProductFormPage from "./pages/seller/ProductFormPage";
 import ProductSettingsPage from "./pages/seller/ProductSettingsPage";
 import ProductPage from "./pages/ProductPage";
+import CartPage from "./pages/CartPage";
+
 
 // Seller pages
 import Products from "./pages/seller/Products";
@@ -32,6 +34,7 @@ export default function App() {
           <Route path="/seller/products/new" element={<ProductFormPage />} />
           <Route path="/seller/products/:id/edit" element={<ProductSettingsPage />} />
           <Route path="/product/:id" element={<ProductPage />} />
+          <Route path="/cart" element={<CartPage />} /> {/* ✅ Add this */}
 
         </Routes>
       </AuthProvider>

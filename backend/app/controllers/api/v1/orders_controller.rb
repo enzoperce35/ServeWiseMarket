@@ -2,7 +2,7 @@
 module Api
   module V1
     class OrdersController < ApplicationController
-      before_action :authenticate_user!
+      before_action :authenticate_user
 
       def create
         orders = CheckoutService.new(current_user).call

@@ -14,9 +14,8 @@ class ApplicationController < ActionController::API
 
   # Decode JWT
   def decoded_token
-    return unless auth_header
-
-    token = auth_header.split(' ')[1]   # "Bearer <token>"
+    token = auth_header&.split(' ')&.last
+    return nil unless token
 
     begin
       JWT.decode(token, Rails.application.credentials.secret_key_base, true, algorithm: 'HS256')
@@ -27,9 +26,12 @@ class ApplicationController < ActionController::API
 
   # Identify current user
   def current_user
-    return unless decoded_token
+    return @current_user if defined?(@current_user)
 
-    user_id = decoded_token[0]['user_id']
+    decoded = decoded_token
+    return nil unless decoded
+
+    user_id = decoded[0]['user_id']
     @current_user ||= User.find_by(id: user_id)
   end
 

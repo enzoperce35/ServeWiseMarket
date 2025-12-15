@@ -1,15 +1,17 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthProvider";
+import { useCartContext } from "../context/CartProvider"; // ✅ import cart context
 import brandLogo from "../assets/images/brand-logo.png";
 import "../css/components/Navbar.css";
-
-// Import the Heroicons shopping bag (basket) icon
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
-
 
 export default function Navbar() {
   const { user, handleLogout } = useAuthContext();
+  const { cart } = useCartContext(); // ✅ get cart state
+  const navigate = useNavigate();
+
+  const itemCount = cart ? cart.item_count : 0; // total items in cart
 
   return (
     <nav className="navbar">
@@ -33,7 +35,10 @@ export default function Navbar() {
           ) : (
             <>
               {user.shop ? (
-                <Link to="/seller/products" className={`nav-btn nav-btn-primary ${user.shop.open ? "" : "shop-closed"}`}>
+                <Link
+                  to="/seller/products"
+                  className={`nav-btn nav-btn-primary ${user.shop.open ? "" : "shop-closed"}`}
+                >
                   Shop
                 </Link>
               ) : (
@@ -41,10 +46,7 @@ export default function Navbar() {
                   Sell?
                 </Link>
               )}
-              <button
-                className="nav-btn nav-btn-outline"
-                onClick={() => handleLogout()}
-              >
+              <button className="nav-btn nav-btn-outline" onClick={() => handleLogout(navigate)}>
                 Logout
               </button>
             </>
@@ -52,12 +54,16 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Bottom row only on small devices */}
+      {/* Bottom row for mobile / cart */}
       {user && (
         <div className="navbar-bottom mobile-only">
           <span className="navbar-user">Hi, {user.name} 👋</span>
-          <button className="cart-btn">
+          <button
+            className="cart-btn"
+            onClick={() => navigate("/cart")} // ✅ navigate to cart page
+          >
             <ShoppingCartIcon className="icon" />
+            {itemCount > 0 && <span className="cart-count">{itemCount}</span>} {/* live count */}
           </button>
         </div>
       )}

@@ -6,6 +6,7 @@ Rails.application.routes.draw do
       post '/login', to: 'sessions#create'
       delete '/logout', to: 'sessions#destroy'
       get '/me', to: 'users#me'
+      get '/cart', to: 'carts#show'
 
       # Public Products (for buyers)
       resources :products, only: [:index, :show] do
@@ -16,8 +17,10 @@ Rails.application.routes.draw do
       # Public shops for buyers
       resources :shops, only: [:show]
 
+      
       resource :cart, only: [:show]
       resources :cart_items, only: [:create, :update, :destroy]
+      resources :orders, only: [:create, :index]
 
       # Seller-specific products (dashboard)
       namespace :seller do
