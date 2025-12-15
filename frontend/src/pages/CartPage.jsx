@@ -1,21 +1,28 @@
 import React from "react";
 import { useCartContext } from "../context/CartProvider";
-import { removeFromCartApi } from "../api/cart"; // API helper
-import "../css/pages/CartPage.css";
+import { useAuthContext } from "../context/AuthProvider"; // ✅ import token
+import { removeFromCartApi } from "../api/cart";
+import "../css/pages/CartPage.css"
 
 export default function CartPage() {
   const { cart, fetchCart } = useCartContext();
+  const { token } = useAuthContext(); // ✅ get token
 
   if (!cart || cart.shops.length === 0) {
     return <p>Your cart is empty.</p>;
   }
 
   const handleRemoveItem = async (cartItemId) => {
+    if (!token) {
+      alert("You must be logged in to remove items from the cart.");
+      return;
+    }
+
     try {
-      await removeFromCartApi(cartItemId);
-      await fetchCart(); // Refresh cart after removing
+      await removeFromCartApi(cartItemId, token); // ✅ pass token
+      await fetchCart(); // Refresh cart
     } catch (err) {
-      alert(err.message);
+      alert(`Remove failed: ${err.message}`);
     }
   };
 
@@ -44,16 +51,14 @@ export default function CartPage() {
               />
               <div className="cart-item-info">
                 <span className="cart-item-name">{item.name}</span>
-                <span className="cart-item-qty">
-                  Qty: {item.quantity}
-                </span>
+                <span className="cart-item-qty">Qty: {item.quantity}</span>
                 <span className="cart-item-price">
                   ₱{Number(item.total_price || 0).toFixed(2)}
                 </span>
               </div>
               <button
-                className="cart-item-remove"
                 onClick={() => handleRemoveItem(item.cart_item_id)}
+                className="cart-item-remove"
               >
                 Remove
               </button>
@@ -68,7 +73,7 @@ export default function CartPage() {
         </div>
       ))}
 
-      <div className="cart-grand-total">
+    <div className="cart-grand-total">
         Grand Total: ₱{grandTotal.toFixed(2)}
       </div>
     </div>

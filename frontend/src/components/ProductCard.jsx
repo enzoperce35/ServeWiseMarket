@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthProvider";
 import { useCartContext } from "../context/CartProvider";
@@ -11,6 +11,7 @@ export default function ProductCard({ product, clickable = true }) {
   const { user, token } = useAuthContext();
   const { refreshCart } = useCartContext();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false); // ✅ prevent double clicks
 
   const handleCardClick = () => {
     if (clickable) navigate(`/product/${product.id}`);
@@ -18,17 +19,22 @@ export default function ProductCard({ product, clickable = true }) {
 
   const addToCart = async (e, quantity = 1) => {
     e.stopPropagation();
+
     if (!user || !token) {
       alert("Please log in to add items to cart.");
       return;
     }
 
+    if (loading) return; // ✅ ignore if already processing
+
     try {
-      await addToCartApi(product.id, quantity, token); // ✅ token is third argument
-      alert(`${product.name} added to tray`);
+      setLoading(true); // start loading
+      await addToCartApi(product.id, quantity, token); // token is third arg
       refreshCart();
     } catch (err) {
       alert(err.message);
+    } finally {
+      setLoading(false); // end loading
     }
   };
 
@@ -56,8 +62,13 @@ export default function ProductCard({ product, clickable = true }) {
       </div>
 
       {!isOwner(user, product) && (
-        <button className="add-to-cart" onClick={(e) => addToCart(e, 1)}>
-          Add to Tray
+        <button
+          className="add-to-cart"
+          onClick={(e) => addToCart(e, 1)}
+          disabled={loading} // ✅ disables while processing
+          style={{ opacity: loading ? 0.6 : 1, pointerEvents: loading ? "none" : "auto" }}
+        >
+          {loading ? "Adding..." : "Add to Tray"}
         </button>
       )}
 
