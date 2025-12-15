@@ -18,8 +18,8 @@ export default function SellerCard({ product, user, onClick, onStatusClick }) {
 
   const getStatusColor = () => {
     if (!status) return "#ccc";
-    if (status && product.preorder_delivery) return "green";
-    return "orange";
+    if (status && product.preorder_delivery) return "orange";
+    return "green";
   };
 
   const handleStatusClick = (e) => {

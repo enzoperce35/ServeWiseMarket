@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
     if (!auth.user?.shop) return;
 
     try {
-      await auth.updateUserShop(updates); // defined in useAuth
+      await auth.updateShop(updates); // defined in useAuth
     } catch (err) {
       console.error("Failed to update shop:", err);
     }

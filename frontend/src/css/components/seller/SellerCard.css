@@ -78,15 +78,17 @@
 .seller-product-name h3 {
   font-size: 0.9rem;
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.2;
 
-  /* Prevent overflow for long text */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;   /* ✅ max 2 lines */
+  -webkit-box-orient: vertical;
+
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap; /* single line */
-  margin: 9px 0 4px;
-}
 
+  margin: 6px 0 4px;
+}
 
 .price-stock-container {
   display: flex;
@@ -136,13 +138,13 @@
 
 /* Subtle background colors for card */
 .preorder-card {
-  background-color: rgba(157, 40, 8, 0.1); /* subtle orange */
-  border: 2px solid rgb(241, 204, 135);
+  background-color: rgba(32, 84, 26, 0.1); /* subtle green */
+  border: 2px solid rgb(160, 209, 160);
 }
 
 .instant-card {
-  background-color: rgba(32, 84, 26, 0.1); /* subtle green */
-  border: 2px solid rgb(160, 209, 160);
+  background-color: rgba(157, 40, 8, 0.1); /* subtle orange */
+  border: 2px solid rgb(241, 204, 135);
 }
 
 /* ================================

@@ -123,13 +123,15 @@
 }
 
 .product-card.regular {
-  border: 2px solid #ff9e2a;
-  box-shadow: 0 0 12px rgba(255, 158, 42, 0.5);
+  border: 2px solid #4caf50;
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
 }
 
 .product-card.preorder {
   border: 2px solid #4caf50;
   box-shadow: 0 0 12px rgba(76, 175, 80, 0.4);
+  border: 2px solid #ff9e2a;
+  box-shadow: 0 0 12px rgba(255, 158, 42, 0.5);
 }
 
 /* ===============================

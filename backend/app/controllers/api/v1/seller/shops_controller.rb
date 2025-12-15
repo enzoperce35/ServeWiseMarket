@@ -11,24 +11,28 @@ module Api
         def show
           if @shop
             update_shop_status(@shop)
-            render json: { shop: @shop }, status: :ok
+            render json: {
+              user: current_user.as_json(include: :shop)
+            }, status: :ok
           else
-            render json: { shop: nil }, status: :ok
+            render json: { user: current_user }, status: :ok
           end
         end
-
+        
         # PUT /api/v1/seller/shop
         def update
           return render json: { error: "No shop exists" }, status: :unprocessable_entity unless @shop
-
+        
           handle_open_toggle(@shop, shop_params[:open]) if shop_params[:open].present?
-
+        
           if @shop.update(shop_params)
-            render json: { shop: @shop }, status: :ok
+            render json: {
+              user: current_user.as_json(include: :shop)
+            }, status: :ok
           else
             render json: { errors: @shop.errors.full_messages }, status: :unprocessable_entity
           end
-        end
+        end        
 
         # POST /api/v1/seller/shop
         def create

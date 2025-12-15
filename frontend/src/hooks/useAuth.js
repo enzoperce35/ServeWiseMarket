@@ -59,6 +59,20 @@ export default function useAuth() {
     if (navigate) navigate("/login");
   };
 
+  const updateShop = async (updates) => {
+    const res = await axios.patch(
+      `${BASE_URL}/seller/shop`,
+      { shop: updates },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  
+    if (res.data?.user) {
+      setUser(res.data.user);
+    }
+  
+    return res.data;
+  };     
+
   return {
     user,
     token, // ✅ expose token
@@ -67,5 +81,6 @@ export default function useAuth() {
     handleSignup,
     handleLogin,
     handleLogout,
+    updateShop,
   };
 }
