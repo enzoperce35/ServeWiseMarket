@@ -4,6 +4,10 @@ class User < ApplicationRecord
   # Associations
   has_one :shop, dependent: :destroy
 
+  has_one :cart
+
+  has_many :orders
+
   # Name: required
   validates :name, presence: true
 

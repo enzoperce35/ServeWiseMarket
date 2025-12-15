@@ -10,9 +10,53 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_09_082948) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_14_225334) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "cart_items", force: :cascade do |t|
+    t.bigint "cart_id", null: false
+    t.bigint "product_id", null: false
+    t.integer "quantity", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["cart_id"], name: "index_cart_items_on_cart_id"
+    t.index ["product_id"], name: "index_cart_items_on_product_id"
+  end
+
+  create_table "carts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "status", default: "active"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_carts_on_user_id"
+  end
+
+  create_table "order_items", force: :cascade do |t|
+    t.bigint "order_id", null: false
+    t.bigint "product_id", null: false
+    t.integer "quantity", null: false
+    t.decimal "unit_price", precision: 10, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_order_items_on_order_id"
+    t.index ["product_id"], name: "index_order_items_on_product_id"
+  end
+
+  create_table "orders", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "shop_id", null: false
+    t.string "status", default: "pending", null: false
+    t.decimal "total_amount", precision: 10, scale: 2, null: false
+    t.datetime "delivery_date"
+    t.string "delivery_time"
+    t.boolean "cross_comm_delivery", default: false
+    t.integer "cross_comm_charge", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["shop_id"], name: "index_orders_on_shop_id"
+    t.index ["user_id"], name: "index_orders_on_user_id"
+  end
 
   create_table "product_ratings", force: :cascade do |t|
     t.bigint "product_id", null: false
@@ -74,6 +118,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_09_082948) do
     t.string "phase", default: "", null: false
   end
 
+  add_foreign_key "cart_items", "carts"
+  add_foreign_key "cart_items", "products"
+  add_foreign_key "carts", "users"
+  add_foreign_key "order_items", "orders"
+  add_foreign_key "order_items", "products"
+  add_foreign_key "orders", "shops"
+  add_foreign_key "orders", "users"
   add_foreign_key "product_ratings", "products"
   add_foreign_key "product_ratings", "users"
   add_foreign_key "products", "shops"

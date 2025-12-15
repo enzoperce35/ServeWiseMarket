@@ -1,0 +1,37 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+   : MyString
+  user: one
+   : MyString
+  shop: one
+   : MyString
+  status: MyString
+   : MyString
+  total_amount: 9.99
+   : MyString
+  delivery_date: 2025-12-15 06:47:37
+   : MyString
+  delivery_time: MyString
+   : MyString
+  cross_comm_delivery: false
+   : MyString
+  cross_comm_charge: 1
+
+two:
+   : MyString
+  user: two
+   : MyString
+  shop: two
+   : MyString
+  status: MyString
+   : MyString
+  total_amount: 9.99
+   : MyString
+  delivery_date: 2025-12-15 06:47:37
+   : MyString
+  delivery_time: MyString
+   : MyString
+  cross_comm_delivery: false
+   : MyString
+  cross_comm_charge: 1

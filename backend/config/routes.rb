@@ -16,6 +16,9 @@ Rails.application.routes.draw do
       # Public shops for buyers
       resources :shops, only: [:show]
 
+      resource :cart, only: [:show]
+      resources :cart_items, only: [:create, :update, :destroy]
+
       # Seller-specific products (dashboard)
       namespace :seller do
         resource :shop, only: [:show, :create, :update]

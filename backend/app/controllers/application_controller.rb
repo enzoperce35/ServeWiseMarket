@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::API
   before_action :authenticate_user
+  before_action :set_current_cart
 
   # Generate JWT token
   def encode_token(payload)
@@ -35,5 +36,16 @@ class ApplicationController < ActionController::API
   # Protect routes
   def authenticate_user
     render json: { error: 'Not Authorized' }, status: :unauthorized unless current_user
+  end
+
+  private
+
+  def set_current_cart
+    return unless current_user
+    @current_cart ||= current_user.cart || current_user.create_cart
+  end
+
+  def current_cart
+    @current_cart
   end
 end
