@@ -14,7 +14,7 @@ import CartPage from "./pages/CartPage";
 // Seller pages
 import Products from "./pages/seller/Products";
 import ShopPage from "./pages/seller/ShopPage";
-import OrdersPage from "./pages/seller/OrdersPage";
+import OrdersPage from "./pages/OrdersPage";
 
 export default function App() {
   return (
@@ -30,7 +30,7 @@ export default function App() {
           <Route path="/seller/create-shop" element={<CreateShop />} />
           <Route path="/seller/products" element={<Products />} />
           <Route path="/shop/:shopId" element={<ShopPage />} />
-          <Route path="/seller/orders" element={<OrdersPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
           <Route path="/seller/products/new" element={<ProductFormPage />} />
           <Route path="/seller/products/:id/edit" element={<ProductSettingsPage />} />
           <Route path="/product/:id" element={<ProductPage />} />

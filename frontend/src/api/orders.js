@@ -1,17 +1,14 @@
-export async function checkout(token) {
-  const res = await fetch("/api/v1/orders", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-  });
+// src/api/orders.js
+import axiosClient from "./axiosClient";
 
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || "Checkout failed");
-  }
-
-  return data.orders;
-}
+export const checkoutApi = (token) => {
+  return axiosClient.post(
+    "/orders",
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+};

@@ -3,6 +3,8 @@ import { useCartContext } from "../context/CartProvider";
 import { useAuthContext } from "../context/AuthProvider"; // ✅ import token
 import { removeFromCartApi } from "../api/cart";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { checkoutApi } from "../api/orders";
 import "../css/pages/CartPage.css"
 
 export default function CartPage() {
@@ -14,6 +16,23 @@ export default function CartPage() {
     return <p>Your cart is empty.</p>;
   }
 
+  const handleCheckout = async () => {
+    if (!token) {
+      toast.error("Please log in to checkout");
+      return;
+    }
+  
+    try {
+      const res = await checkoutApi(token);
+      await fetchCart();
+  
+      toast.success("Order placed successfully 🎉");
+      navigate("/orders");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Checkout failed");
+    }
+  };
+  
   const handleRemoveItem = async (cartItemId) => {
     if (!token) {
       alert("You must be logged in to remove items from the cart.");
@@ -79,9 +98,13 @@ export default function CartPage() {
         </div>
       ))}
 
-    <div className="cart-grand-total">
+      <div className="cart-grand-total">
         Grand Total: ₱{grandTotal.toFixed(2)}
       </div>
+
+      <button className="checkout-btn" onClick={handleCheckout}>
+        Place Order
+      </button>
     </div>
   );
 }

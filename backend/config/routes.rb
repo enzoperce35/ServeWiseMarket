@@ -20,7 +20,7 @@ Rails.application.routes.draw do
       
       resource :cart, only: [:show]
       resources :cart_items, only: [:create, :update, :destroy]
-      resources :orders, only: [:create, :index]
+      resources :orders, only: [:create, :index, :show]
 
       # Seller-specific products (dashboard)
       namespace :seller do
