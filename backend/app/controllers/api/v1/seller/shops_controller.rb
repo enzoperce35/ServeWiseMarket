@@ -11,9 +11,9 @@ module Api
         def show
           if @shop
             update_shop_status(@shop)
-            render json: @shop, status: :ok
+            render json: { shop: @shop }, status: :ok
           else
-            render json: { error: "Shop not found" }, status: :not_found
+            render json: { shop: nil }, status: :ok
           end
         end
 
@@ -24,9 +24,8 @@ module Api
           handle_open_toggle(@shop, shop_params[:open]) if shop_params[:open].present?
 
           if @shop.update(shop_params)
-            # Skip auto-close because this is a manual toggle
             update_shop_status(@shop, manual_toggle: true)
-            render json: @shop, status: :ok
+            render json: { shop: @shop }, status: :ok
           else
             render json: { errors: @shop.errors.full_messages }, status: :unprocessable_entity
           end
@@ -40,7 +39,7 @@ module Api
 
           shop = current_user.build_shop(shop_params)
           if shop.save
-            render json: shop, status: :created
+            render json: { shop: shop }, status: :created
           else
             render json: { errors: shop.errors.full_messages }, status: :unprocessable_entity
           end
@@ -50,7 +49,7 @@ module Api
 
         def set_shop
           @shop = current_user.shop
-          render json: { error: "Shop not found" }, status: :not_found unless @shop
+          # DO NOT render 404 here
         end
 
         def shop_params
