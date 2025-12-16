@@ -11,28 +11,26 @@ module Api
         def show
           if @shop
             update_shop_status(@shop)
-            render json: {
-              user: current_user.as_json(include: :shop)
-            }, status: :ok
+            render json: @shop, status: :ok
           else
-            render json: { user: current_user }, status: :ok
+            render json: { error: "Shop not found" }, status: :not_found
           end
         end
-        
+
         # PUT /api/v1/seller/shop
         def update
-          return render json: { error: "No shop exists" }, status: :unprocessable_entity unless @shop
-        
+          return render json: { error: "Shop not found" }, status: :not_found unless @shop
+
           handle_open_toggle(@shop, shop_params[:open]) if shop_params[:open].present?
-        
+
           if @shop.update(shop_params)
-            render json: {
-              user: current_user.as_json(include: :shop)
-            }, status: :ok
+            # Skip auto-close because this is a manual toggle
+            update_shop_status(@shop, manual_toggle: true)
+            render json: @shop, status: :ok
           else
             render json: { errors: @shop.errors.full_messages }, status: :unprocessable_entity
           end
-        end        
+        end
 
         # POST /api/v1/seller/shop
         def create
@@ -42,7 +40,7 @@ module Api
 
           shop = current_user.build_shop(shop_params)
           if shop.save
-            render json: { shop: shop }, status: :created
+            render json: shop, status: :created
           else
             render json: { errors: shop.errors.full_messages }, status: :unprocessable_entity
           end
@@ -52,7 +50,7 @@ module Api
 
         def set_shop
           @shop = current_user.shop
-          # no 404 here; just leave @shop nil if it doesn't exist
+          render json: { error: "Shop not found" }, status: :not_found unless @shop
         end
 
         def shop_params

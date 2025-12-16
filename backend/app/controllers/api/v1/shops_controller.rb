@@ -7,6 +7,8 @@ module Api
 
       def show
         shop = Shop.includes(:user, :products).find(params[:id])
+
+        # Restore previous behavior
         update_shop_status(shop)
 
         render json: {
@@ -33,6 +35,7 @@ module Api
                 price: p.price,
                 stock: p.stock,
                 image_url: p.image_url,
+                status: p.status,       # bring back 'status' field
                 featured: p.featured
               }
             end

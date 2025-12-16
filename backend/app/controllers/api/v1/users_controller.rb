@@ -1,4 +1,3 @@
-# app/controllers/api/v1/users_controller.rb
 module Api
   module V1
     class UsersController < ApplicationController
@@ -16,10 +15,10 @@ module Api
         end
 
         shop = current_user.shop
-        update_shop_status(shop) if shop
+        update_shop_status(shop) if shop  # restore old behavior
 
         render json: {
-          status: "ok",
+          status: "success",  # restore old 'success' keyword if desired
           user: current_user.as_json(
             include: { shop: { only: [:id, :name, :image_url, :open, :user_opened_at] } }
           )
@@ -56,7 +55,6 @@ module Api
 
       private
 
-      # Strong parameters for signup
       def user_params
         params.require(:user).permit(
           :name, :contact_number, :password, :password_confirmation,
@@ -64,9 +62,6 @@ module Api
         )
       end
 
-      # ------------------------
-      # JWT helper methods
-      # ------------------------
       def encode_jwt(user_id)
         payload = { user_id: user_id, exp: 7.days.from_now.to_i }
         JWT.encode(payload, Rails.application.secret_key_base)
@@ -79,7 +74,6 @@ module Api
         nil
       end
 
-      # Override current_user to read from JWT
       def current_user
         return @current_user if defined?(@current_user)
 
