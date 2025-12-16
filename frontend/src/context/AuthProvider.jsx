@@ -1,34 +1,23 @@
-// src/context/AuthProvider.jsx
-import { createContext, useContext, useEffect, useState } from "react";
+// AuthProvider.jsx
+import { createContext, useContext, useState, useEffect } from "react";
 import useAuth from "../hooks/useAuth";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const auth = useAuth();
+  const auth = useAuth(); // has handleLogin, handleSignup, etc.
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
-      await auth.fetchUser(); // fetch user including shop
+    const init = async () => {
+      await auth.fetchUser();
       setLoading(false);
     };
-    fetch();
+    init();
   }, []);
 
-  // Add updateUserShop to context
-  const updateUserShop = async (updates) => {
-    if (!auth.user?.shop) return;
-
-    try {
-      await auth.updateShop(updates); // defined in useAuth
-    } catch (err) {
-      console.error("Failed to update shop:", err);
-    }
-  };
-
   return (
-    <AuthContext.Provider value={{ ...auth, updateUserShop, loading }}>
+    <AuthContext.Provider value={{ ...auth, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,3 +1,4 @@
+// src/hooks/useAuth.jsx
 import { useState } from "react";
 import axios from "axios";
 
@@ -8,16 +9,11 @@ export default function useAuth() {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
 
   const fetchUser = async () => {
+    if (!token) return null;
     try {
-      if (!token) {
-        setUser(null);
-        return null;
-      }
-
       const res = await axios.get(`${BASE_URL}/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       setUser(res.data.user);
       return res.data.user;
     } catch (err) {
@@ -27,34 +23,40 @@ export default function useAuth() {
     }
   };
 
+  const handleLogin = async ({ contact_number, password }) => {
+    try {
+      const res = await axios.post(`${BASE_URL}/login`, { contact_number, password });
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        setToken(res.data.token);
+        setUser(res.data.user); // ✅ immediate reactive user
+        return { status: "ok", user: res.data.user };
+      }
+      return { status: "error", errors: ["Login failed"] };
+    } catch (err) {
+      return { status: "error", errors: err.response?.data?.errors || ["Login failed"] };
+    }
+  };
+
   const handleSignup = async (data) => {
     try {
       const payload = { ...data, role: "buyer" };
       const res = await axios.post(`${BASE_URL}/signup`, { user: payload });
       localStorage.setItem("token", res.data.token);
-      setToken(res.data.token); // ✅ store in state
-      await fetchUser();
+      setToken(res.data.token);
+      setUser(res.data.user); // ✅ immediately reactive
       return { status: "ok" };
     } catch (err) {
-      return { status: "error", errors: err.response?.data?.errors || [err.message] };
+      return {
+        status: "error",
+        errors: err.response?.data?.errors || [err.message]
+      };
     }
-  };
-
-  const handleLogin = async ({ contact_number, password }) => {
-    try {
-      const res = await axios.post(`${BASE_URL}/login`, { contact_number, password });
-      localStorage.setItem("token", res.data.token);
-      setToken(res.data.token); // ✅ store in state
-      const freshUser = await fetchUser();
-      return { status: "ok", user: freshUser };
-    } catch {
-      return { status: "error", errors: ["Invalid login credentials"] };
-    }
-  };
+  };  
 
   const handleLogout = (navigate) => {
     localStorage.removeItem("token");
-    setToken(null); // ✅ clear token
+    setToken(null);
     setUser(null);
     if (navigate) navigate("/login");
   };
@@ -65,22 +67,9 @@ export default function useAuth() {
       { shop: updates },
       { headers: { Authorization: `Bearer ${token}` } }
     );
-  
-    if (res.data?.user) {
-      setUser(res.data.user);
-    }
-  
+    if (res.data?.user) setUser(res.data.user);
     return res.data;
-  };     
-
-  return {
-    user,
-    token, // ✅ expose token
-    setUser,
-    fetchUser,
-    handleSignup,
-    handleLogin,
-    handleLogout,
-    updateShop,
   };
+
+  return { user, token, setUser, fetchUser, handleLogin, handleSignup, handleLogout, updateShop };
 }

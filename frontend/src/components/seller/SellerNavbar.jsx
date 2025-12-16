@@ -6,7 +6,7 @@ import "../../css/seller/navbar.css";
 
 export default function SellerNavbar() {
   const navigate = useNavigate();
-  const { user, updateUserShop } = useAuthContext();
+  const { user, updateShop } = useAuthContext(); // ✅ use correct function name
 
   const shopName = user?.shop?.name || "My Shop";
 
@@ -29,11 +29,13 @@ export default function SellerNavbar() {
 
     try {
       // Backend handles user_opened_at automatically
-      await updateUserShop({ open: newState });
+      await updateShop({ open: newState }); // ✅ updated function call
     } catch (err) {
       console.error("Failed to update shop:", err);
     }
   };
+
+  if (!user || !user.shop) return null; // null-safe
 
   return (
     <nav className="seller-navbar">
