@@ -14,14 +14,24 @@ export default function useAuth() {
       const res = await axios.get(`${BASE_URL}/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUser(res.data.user);
-      return res.data.user;
+  
+      if (res.data.user) {
+        const userData = res.data.user;
+  
+        // Add helper boolean for convenience
+        userData.hasOngoingOrders = userData.ongoing_orders_count > 0;
+  
+        setUser(userData);
+        return userData;
+      }
+  
+      return null;
     } catch (err) {
       console.error("Fetch user failed:", err.response?.data || err.message);
       setUser(null);
       return null;
     }
-  };
+  };  
 
   const handleLogin = async ({ contact_number, password }) => {
     try {
@@ -29,22 +39,31 @@ export default function useAuth() {
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
         setToken(res.data.token);
-        setUser(res.data.user); // ✅ immediate reactive user
-        return { status: "ok", user: res.data.user };
+  
+        const userData = res.data.user;
+        userData.hasOngoingOrders = userData.ongoing_orders_count > 0; // ✅ add boolean
+        setUser(userData);
+  
+        return { status: "ok", user: userData };
       }
       return { status: "error", errors: ["Login failed"] };
     } catch (err) {
       return { status: "error", errors: err.response?.data?.errors || ["Login failed"] };
     }
   };
-
+  
   const handleSignup = async (data) => {
     try {
       const payload = { ...data, role: "buyer" };
       const res = await axios.post(`${BASE_URL}/signup`, { user: payload });
+  
       localStorage.setItem("token", res.data.token);
       setToken(res.data.token);
-      setUser(res.data.user); // ✅ immediately reactive
+  
+      const userData = res.data.user;
+      userData.hasOngoingOrders = userData.ongoing_orders_count > 0; // ✅ add boolean
+      setUser(userData);
+  
       return { status: "ok" };
     } catch (err) {
       return {
@@ -52,7 +71,7 @@ export default function useAuth() {
         errors: err.response?.data?.errors || [err.message]
       };
     }
-  };  
+  };    
 
   const handleLogout = (navigate) => {
     localStorage.removeItem("token");

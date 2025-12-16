@@ -9,22 +9,26 @@ module Api
       # ------------------------
       # GET /api/v1/me
       # ------------------------
+      # app/controllers/api/v1/users_controller.rb
       def me
         unless current_user
           return render json: { status: "error", error: "Unauthorized" }, status: :unauthorized
         end
-
+      
         shop = current_user.shop
-        update_shop_status(shop) if shop  # restore old behavior
-
+        update_shop_status(shop) if shop
+      
+        ongoing_count = current_user.orders.ongoing.count
+      
         render json: {
-          status: "success",  # restore old 'success' keyword if desired
+          status: "success",
           user: current_user.as_json(
             include: { shop: { only: [:id, :name, :image_url, :open, :user_opened_at] } }
-          )
+          ).merge(ongoing_orders_count: ongoing_count)
         }
       end
-
+      
+      
       # ------------------------
       # POST /api/v1/signup
       # ------------------------

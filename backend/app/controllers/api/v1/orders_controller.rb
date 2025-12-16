@@ -44,6 +44,22 @@ module Api
           order_ids: orders.map(&:id)
         }, status: :created
       end
+
+      # GET /api/v1/orders
+      def index
+        orders = current_user.orders.includes(:shop).order(created_at: :desc)
+      
+        render json: {
+          orders: orders.as_json(include: { shop: { only: [:id, :name, :image_url] } }),
+          has_ongoing: orders.ongoing.exists?
+        }
+      end
+      
+      # GET /api/v1/orders/:id
+      def show
+        order = current_user.orders.find(params[:id])
+        render json: order
+      end
     end
   end
 end
