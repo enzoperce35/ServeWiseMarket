@@ -2,11 +2,13 @@ import React from "react";
 import { useCartContext } from "../context/CartProvider";
 import { useAuthContext } from "../context/AuthProvider"; // ✅ import token
 import { removeFromCartApi } from "../api/cart";
+import { useNavigate } from "react-router-dom";
 import "../css/pages/CartPage.css"
 
 export default function CartPage() {
   const { cart, fetchCart } = useCartContext();
   const { token } = useAuthContext(); // ✅ get token
+  const navigate = useNavigate();
 
   if (!cart || cart.shops.length === 0) {
     return <p>Your cart is empty.</p>;
@@ -37,7 +39,11 @@ export default function CartPage() {
 
   return (
     <div className="cart-page">
-      <h2>Your Cart</h2>
+      <div className="cart-header">
+        <button className="home-btn" onClick={() => navigate("/")}>
+          ← Home
+        </button>
+      </div>
 
       {cart.shops.map((shop) => (
         <div key={shop.shop_id} className="cart-shop">

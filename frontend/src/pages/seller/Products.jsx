@@ -85,26 +85,11 @@ export default function Products() {
   // ⭐ SORTING LOGIC (unchanged)
   // ============================================================
   const sortedProducts = [...products].sort((a, b) => {
+    // 1️⃣ Active products first
     if (a.status !== b.status) return a.status ? -1 : 1;
-
-    if (a.status && b.status) {
-      if (!a.preorder_delivery && !b.preorder_delivery) {
-        return new Date(b.updated_at) - new Date(a.updated_at);
-      }
-
-      if (a.preorder_delivery && b.preorder_delivery) {
-        return new Date(a.delivery_time) - new Date(b.delivery_time);
-      }
-
-      if (!a.preorder_delivery && b.preorder_delivery) return -1;
-      if (a.preorder_delivery && !b.preorder_delivery) return 1;
-    }
-
-    if (!a.status && !b.status) {
-      return new Date(b.updated_at) - new Date(a.updated_at);
-    }
-
-    return 0;
+  
+    // 2️⃣ Among active or inactive, newest updated_at first
+    return new Date(b.updated_at) - new Date(a.updated_at);
   });
 
   return (

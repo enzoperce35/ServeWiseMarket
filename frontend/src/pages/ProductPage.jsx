@@ -1,20 +1,25 @@
-// src/pages/ProductPage.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthProvider";
+import { useCartContext } from "../context/CartProvider";
+import { addToCartApi } from "../api/cart";
 import axiosClient from "../api/axiosClient";
 import { getDeliveryLabel } from "../utils/deliveryDateTime";
 import { isOwner, getPriceString } from "../utils/userProducts";
+import toast from "react-hot-toast";
 import "../css/pages/ProductPage.css";
 
 export default function ProductPage() {
-  const { id } = useParams(); // product ID
-  const { user } = useAuthContext();
+  const { id } = useParams();
   const navigate = useNavigate();
+
+  const { user, token } = useAuthContext();
+  const { refreshCart } = useCartContext();
 
   const [product, setProduct] = useState(null);
   const [ratings, setRatings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false); // ✅ prevent double add
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -40,15 +45,55 @@ export default function ProductPage() {
   const deliveryDisplay = getDeliveryLabel(product);
   const priceString = getPriceString(product, user);
 
-  const addToCart = () => {
-    if (!user) {
-      alert("Please log in to add items to tray.");
+  // ✅ REAL add to tray
+  const handleAddToCart = async () => {
+    if (!user || !token) {
+      toast.error("Please log in to add items to tray");
       return;
     }
-    alert(`Added ${product.name} to tray!`);
-  };
+  
+    if (adding) return;
+    setAdding(true);
+  
+    try {
+      await addToCartApi(product.id, 1, token);
+      await refreshCart();
+  
+      toast.success(
+        (t) => (
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <span>Added to tray</span>
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                navigate("/cart");
+              }}
+              style={{
+                background: "#ff7a00",
+                color: "#fff",
+                border: "none",
+                padding: "4px 8px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+              }}
+            >
+              Check Tray
+            </button>
+          </div>
+        ),
+        {
+          duration: 2000, // ✅ THIS is the missing piece
+        }
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add item");
+    } finally {
+      setAdding(false);
+    }
+  };  
 
-  // Safely get shop ID
   const shopId = product.shop_id || product.shop?.id;
 
   return (
@@ -66,7 +111,6 @@ export default function ProductPage() {
       <div className="product-page-content">
         <h1 className="product-title">{product.name}</h1>
 
-        {/* Visit Shop button */}
         {!isOwner(user, product) && shopId && (
           <button
             className="shop-link-btn"
@@ -79,25 +123,39 @@ export default function ProductPage() {
         <p className="product-description">{product.description}</p>
 
         <div className="product-meta">
-          <p className="price"><strong>{priceString}</strong></p>
-          <p className="stock">Stock: <strong>{product.stock}</strong></p>
-          <p className="delivery">Delivery: <span>{deliveryDisplay}</span></p>
+          <p className="price">
+            <strong>{priceString}</strong>
+          </p>
+          <p className="stock">
+            Stock: <strong>{product.stock}</strong>
+          </p>
+          <p className="delivery">
+            Delivery: <span>{deliveryDisplay}</span>
+          </p>
 
           {ratings.length > 0 && (
             <p className="average-rating">
               ⭐ Average Rating:{" "}
               <strong>
-                {(ratings.reduce((acc, r) => acc + r.rating, 0) / ratings.length).toFixed(1)}
+                {(
+                  ratings.reduce((acc, r) => acc + r.rating, 0) /
+                  ratings.length
+                ).toFixed(1)}
               </strong>{" "}
               ({ratings.length} review{ratings.length > 1 ? "s" : ""})
             </p>
           )}
         </div>
 
+        {/* ✅ Add to Tray */}
         {!isOwner(user, product) && (
-          <button className="add-to-tray-btn" onClick={addToCart}>
-            Add to Tray
-          </button>
+          <button
+          className="add-to-tray-btn"
+          onClick={handleAddToCart}
+          disabled={adding}
+        >
+          {adding ? "Adding..." : "Add to Tray"}
+        </button>        
         )}
 
         {ratings.length > 0 && (

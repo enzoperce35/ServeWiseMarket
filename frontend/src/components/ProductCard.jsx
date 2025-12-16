@@ -5,6 +5,7 @@ import { useCartContext } from "../context/CartProvider";
 import { addToCartApi } from "../api/cart";
 import { getDeliveryLabel } from "../utils/deliveryDateTime";
 import { isOwner, getPriceString } from "../utils/userProducts";
+import toast from "react-hot-toast";
 import "../css/components/ProductCard.css";
 
 export default function ProductCard({ product, clickable = true }) {
@@ -21,20 +22,30 @@ export default function ProductCard({ product, clickable = true }) {
     e.stopPropagation();
 
     if (!user || !token) {
-      alert("Please log in to add items to cart.");
+      toast.error("Please log in to add items to tray");
       return;
     }
 
-    if (loading) return; // ✅ ignore if already processing
+    if (loading) return;
 
     try {
-      setLoading(true); // start loading
-      await addToCartApi(product.id, quantity, token); // token is third arg
-      refreshCart();
+      setLoading(true);
+      await addToCartApi(product.id, quantity, token);
+      await refreshCart();
+
+      toast.success(
+        (t) => (
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            <span>Added to tray</span>
+          </div>
+        ),
+        { duration: 2000 } // ✅ auto-dismiss
+      );
     } catch (err) {
-      alert(err.message);
+      console.error(err);
+      toast.error("Failed to add item");
     } finally {
-      setLoading(false); // end loading
+      setLoading(false);
     }
   };
 
@@ -49,15 +60,20 @@ export default function ProductCard({ product, clickable = true }) {
       onClick={handleCardClick}
       style={{ cursor: clickable ? "pointer" : "default" }}
     >
-      <img src={product.image_url || "/images/default-product.png"} alt={product.name} />
+      <img
+        src={product.image_url || "/images/default-product.png"}
+        alt={product.name}
+      />
 
       <div className="product-info">
         <h3 className="product-name">{product.name}</h3>
+
         {deliveryDisplay && (
           <p className="delivery">
             Delivery: <span className="delivery-time">{deliveryDisplay}</span>
           </p>
         )}
+
         <p className="product-price">{priceString}</p>
       </div>
 
@@ -65,8 +81,11 @@ export default function ProductCard({ product, clickable = true }) {
         <button
           className="add-to-cart"
           onClick={(e) => addToCart(e, 1)}
-          disabled={loading} // ✅ disables while processing
-          style={{ opacity: loading ? 0.6 : 1, pointerEvents: loading ? "none" : "auto" }}
+          disabled={loading}
+          style={{
+            opacity: loading ? 0.6 : 1,
+            pointerEvents: loading ? "none" : "auto",
+          }}
         >
           {loading ? "Adding..." : "Add to Tray"}
         </button>
