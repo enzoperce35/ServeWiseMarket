@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axiosClient from "../api/axiosClient";
+import { useNavigate } from "react-router-dom";
 import "../css/pages/OrdersPage.css"; // Create this CSS file
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const loadOrders = async () => {
     try {
@@ -44,7 +46,12 @@ export default function OrdersPage() {
 
   return (
     <div className="orders-page">
-      <h2 className="page-title">Your Orders</h2>
+      <div className="orders-header">
+        <button className="home-btn" onClick={() => navigate("/")}>
+          ← Home
+        </button>
+      </div>
+      
       <div className="orders-grid">
         {orders.map((order) => (
           <div key={order.id} className="order-card">

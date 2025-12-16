@@ -81,3 +81,17 @@
   margin-top: 2rem;
   color: #6b7280;
 }
+
+.home-btn {
+  background: none;
+  border: none;
+  color: #ff7a00;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+  padding-bottom: 15px;
+}
+
+.home-btn:hover {
+  text-decoration: underline;
+}

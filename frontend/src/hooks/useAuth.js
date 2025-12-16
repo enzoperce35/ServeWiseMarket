@@ -8,18 +8,19 @@ export default function useAuth() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token") || null);
 
-  const fetchUser = async () => {
-    if (!token) return null;
+  const fetchUser = async (authToken = token) => {
+    if (!authToken) return null;
+  
     try {
       const res = await axios.get(`${BASE_URL}/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
   
       if (res.data.user) {
-        const userData = res.data.user;
-  
-        // Add helper boolean for convenience
-        userData.hasOngoingOrders = userData.ongoing_orders_count > 0;
+        const userData = {
+          ...res.data.user,
+          hasOngoingOrders: res.data.user.ongoing_orders_count > 0,
+        };
   
         setUser(userData);
         return userData;
@@ -31,26 +32,33 @@ export default function useAuth() {
       setUser(null);
       return null;
     }
-  };  
+  };    
 
   const handleLogin = async ({ contact_number, password }) => {
     try {
-      const res = await axios.post(`${BASE_URL}/login`, { contact_number, password });
+      const res = await axios.post(`${BASE_URL}/login`, {
+        contact_number,
+        password,
+      });
+  
       if (res.data.token) {
         localStorage.setItem("token", res.data.token);
         setToken(res.data.token);
   
-        const userData = res.data.user;
-        userData.hasOngoingOrders = userData.ongoing_orders_count > 0; // ✅ add boolean
-        setUser(userData);
+        // ✅ pass token DIRECTLY
+        await fetchUser(res.data.token);
   
-        return { status: "ok", user: userData };
+        return { status: "ok" };
       }
+  
       return { status: "error", errors: ["Login failed"] };
     } catch (err) {
-      return { status: "error", errors: err.response?.data?.errors || ["Login failed"] };
+      return {
+        status: "error",
+        errors: err.response?.data?.errors || ["Login failed"],
+      };
     }
-  };
+  };  
   
   const handleSignup = async (data) => {
     try {
@@ -60,18 +68,16 @@ export default function useAuth() {
       localStorage.setItem("token", res.data.token);
       setToken(res.data.token);
   
-      const userData = res.data.user;
-      userData.hasOngoingOrders = userData.ongoing_orders_count > 0; // ✅ add boolean
-      setUser(userData);
+      await fetchUser(res.data.token);
   
       return { status: "ok" };
     } catch (err) {
       return {
         status: "error",
-        errors: err.response?.data?.errors || [err.message]
+        errors: err.response?.data?.errors || [err.message],
       };
     }
-  };    
+  };      
 
   const handleLogout = (navigate) => {
     localStorage.removeItem("token");
