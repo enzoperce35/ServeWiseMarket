@@ -6,7 +6,7 @@ import "../../css/seller/navbar.css";
 
 export default function SellerNavbar() {
   const navigate = useNavigate();
-  const { user, updateShop } = useAuthContext(); // ✅ use correct function name
+  const { user, updateShop } = useAuthContext();
 
   const shopName = user?.shop?.name || "My Shop";
 
@@ -16,7 +16,7 @@ export default function SellerNavbar() {
 
   const [shopOpen, setShopOpen] = useState(user?.shop?.open ?? false);
 
-  // Keep local state in sync with user context
+  // Sync local state with backend shop status
   useEffect(() => {
     setShopOpen(user?.shop?.open ?? false);
   }, [user?.shop?.open]);
@@ -28,14 +28,13 @@ export default function SellerNavbar() {
     setShopOpen(newState);
 
     try {
-      // Backend handles user_opened_at automatically
-      await updateShop({ open: newState }); // ✅ updated function call
+      await updateShop({ open: newState }); // backend handles user_opened_at
     } catch (err) {
       console.error("Failed to update shop:", err);
     }
   };
 
-  if (!user || !user.shop) return null; // null-safe
+  if (!user || !user.shop) return null;
 
   return (
     <nav className="seller-navbar">
@@ -47,11 +46,8 @@ export default function SellerNavbar() {
         <div className="nav-center" style={{ cursor: "pointer" }}>
           <h2
             onClick={() => {
-              if (user?.shop?.id) {
-                navigate(`/shop/${user.shop.id}`);
-              } else {
-                alert("You don't have a shop yet.");
-              }
+              if (user?.shop?.id) navigate(`/shop/${user.shop.id}`);
+              else alert("You don't have a shop yet.");
             }}
           >
             {shopName}
@@ -63,16 +59,18 @@ export default function SellerNavbar() {
         </div>
       </div>
 
-      {isWithinToggleHours && (
-        <div className="nav-status-row">
-          <div
-            className={`status-pill ${shopOpen ? "open" : "closed"}`}
-            onClick={handleToggle}
-          >
-            {shopOpen ? "OPEN 🟢" : "CLOSED 🔴"}
-          </div>
+      <div className="nav-status-row">
+        <div
+          className={`status-pill ${shopOpen ? "open" : "closed"}`}
+          onClick={handleToggle}
+        >
+          {isWithinToggleHours
+            ? shopOpen
+              ? "OPEN 🟢"
+              : "CLOSED 🔴"
+            : "CLOSED ⏰"}
         </div>
-      )}
+      </div>
     </nav>
   );
 }

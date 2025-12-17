@@ -11,12 +11,10 @@ module Api
       # ------------------------
       # app/controllers/api/v1/users_controller.rb
       def me
-        unless current_user
-          return render json: { status: "error", error: "Unauthorized" }, status: :unauthorized
-        end
+        return render json: { status: "error", error: "Unauthorized" }, status: :unauthorized unless current_user
       
-        shop = current_user.shop
-        update_shop_status(shop) if shop
+        # Auto-close shop if needed, safely
+        current_user.shop&.auto_close_if_needed
       
         ongoing_count = current_user.orders.ongoing.count
       
@@ -27,7 +25,6 @@ module Api
           ).merge(ongoing_orders_count: ongoing_count)
         }
       end
-      
       
       # ------------------------
       # POST /api/v1/signup
