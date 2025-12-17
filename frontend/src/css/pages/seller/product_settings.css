@@ -294,7 +294,9 @@ input:disabled {
   font-weight: 600;
 }
 
-
+.time-box.past{
+  border-color: #e37f05;
+}
 
 /* ---------------------- RESPONSIVE ---------------------- */
 

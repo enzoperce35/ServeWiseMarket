@@ -11,13 +11,14 @@ import { useAuthContext } from "../../context/AuthProvider";
 import "../../css/pages/seller/product_settings.css";
 import { localDateString } from "../../utils/deliveryDateTime";
 
-// CONSTANTS
+// ----------------- CONSTANTS -----------------
 const CATEGORIES = [
   "merienda", "lutong ulam", "lutong gulay", "rice meal", "pasta",
   "almusal", "dessert", "delicacy", "specialty", "frozen", "pulutan", "refreshment",
 ];
 
-// TIMESLOTS helper
+const TIME_HOURS = [6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8];
+
 const parseAMPM = (t) => {
   const [_, h, ap] = t.match(/(\d+)(am|pm)/i) || [];
   let hour = parseInt(h);
@@ -34,6 +35,12 @@ const slotToDate = (slot, referenceDate = new Date()) => {
   return date;
 };
 
+const buildTimeSlots = () => TIME_HOURS.map((hour, i) => {
+  const isPM = i >= 6;
+  return { hour, label: `${hour}${isPM ? "pm" : "am"} - ${hour}:30${isPM ? "pm" : "am"}` };
+});
+
+// ----------------- COMPONENT -----------------
 export default function ProductSettingsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -42,11 +49,9 @@ export default function ProductSettingsPage() {
   const [shop, setShop] = useState(null);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [basicInfoOpen, setBasicInfoOpen] = useState(false); // collapsible section
+  const [basicInfoOpen, setBasicInfoOpen] = useState(false);
 
-  const update = (key, value) => {
-    setProduct((prev) => ({ ...prev, [key]: value }));
-  };
+  const update = (key, value) => setProduct(prev => ({ ...prev, [key]: value }));
 
   useEffect(() => {
     (async () => {
@@ -58,27 +63,19 @@ export default function ProductSettingsPage() {
       const eightPM = new Date(today);
       eightPM.setHours(20, 0, 0, 0);
 
+      // Initialize product
+      let initialProduct;
       if (id) {
         const prods = await fetchSellerProducts();
-        const found = prods.find((p) => p.id === parseInt(id));
-        const baseDeliveryDate = found.delivery_date
-          ? localDateString(new Date(found.delivery_date))
-          : todayStr;
-        const baseDeliveryTime = found.preorder_delivery
-          ? found.delivery_time
-          : eightPM;
-        const baseLabel = found.preorder_delivery
-          ? found.delivery_time_label || ""
-          : "8pm - 8:30pm";
-
-        setProduct({
+        const found = prods.find(p => p.id === parseInt(id));
+        initialProduct = {
           ...found,
-          delivery_date: baseDeliveryDate,
-          delivery_time: baseDeliveryTime,
-          delivery_time_label: baseLabel,
-        });
+          delivery_date: found.delivery_date ? localDateString(new Date(found.delivery_date)) : todayStr,
+          delivery_time: found.preorder_delivery ? found.delivery_time : eightPM,
+          delivery_time_label: found.delivery_time_label || "",
+        };
       } else {
-        setProduct({
+        initialProduct = {
           name: "",
           description: "",
           price: 0,
@@ -92,15 +89,33 @@ export default function ProductSettingsPage() {
           delivery_time_label: "",
           cross_comm_delivery: false,
           cross_comm_charge: 0,
-        });
+        };
       }
 
+      // Build slots and rotate past slots
+      const slots = buildTimeSlots().map(slot => {
+        const slotDate = slotToDate(slot.label, new Date(todayStr));
+        const isPast = slotDate < new Date(today.getTime() + 60 * 60 * 1000);
+        return { ...slot, isPast };
+      });
+      const orderedSlots = [...slots.filter(s => !s.isPast), ...slots.filter(s => s.isPast)];
+      const firstAvailableSlot = orderedSlots.find(s => !s.isPast) || orderedSlots[0];
+
+      // Set default slot if none selected
+      if (!initialProduct.delivery_time_label && initialProduct.preorder_delivery) {
+        initialProduct.delivery_time_label = firstAvailableSlot.label;
+        initialProduct.delivery_time = slotToDate(firstAvailableSlot.label, new Date(todayStr));
+        initialProduct.delivery_date = firstAvailableSlot.isPast
+          ? localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000))
+          : todayStr;
+      }
+
+      setProduct(initialProduct);
       setLoading(false);
     })();
   }, [id]);
 
-  if (loading || !product || !shop || !user)
-    return <p className="loading">Loading...</p>;
+  if (loading || !product || !shop || !user) return <p className="loading">Loading...</p>;
 
   const saveProduct = async () => {
     const today = new Date();
@@ -119,10 +134,9 @@ export default function ProductSettingsPage() {
     let gap = 0;
     if (product.preorder_delivery && deliveryDate) {
       const d1 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const d2Source = new Date(deliveryDate);
-      const d2 = new Date(d2Source.getFullYear(), d2Source.getMonth(), d2Source.getDate());
-      const diff = d2 - d1;
-      gap = Math.max(Math.floor(diff / (1000 * 60 * 60 * 24)), 0);
+      const d2 = new Date(deliveryDate);
+      const d2Clean = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate());
+      gap = Math.max(Math.floor((d2Clean - d1) / (1000 * 60 * 60 * 24)), 0);
     }
 
     const body = {
@@ -149,25 +163,36 @@ export default function ProductSettingsPage() {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = () => update("image_url", reader.result);
     reader.readAsDataURL(file);
   };
 
-  const communityText =
-    user.community === "Sampaguita West"
-      ? "Deliver to Sampaguita Homes"
-      : "Deliver to Sampaguita West";
+  const getDeliveryLabel = (product) => {
+    if (!product.preorder_delivery) {
+      return "In 30 minutes";
+    }
+
+    const todayStr = localDateString(new Date());
+    const tomorrowStr = localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000));
+
+    let dayLabel = product.delivery_date;
+    if (product.delivery_date === todayStr) dayLabel = "Today";
+    else if (product.delivery_date === tomorrowStr) dayLabel = "Tomorrow";
+
+    return `${dayLabel}, ${product.delivery_time_label}`;
+  };
+
+  const communityText = user.community === "Sampaguita West" ? "Deliver to Sampaguita Homes" : "Deliver to Sampaguita West";
 
   // ----------------- JSX -----------------
   return (
     <div className="settings-page">
       <h2 className="settings-title">{id ? "Edit Product" : "Create Product"}</h2>
 
-      {/* BASIC INFO (collapsible) */}
+      {/* BASIC INFO */}
       <div className="settings-section">
-        <div className="section-header" onClick={()=>setBasicInfoOpen(!basicInfoOpen)}>
+        <div className="section-header" onClick={() => setBasicInfoOpen(!basicInfoOpen)}>
           <h3>{product.name}</h3>
           <span>{basicInfoOpen ? "-" : "+"}</span>
         </div>
@@ -190,13 +215,8 @@ export default function ProductSettingsPage() {
             </div>
             <div className="settings-item">
               <label>Price (₱)</label>
-              <input
-                type="number"
-                min="0"
-                value={product.price ?? ""}
-                placeholder="0"
-                onChange={e => update("price", e.target.value === "" ? null : parseFloat(e.target.value))}
-              />
+              <input type="number" min="0" value={product.price ?? ""} placeholder="0"
+                onChange={e => update("price", e.target.value === "" ? null : parseFloat(e.target.value))} />
             </div>
             <div className="settings-item">
               <label>Product Image</label>
@@ -213,18 +233,13 @@ export default function ProductSettingsPage() {
         <div className="section-body">
           <div className="settings-item">
             <label>Available Stock</label>
-            <input
-              type="number"
-              min="0"
-              value={product.stock ?? ""}
-              placeholder="0"
-              onChange={e => update("stock", e.target.value === "" ? null : parseInt(e.target.value))}
-            />
+            <input type="number" min="0" value={product.stock ?? ""} placeholder="0"
+              onChange={e => update("stock", e.target.value === "" ? null : parseInt(e.target.value))} />
           </div>
         </div>
       </div>
 
-      {/* DELIVERY DATE / TIME */}
+      {/* DELIVERY TIME */}
       <div className="settings-section">
         <div className="section-header"><h3>Delivery Time</h3></div>
         <div className="section-body">
@@ -236,152 +251,112 @@ export default function ProductSettingsPage() {
               onChange={e => {
                 const checked = e.target.checked;
                 update("preorder_delivery", checked);
-                const today = new Date();
-                const todayStr = localDateString(today);
-                const defaultTime = new Date(today.getTime() + 30*60*1000);
-                if(!checked){
+
+                const now = new Date();
+                const todayStr = localDateString(now);
+
+                if (!checked) {
+                  // if unchecked, reset to "In 30 minutes"
+                  const defaultTime = new Date(Date.now() + 30 * 60 * 1000);
                   update("delivery_date", todayStr);
                   update("delivery_time", defaultTime);
                   update("delivery_time_label", "");
                 } else {
-                  update("delivery_date", product.delivery_date || todayStr);
+                  // if checked, find first available slot
+                  let slots = buildTimeSlots().map(slot => {
+                    const slotDate = slotToDate(slot.label, new Date(todayStr));
+                    const isPast = slotDate < new Date(now.getTime() + 60 * 60 * 1000);
+                    return { ...slot, isPast };
+                  });
+                  // rotate past slots to the end
+                  slots = [...slots.filter(s => !s.isPast), ...slots.filter(s => s.isPast)];
+                  const firstAvailableSlot = slots.find(s => !s.isPast) || slots[0];
+
+                  update("delivery_time_label", firstAvailableSlot.label);
+                  update(
+                    "delivery_time",
+                    slotToDate(
+                      firstAvailableSlot.label,
+                      new Date(firstAvailableSlot.isPast ? Date.now() + 24 * 60 * 60 * 1000 : todayStr)
+                    )
+                  );
+                  update(
+                    "delivery_date",
+                    firstAvailableSlot.isPast
+                      ? localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000))
+                      : todayStr
+                  );
                 }
               }}
             />
+
           </div>
 
-          {/* Delivery Date */}
           <label className="delivery-date-label">
-            Delivery Date:{" "}
-            <span>
-              {product.delivery_date
-                ? (new Date(product.delivery_date).toDateString() === new Date().toDateString() ? "Today" : new Date(product.delivery_date).toLocaleDateString("en-US",{month:"short", day:"numeric", year:"numeric"}))
-                : "Today"}
-            </span>
+            Delivery: <span>{getDeliveryLabel(product)}</span>
           </label>
 
-          {/* Weekday picker */}
-          <div className={`weekday-picker ${!product.preorder_delivery ? "disabled" : ""}`}>
-            {Array.from({ length: 7 }).map((_, i) => {
-              const today = new Date();
-              const dayDate = new Date(today);
-              dayDate.setDate(today.getDate() + i);
-              const dayLabel = dayDate.toLocaleDateString("en-US",{weekday:"short"});
-              const selectedDate = product.delivery_date || localDateString(today);
-              const isSelected = selectedDate === localDateString(dayDate);
-              return (
-                <div
-                  key={i}
-                  className={`weekday-box ${isSelected ? "selected" : ""}`}
-                  onClick={() => {
-                    const clickedDateStr = localDateString(dayDate);
-                    update("delivery_date", clickedDateStr);
-                    if(clickedDateStr === localDateString(new Date())){
-                      // today: default first available slot
-                      const now = new Date();
-                      const availableSlots = [6,7,8,9,10,11,12,1,2,3,4,5,6,7,8]
-                        .map((h,j)=>{
-                          const pm = j>=6;
-                          const lbl = `${h}${pm?"pm":"am"} - ${h}:30${pm?"pm":"am"}`;
-                          const dt = slotToDate(lbl,dayDate);
-                          return dt >= new Date(now.getTime()+60*60*1000)?lbl:null;
-                        }).filter(Boolean);
-                      const defaultSlot = availableSlots[0] || "";
-                      update("delivery_time_label", defaultSlot);
-                      update("delivery_time", slotToDate(defaultSlot,dayDate));
-                    } else {
-                      // other days: All Day
-                      update("delivery_time_label","");
-                      update("delivery_time",new Date(dayDate.setHours(0,0,0,0)));
-                    }
-                  }}
-                >{dayLabel}</div>
-              );
-            })}
-          </div>
 
-          {/* Delivery Time Picker */}
-          <label className="delivery-date-label">
-            Delivery Time:{" "}
-            <span>
-              {product.preorder_delivery
-                ? (product.delivery_time_label || "All Day")
-                : "In 30 minutes"}
-            </span>
-          </label>
           <div className={`time-picker ${!product.preorder_delivery ? "disabled" : ""}`}>
-            {[6,7,8,9,10,11,12,1,2,3,4,5,6,7,8].map((hour,i)=>{
-              const isPM = i>=6;
-              const displayHour = hour;
-              const label = `${displayHour}${isPM?"pm":"am"} - ${displayHour}:30${isPM?"pm":"am"}`;
+            {(() => {
               const now = new Date();
               const todayStr = localDateString(now);
-              const selectedDate = product.delivery_date || todayStr;
-              const slotDate = slotToDate(label,new Date(selectedDate));
-              const isPastTime = selectedDate === todayStr && slotDate < new Date(now.getTime()+60*60*1000);
-              let isSelected = false;
-              if(selectedDate===todayStr){
-                const availableSlots = [6,7,8,9,10,11,12,1,2,3,4,5,6,7,8]
-                  .map((h,j)=>{
-                    const pm = j>=6;
-                    const lbl = `${h}${pm?"pm":"am"} - ${h}:30${pm?"pm":"am"}`;
-                    const dt = slotToDate(lbl,new Date(selectedDate));
-                    return dt >= new Date(now.getTime()+60*60*1000)?lbl:null;
-                  }).filter(Boolean);
-                const defaultSlot = availableSlots[0] || "";
-                isSelected = label === (product.delivery_time_label || defaultSlot);
-              } else {
-                isSelected = label === product.delivery_time_label;
-              }
+              let slots = buildTimeSlots().map(slot => {
+                const slotDate = slotToDate(slot.label, new Date(todayStr));
+                const isPast = slotDate < new Date(now.getTime() + 60 * 60 * 1000);
+                return { ...slot, isPast };
+              });
+              // Rotate past slots to end
+              slots = [...slots.filter(s => !s.isPast), ...slots.filter(s => s.isPast)];
+              return slots.map((slot, i) => {
+                const isSelected = slot.label === product.delivery_time_label;
+                const slotDate = slotToDate(slot.label, new Date(todayStr));
+                const slotDeliveryDate = slot.isPast ? localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000)) : todayStr;
+                return (
+                  <div
+                    key={i}
+                    className={`time-box ${isSelected ? "selected" : ""} ${slot.isPast ? "past" : ""}`}
+                    onClick={() => {
+                      if (!product.preorder_delivery) return;
+                      const slotDeliveryDate = slot.isPast
+                        ? localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000)) // tomorrow
+                        : localDateString(new Date());
+                      update("delivery_time_label", slot.label);
+                      update("delivery_time", slotToDate(slot.label, new Date(slotDeliveryDate)));
+                      update("delivery_date", slotDeliveryDate);
+                    }}
+                  >
+                    {slot.hour}
+                  </div>
 
-              return (
-                <div
-                  key={i}
-                  className={`time-box ${isSelected?"selected":""} ${!product.preorder_delivery || isPastTime?"disabled":""}`}
-                  onClick={()=>{
-                    if(!product.preorder_delivery || isPastTime) return;
-                    update("delivery_time_label",label);
-                    update("delivery_time",slotToDate(label,new Date(product.delivery_date)));
-                  }}
-                >{displayHour}</div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
-
         </div>
       </div>
 
-      {/* CROSS COMMUNITY DELIVERY */}
+      {/* CROSS-COMMUNITY DELIVERY */}
       <div className="settings-section">
         <div className="section-header"><h3>Delivery Options</h3></div>
         <div className="section-body">
           <div className="cross-delivery-row">
             <label>{communityText}</label>
-            <input
-              type="checkbox"
-              checked={product.cross_comm_delivery || false}
-              onChange={e => update("cross_comm_delivery", e.target.checked)}
-            />
+            <input type="checkbox" checked={product.cross_comm_delivery || false}
+              onChange={e => update("cross_comm_delivery", e.target.checked)} />
           </div>
           <div className="settings-item">
             <label>Extra Delivery Charge (₱)</label>
-            <input
-              type="number"
-              disabled={!product.cross_comm_delivery}
-              value={product.cross_comm_charge ?? ""}
-              placeholder="0"
-              onChange={e => update("cross_comm_charge", e.target.value===""?null:parseInt(e.target.value))}
-            />
+            <input type="number" disabled={!product.cross_comm_delivery} value={product.cross_comm_charge ?? ""} placeholder="0"
+              onChange={e => update("cross_comm_charge", e.target.value === "" ? null : parseInt(e.target.value))} />
           </div>
         </div>
       </div>
 
       {/* BUTTONS */}
       <div className="settings-actions">
-        <button className="save-btn" onClick={saveProduct}>
-          {id ? "Save Changes" : "Add Product"}
-        </button>
-        <button className="cancel-btn" onClick={()=>navigate(-1)}>Cancel</button>
+        <button className="save-btn" onClick={saveProduct}>{id ? "Save Changes" : "Add Product"}</button>
+        <button className="cancel-btn" onClick={() => navigate(-1)}>Cancel</button>
         {id && <button className="delete-btn" onClick={deleteProductHandler}>Delete Product</button>}
       </div>
     </div>
