@@ -34,9 +34,6 @@ class Product < ApplicationRecord
   # Validations
   # ----------------------
   validates :status, inclusion: { in: [true, false] }
-  validates :cross_comm_charge,
-            numericality: { greater_than_or_equal_to: 0 },
-            allow_nil: true
   validates :delivery_date_gap,
             numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validates :preorder_delivery, inclusion: { in: [true, false] } # new validation
@@ -56,6 +53,11 @@ class Product < ApplicationRecord
   # Callbacks
   # ----------------------
   before_validation :normalize_image_url
+
+  # Expose the shop's cross-community charge for this product
+  def cross_comm_charge
+    shop.cross_comm_charge
+  end
 
   private
 

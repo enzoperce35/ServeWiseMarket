@@ -1,11 +1,7 @@
-# db/seeds.rb
-
 puts "Clearing existing data..."
 Product.destroy_all
 Shop.destroy_all
 User.destroy_all
-
-puts "Creating sellers..."
 
 # ---------------------------------------
 # Helper: Always-valid PH mobile number
@@ -19,7 +15,7 @@ end
 #    • 5 = Sampaguita West
 #    • 5 = Sampaguita Homes
 # ---------------------------------------
-
+puts "Creating sellers..."
 sellers = []
 
 10.times do |i|
@@ -44,13 +40,15 @@ puts "✅ Created #{sellers.count} sellers"
 # ---------------------------------------
 # 2. CREATE SHOPS
 # ---------------------------------------
-
 puts "Creating shops for sellers..."
 
 sellers.each do |seller|
   seller.create_shop!(
     name: "#{seller.name}'s Shop",
-    open: true
+    open: true,
+    community: seller.community,
+    cross_comm_charge: 50,            # default cross-community charge per shop
+    cross_comm_minimum: 500.0         # default minimum to waive cross-community charge
   )
 end
 
@@ -59,7 +57,6 @@ puts "✅ Created shops for all sellers"
 # ---------------------------------------
 # 3. PRODUCT CATEGORIES
 # ---------------------------------------
-
 categories = [
   "merienda", "lutong ulam", "lutong gulay",
   "rice meal", "almusal", "dessert", "delicacy",
@@ -67,7 +64,7 @@ categories = [
 ]
 
 # ---------------------------------------
-# Built-in lorem ipsum generator
+# Helper: Lorem generator
 # ---------------------------------------
 def lorem_words(min = 10, max = 30)
   pool = %w[
@@ -84,7 +81,6 @@ end
 # ---------------------------------------
 # 4. CREATE 10 PRODUCTS PER SELLER
 # ---------------------------------------
-
 puts "Creating products..."
 
 sellers.each do |seller|
@@ -126,15 +122,6 @@ sellers.each do |seller|
     # dessert, frozen, refreshment → no date/time
     end
 
-    # Cross-community delivery rules (first 4 products only)
-    cross_delivery = false
-    cross_charge = 0
-
-    if i < 4
-      cross_delivery = true
-      cross_charge = (i < 2 ? 20 : 0)
-    end
-
     Product.create!(
       name: "Product #{seller.id}-#{i + 1}",
       price: rand(50..500),
@@ -144,8 +131,6 @@ sellers.each do |seller|
       shop: shop,
       status: true,
       stock: rand(10..30),
-      cross_comm_delivery: cross_delivery,
-      cross_comm_charge: cross_charge,
       delivery_date: delivery_date,
       delivery_time: delivery_time
     )

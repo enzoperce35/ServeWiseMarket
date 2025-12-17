@@ -14,13 +14,13 @@ module Api
                           .includes(shop: :user) # eager load shop and user
 
         render json: products.as_json(
+          methods: [:cross_comm_charge], # call the model method
           only: [:id, :name, :description, :price, :stock, :category, :image_url,
                  :delivery_date, :delivery_time, :delivery_date_gap,
-                 :preorder_delivery, # newly added
-                 :cross_comm_delivery, :cross_comm_charge, :status],
+                 :preorder_delivery, :cross_comm_delivery, :status],
           include: {
             shop: {
-              only: [:id, :name, :status],
+              only: [:id, :name, :status, :cross_comm_charge, :cross_comm_minimum],
               include: {
                 user: {
                   only: [:id, :name, :community, :phase, :contact_number]
@@ -36,13 +36,13 @@ module Api
         product = Product.available.includes(shop: :user).find(params[:id])
 
         render json: product.as_json(
+          methods: [:cross_comm_charge],
           only: [:id, :name, :description, :price, :stock, :category, :image_url,
                  :delivery_date, :delivery_time, :delivery_date_gap,
-                 :preorder_delivery, # newly added
-                 :cross_comm_delivery, :cross_comm_charge, :status],
+                 :preorder_delivery, :cross_comm_delivery, :status],
           include: {
             shop: {
-              only: [:id, :name, :status],
+              only: [:id, :name, :status, :cross_comm_charge, :cross_comm_minimum],
               include: {
                 user: {
                   only: [:id, :name, :community, :phase, :contact_number]

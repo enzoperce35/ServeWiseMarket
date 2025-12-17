@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_15_064346) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_17_123219) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -84,8 +84,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_064346) do
     t.bigint "shop_id", null: false
     t.datetime "delivery_date"
     t.string "delivery_time"
-    t.boolean "cross_comm_delivery", default: false
-    t.integer "cross_comm_charge", default: 0
     t.boolean "status", default: false, null: false
     t.integer "delivery_date_gap", default: 0, null: false
     t.boolean "preorder_delivery", default: false, null: false
@@ -101,6 +99,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_064346) do
     t.datetime "updated_at", null: false
     t.boolean "open", default: true, null: false
     t.datetime "user_opened_at"
+    t.string "community", null: false
+    t.integer "cross_comm_charge", default: 0, null: false
+    t.decimal "cross_comm_minimum", precision: 10, scale: 2, default: "0.0", null: false
     t.index ["user_id"], name: "index_shops_on_user_id"
   end
 

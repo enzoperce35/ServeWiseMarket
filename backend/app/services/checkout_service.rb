@@ -64,6 +64,6 @@ class CheckoutService
   end
 
   def calculate_cross_comm(items)
-    items.sum { |i| i.product.cross_comm_charge.to_i }
+    items.sum { |i| i.product.shop.cross_comm_charge.to_i }
   end
 end
