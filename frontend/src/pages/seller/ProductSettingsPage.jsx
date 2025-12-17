@@ -63,7 +63,6 @@ export default function ProductSettingsPage() {
       const eightPM = new Date(today);
       eightPM.setHours(20, 0, 0, 0);
 
-      // Initialize product
       let initialProduct;
       if (id) {
         const prods = await fetchSellerProducts();
@@ -71,8 +70,9 @@ export default function ProductSettingsPage() {
         initialProduct = {
           ...found,
           delivery_date: found.delivery_date ? localDateString(new Date(found.delivery_date)) : todayStr,
-          delivery_time: found.preorder_delivery ? found.delivery_time : eightPM,
-          delivery_time_label: found.delivery_time_label || "",
+          delivery_time: found.delivery_time ? new Date(found.delivery_time) : eightPM,
+          // IMPORTANT: do NOT highlight on load
+          delivery_time_label: "",
         };
       } else {
         initialProduct = {
@@ -92,24 +92,6 @@ export default function ProductSettingsPage() {
         };
       }
 
-      // Build slots and rotate past slots
-      const slots = buildTimeSlots().map(slot => {
-        const slotDate = slotToDate(slot.label, new Date(todayStr));
-        const isPast = slotDate < new Date(today.getTime() + 60 * 60 * 1000);
-        return { ...slot, isPast };
-      });
-      const orderedSlots = [...slots.filter(s => !s.isPast), ...slots.filter(s => s.isPast)];
-      const firstAvailableSlot = orderedSlots.find(s => !s.isPast) || orderedSlots[0];
-
-      // Set default slot if none selected
-      if (!initialProduct.delivery_time_label && initialProduct.preorder_delivery) {
-        initialProduct.delivery_time_label = firstAvailableSlot.label;
-        initialProduct.delivery_time = slotToDate(firstAvailableSlot.label, new Date(todayStr));
-        initialProduct.delivery_date = firstAvailableSlot.isPast
-          ? localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000))
-          : todayStr;
-      }
-
       setProduct(initialProduct);
       setLoading(false);
     })();
@@ -126,9 +108,8 @@ export default function ProductSettingsPage() {
 
     if (!product.preorder_delivery) {
       deliveryDate = todayStr;
-      const eightPM = new Date(today);
-      eightPM.setHours(20, 0, 0, 0);
-      deliveryTime = eightPM;
+      const defaultTime = new Date(Date.now() + 30 * 60 * 1000);
+      deliveryTime = defaultTime;
     }
 
     let gap = 0;
@@ -169,21 +150,33 @@ export default function ProductSettingsPage() {
   };
 
   const getDeliveryLabel = (product) => {
-    if (!product.preorder_delivery) {
-      return "In 30 minutes";
-    }
-
+    if (!product.preorder_delivery) return "In 30 minutes";
+  
     const todayStr = localDateString(new Date());
     const tomorrowStr = localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000));
-
+  
     let dayLabel = product.delivery_date;
     if (product.delivery_date === todayStr) dayLabel = "Today";
     else if (product.delivery_date === tomorrowStr) dayLabel = "Tomorrow";
+  
+    // If no label yet, build from delivery_time
+    const timeLabel = product.delivery_time_label
+      || (() => {
+        if (!product.delivery_time) return "";
+        const hour = product.delivery_time.getHours();
+        const minutes = product.delivery_time.getMinutes();
+        const formatHour = hour % 12 === 0 ? 12 : hour % 12;
+        const ampm = hour >= 12 ? "pm" : "am";
+        const nextHalfHour = minutes === 0 ? `${formatHour}:30${ampm}` : `${formatHour + 1}:00${ampm}`;
+        return `${formatHour}${ampm} - ${nextHalfHour}`;
+      })();
+  
+    return `${dayLabel}, ${timeLabel}`;
+  };  
 
-    return `${dayLabel}, ${product.delivery_time_label}`;
-  };
-
-  const communityText = user.community === "Sampaguita West" ? "Deliver to Sampaguita Homes" : "Deliver to Sampaguita West";
+  const communityText = user.community === "Sampaguita West"
+    ? "Deliver to Sampaguita Homes"
+    : "Deliver to Sampaguita West";
 
   // ----------------- JSX -----------------
   return (
@@ -193,7 +186,7 @@ export default function ProductSettingsPage() {
       {/* BASIC INFO */}
       <div className="settings-section">
         <div className="section-header" onClick={() => setBasicInfoOpen(!basicInfoOpen)}>
-          <h3>{product.name}</h3>
+          <h3>{product.name || "Basic Info"}</h3>
           <span>{basicInfoOpen ? "-" : "+"}</span>
         </div>
         {basicInfoOpen && (
@@ -252,23 +245,21 @@ export default function ProductSettingsPage() {
                 const checked = e.target.checked;
                 update("preorder_delivery", checked);
 
-                const now = new Date();
-                const todayStr = localDateString(now);
-
                 if (!checked) {
-                  // if unchecked, reset to "In 30 minutes"
+                  const todayStr = localDateString(new Date());
                   const defaultTime = new Date(Date.now() + 30 * 60 * 1000);
                   update("delivery_date", todayStr);
                   update("delivery_time", defaultTime);
                   update("delivery_time_label", "");
                 } else {
-                  // if checked, find first available slot
+                  // only on manual toggle we pick first available slot
+                  const now = new Date();
+                  const todayStr = localDateString(now);
                   let slots = buildTimeSlots().map(slot => {
                     const slotDate = slotToDate(slot.label, new Date(todayStr));
                     const isPast = slotDate < new Date(now.getTime() + 60 * 60 * 1000);
                     return { ...slot, isPast };
                   });
-                  // rotate past slots to the end
                   slots = [...slots.filter(s => !s.isPast), ...slots.filter(s => s.isPast)];
                   const firstAvailableSlot = slots.find(s => !s.isPast) || slots[0];
 
@@ -289,13 +280,11 @@ export default function ProductSettingsPage() {
                 }
               }}
             />
-
           </div>
 
           <label className="delivery-date-label">
             Delivery: <span>{getDeliveryLabel(product)}</span>
           </label>
-
 
           <div className={`time-picker ${!product.preorder_delivery ? "disabled" : ""}`}>
             {(() => {
@@ -306,12 +295,9 @@ export default function ProductSettingsPage() {
                 const isPast = slotDate < new Date(now.getTime() + 60 * 60 * 1000);
                 return { ...slot, isPast };
               });
-              // Rotate past slots to end
               slots = [...slots.filter(s => !s.isPast), ...slots.filter(s => s.isPast)];
               return slots.map((slot, i) => {
                 const isSelected = slot.label === product.delivery_time_label;
-                const slotDate = slotToDate(slot.label, new Date(todayStr));
-                const slotDeliveryDate = slot.isPast ? localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000)) : todayStr;
                 return (
                   <div
                     key={i}
@@ -319,7 +305,7 @@ export default function ProductSettingsPage() {
                     onClick={() => {
                       if (!product.preorder_delivery) return;
                       const slotDeliveryDate = slot.isPast
-                        ? localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000)) // tomorrow
+                        ? localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000))
                         : localDateString(new Date());
                       update("delivery_time_label", slot.label);
                       update("delivery_time", slotToDate(slot.label, new Date(slotDeliveryDate)));
@@ -328,7 +314,6 @@ export default function ProductSettingsPage() {
                   >
                     {slot.hour}
                   </div>
-
                 );
               });
             })()}
