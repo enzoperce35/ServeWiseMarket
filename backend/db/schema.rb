@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_17_123219) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_18_052133) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -87,6 +87,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_17_123219) do
     t.boolean "status", default: false, null: false
     t.integer "delivery_date_gap", default: 0, null: false
     t.boolean "preorder_delivery", default: false, null: false
+    t.boolean "cross_comm_delivery", default: false, null: false
     t.index ["shop_id"], name: "index_products_on_shop_id"
   end
 

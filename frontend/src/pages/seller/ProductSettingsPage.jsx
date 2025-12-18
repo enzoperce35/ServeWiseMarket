@@ -88,7 +88,6 @@ export default function ProductSettingsPage() {
           delivery_time: eightPM,
           delivery_time_label: "",
           cross_comm_delivery: false,
-          cross_comm_charge: 0,
         };
       }
 
@@ -99,6 +98,7 @@ export default function ProductSettingsPage() {
 
   if (loading || !product || !shop || !user) return <p className="loading">Loading...</p>;
 
+  // ----------------- SAVE PRODUCT -----------------
   const saveProduct = async () => {
     const today = new Date();
     const todayStr = localDateString(today);
@@ -120,6 +120,7 @@ export default function ProductSettingsPage() {
       gap = Math.max(Math.floor((d2Clean - d1) / (1000 * 60 * 60 * 24)), 0);
     }
 
+    // Include cross_comm_delivery only
     const body = {
       ...product,
       shop_id: shop.id,
@@ -127,6 +128,7 @@ export default function ProductSettingsPage() {
       delivery_date: deliveryDate,
       delivery_time: deliveryTime,
       delivery_date_gap: gap,
+      cross_comm_delivery: product.cross_comm_delivery, // ✅ keep checkbox value
     };
 
     if (id) await updateProduct(id, body);
@@ -134,6 +136,7 @@ export default function ProductSettingsPage() {
 
     navigate("/seller/products");
   };
+
 
   const deleteProductHandler = async () => {
     if (!window.confirm("Delete this product permanently?")) return;
@@ -151,14 +154,14 @@ export default function ProductSettingsPage() {
 
   const getDeliveryLabel = (product) => {
     if (!product.preorder_delivery) return "In 30 minutes";
-  
+
     const todayStr = localDateString(new Date());
     const tomorrowStr = localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000));
-  
+
     let dayLabel = product.delivery_date;
     if (product.delivery_date === todayStr) dayLabel = "Today";
     else if (product.delivery_date === tomorrowStr) dayLabel = "Tomorrow";
-  
+
     // If no label yet, build from delivery_time
     const timeLabel = product.delivery_time_label
       || (() => {
@@ -170,9 +173,9 @@ export default function ProductSettingsPage() {
         const nextHalfHour = minutes === 0 ? `${formatHour}:30${ampm}` : `${formatHour + 1}:00${ampm}`;
         return `${formatHour}${ampm} - ${nextHalfHour}`;
       })();
-  
+
     return `${dayLabel}, ${timeLabel}`;
-  };  
+  };
 
   const communityText = user.community === "Sampaguita West"
     ? "Deliver to Sampaguita Homes"
@@ -327,14 +330,13 @@ export default function ProductSettingsPage() {
         <div className="section-body">
           <div className="cross-delivery-row">
             <label>{communityText}</label>
-            <input type="checkbox" checked={product.cross_comm_delivery || false}
-              onChange={e => update("cross_comm_delivery", e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={product.cross_comm_delivery || false}
+              onChange={e => update("cross_comm_delivery", e.target.checked)}
+            />
           </div>
-          <div className="settings-item">
-            <label>Extra Delivery Charge (₱)</label>
-            <input type="number" disabled={!product.cross_comm_delivery} value={product.cross_comm_charge ?? ""} placeholder="0"
-              onChange={e => update("cross_comm_charge", e.target.value === "" ? null : parseInt(e.target.value))} />
-          </div>
+
         </div>
       </div>
 
