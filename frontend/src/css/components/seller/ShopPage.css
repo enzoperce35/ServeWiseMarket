@@ -9,8 +9,8 @@
   font-family: 'Helvetica', sans-serif;
   color: #333;
   display: flex;
-  flex-direction: column; /* allows footer to stick */
-  min-height: 100vh; /* full viewport height */
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* --- Shop Header & Image Container --- */
@@ -20,7 +20,7 @@
 }
 
 .user-shop-page-image-container {
-  position: relative; /* for back button overlay */
+  position: relative;
   width: 100%;
   max-width: 400px;
   margin: 0 auto 10px auto;
@@ -30,7 +30,7 @@
   width: 100%;
   height: 250px;
   object-fit: cover;
-  border-radius: 12px; /* square with rounded corners */
+  border-radius: 12px;
 }
 
 .user-shop-page-image-placeholder {
@@ -127,7 +127,7 @@
 
 /* --- Products --- */
 .user-shop-page-products {
-  flex: 1; /* grows to push footer down */
+  flex: 1;
 }
 
 .user-shop-page-products-header {
@@ -202,27 +202,382 @@
   color: #777;
 }
 
-/* --- Footer: Owner Info --- */
+/* --- Footer --- */
 .user-shop-page-footer {
-  margin-top: auto; /* sticky at bottom */
+  margin-top: auto;
   padding: 50px 15px;
   background-color: #fff;
   border-top: 1px solid #eee;
 }
 
 /* ====================================
-   RESPONSIVE
+   SHOP PAGE - FRIENDLY FOOD VIBE
 ==================================== */
 
+.shop-page-friendly {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px;
+  font-family: "Inter", "Helvetica", sans-serif;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #fafafa;
+}
+
+/* HEADER */
+.shop-page-friendly-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.shop-page-friendly-image-container {
+  position: relative;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.shop-page-friendly-image {
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+.shop-page-friendly-image-placeholder {
+  width: 100%;
+  height: 240px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-page-friendly-image-placeholder-text {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  padding: 0 12px;
+}
+
+/* Back button */
+.shop-page-friendly-back-btn {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* Status pill */
+.shop-status-pill {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.shop-status-pill.open {
+  background: #e8f7ef;
+  color: #1b8a5a;
+}
+
+.shop-status-pill.closed {
+  background: #fdecec;
+  color: #c0392b;
+}
+
+/* PRODUCTS */
+.shop-page-friendly-products {
+  flex: 1;
+  margin-top: 20px;
+}
+
+.shop-page-friendly-products-header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Products title */
+.shop-page-friendly-products-header {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+/* ICONS WRAPPER */
+.shop-icons-wrapper {
+  display: flex;
+  gap: 16px; /* spacing between cart and orders */
+}
+
+/* CART / ORDERS BUTTON */
+.shop-page-friendly-cart-btn,
+.shop-page-friendly-orders-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* ICON SIZE */
+.shop-page-friendly-cart-icon,
+.shop-page-friendly-orders-icon {
+  width: 28px;
+  height: 28px;
+  color: #ff7a18;
+}
+
+/* BADGE NUMBER */
+.shop-cart-count,
+.shop-orders-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ff3b30;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(1);
+  transition: transform 0.25s ease, background 0.25s ease;
+  z-index: 10;
+}
+
+/* Hide badge if count is 0 */
+.shop-cart-count:empty,
+.shop-orders-count:empty {
+  display: none;
+}
+
+/* Animation */
+.cart-badge-animate .shop-cart-count,
+.cart-badge-animate .shop-orders-count {
+  transform: scale(1.5);
+  background: #ff453a;
+}
+
+/* MOBILE ADJUSTMENTS */
+@media (max-width: 768px) {
+  .shop-icons-wrapper {
+    gap: 12px;
+  }
+
+  .shop-page-friendly-cart-icon,
+  .shop-page-friendly-orders-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .shop-cart-count,
+  .shop-orders-count {
+    top: -5px;
+    right: -5px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 0.65rem;
+  }
+}
+
+/* POP ANIMATION */
+@keyframes cart-badge-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.45); }
+  100% { transform: scale(1); }
+}
+
+/* MOBILE MENU */
+.shop-page-friendly-mobile-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.shop-page-friendly-menu-group {
+  background: #fff;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.shop-page-friendly-menu-group-header {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+.shop-page-friendly-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px dashed #eee;
+}
+
+.shop-page-friendly-menu-item:last-child {
+  border-bottom: none;
+}
+
+.shop-page-friendly-menu-item-main {
+  flex: 1;
+  padding-right: 10px;
+}
+
+.shop-page-friendly-menu-item-name {
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: #ff7a18;
+}
+
+.shop-page-friendly-menu-item-name:hover {
+  text-decoration: underline;
+}
+
+.shop-page-friendly-menu-item-desc {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 4px 0;
+}
+
+.shop-page-friendly-menu-item-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.shop-page-friendly-menu-item-price {
+  font-weight: 700;
+  color: #222;
+}
+
+.shop-page-friendly-menu-add-btn {
+  min-width: 64px;
+  height: 36px;
+  border-radius: 999px;
+  border: none;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ff7a18, #ffb347);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(255,122,24,0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.shop-page-friendly-menu-add-btn:active {
+  transform: scale(0.95);
+}
+
+.shop-page-friendly-menu-add-btn:disabled {
+  background: #ddd;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* DESKTOP GRID */
+.shop-page-friendly-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px;
+}
+
+/* EMPTY / STATES */
+.shop-page-friendly-no-products,
+.shop-page-friendly-loading,
+.shop-page-friendly-not-found {
+  text-align: center;
+  color: #777;
+  margin-top: 40px;
+  font-size: 1rem;
+}
+
+/* FOOTER */
+.shop-page-friendly-footer {
+  margin-top: 40px;
+  padding: 50px 15px 30px;
+  position: relative;
+  background: #fff;
+  border-radius: 12px 12px 0 0;
+}
+
+.shop-page-friendly-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10px;
+  right: 10px;
+  height: 3px;
+  border-radius: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(255, 122, 24, 0.3),
+    rgba(255, 183, 71, 0.3)
+  );
+}
+
+.shop-page-friendly-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shop-page-friendly-info-item {
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  color: #333;
+}
+
+.shop-page-friendly-info-icon {
+  margin-right: 8px;
+  font-size: 1.2rem;
+  width: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* RESPONSIVE */
+@media (min-width: 769px) {
+  .shop-page-friendly-mobile-menu {
+    display: none;
+  }
+}
 
 @media (max-width: 768px) {
-  .user-shop-page {
+  .shop-page-friendly-products-grid {
+    display: none;
+  }
+
+  .shop-page-friendly {
     padding: 15px;
   }
 }
 
 @media (max-width: 480px) {
-  .user-shop-page-info {
+  .shop-page-friendly-info {
     align-items: flex-start;
   }
 }

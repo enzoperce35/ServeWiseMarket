@@ -82,16 +82,31 @@
   color: #6b7280;
 }
 
-.home-btn {
-  background: none;
+/* ====================================
+   BACK BUTTON (ShopPage style)
+==================================== */
+
+.orders-back-btn {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
   border: none;
-  color: #ff7a00;
+  border-radius: 999px;
+  padding: 8px 14px;
+
+  font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  font-weight: 600;
-  padding-bottom: 15px;
+  margin-bottom: 20px;
+
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.home-btn:hover {
-  text-decoration: underline;
+.orders-back-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+}
+
+.orders-back-btn:active {
+  transform: scale(0.95);
 }

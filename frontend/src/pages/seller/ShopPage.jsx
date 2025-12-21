@@ -1,29 +1,90 @@
-// src/pages/seller/ShopPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import ProductCard from "../../components/ProductCard";
+import {
+  isExpired,
+  getDeliveryLabel,
+  getDeliveryDateTime,
+} from "../../utils/deliveryDateTime";
+import { useCartContext } from "../../context/CartProvider";
+import { useOrdersContext } from "../../context/OrdersProvider";
+import { useAuthContext } from "../../context/AuthProvider";
+import { addToCartApi } from "../../api/cart";
+import toast from "react-hot-toast";
 import "../../css/components/seller/ShopPage.css";
+import {
+  ShoppingCartIcon,
+  ClipboardDocumentListIcon,
+} from "@heroicons/react/24/outline";
 
 export default function ShopPage() {
   const { shopId } = useParams();
   const navigate = useNavigate();
 
+  const { cart, refreshCart } = useCartContext();
+  const { ordersCount, refreshOrders } = useOrdersContext();
+  const { user, token } = useAuthContext();
+
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+
+  /* ===== BADGE ANIMATION ===== */
+  const [animateCart, setAnimateCart] = useState(false);
+  const [animateOrders, setAnimateOrders] = useState(false);
+
+  const prevCartCountRef = useRef(cart?.item_count || 0);
+  const prevOrdersCountRef = useRef(ordersCount || 0);
+
+  /* =========================
+     🔁 REFRESH ON PAGE MOUNT
+     (this fixes stale badges on Back)
+  ========================= */
+  useEffect(() => {
+    refreshCart();
+    refreshOrders();
+  }, []);
+
+  useEffect(() => {
+    const currentCartCount = cart?.item_count || 0;
+    if (currentCartCount > prevCartCountRef.current) {
+      setAnimateCart(true);
+      const timer = setTimeout(() => setAnimateCart(false), 350);
+      return () => clearTimeout(timer);
+    }
+    prevCartCountRef.current = currentCartCount;
+  }, [cart?.item_count]);
+
+  useEffect(() => {
+    if (ordersCount > prevOrdersCountRef.current) {
+      setAnimateOrders(true);
+      const timer = setTimeout(() => setAnimateOrders(false), 350);
+      return () => clearTimeout(timer);
+    }
+    prevOrdersCountRef.current = ordersCount;
+  }, [ordersCount]);
+
+  const isMobile = window.innerWidth <= 768;
+
+  /* =========================
+     HELPERS
+  ========================= */
 
   const formatAddress = (user) => {
     if (!user) return "N/A";
     const { block, lot, street, phase, community } = user;
 
-    const blockLot = [block && `blk. ${block}`, lot && `lot ${lot}`]
+    const blockLot = [
+      block && `blk. ${block}`,
+      lot && `lot ${lot}`,
+    ]
       .filter(Boolean)
       .join(" - ");
 
     const rest = [
       street && `${street} st.`,
-      phase && `${phase}`.toLowerCase(),
+      phase && phase.toLowerCase(),
       community,
     ]
       .filter(Boolean)
@@ -31,6 +92,20 @@ export default function ShopPage() {
 
     return [blockLot, rest].filter(Boolean).join(", ");
   };
+
+  const generateGradientFromId = (id) => {
+    const hash = Array.from(String(id)).reduce(
+      (acc, char) => acc + char.charCodeAt(0),
+      0
+    );
+    const color1 = `hsl(${hash % 360}, 70%, 60%)`;
+    const color2 = `hsl(${(hash * 7) % 360}, 70%, 45%)`;
+    return `linear-gradient(135deg, ${color1}, ${color2})`;
+  };
+
+  /* =========================
+     FETCH SHOP
+  ========================= */
 
   useEffect(() => {
     const loadShop = async () => {
@@ -52,77 +127,247 @@ export default function ShopPage() {
     loadShop();
   }, [shopId]);
 
-  if (loading) return <p className="user-shop-page-loading">Loading shop...</p>;
-  if (errorMessage) return <p className="user-shop-page-not-found">{errorMessage}</p>;
+  /* =========================
+     ADD TO CART
+  ========================= */
 
-  const generateGradientFromId = (id) => {
-    if (!id) return "linear-gradient(135deg, #ccc, #aaa)";
-    const hash = Array.from(String(id)).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const color1 = `hsl(${hash % 360}, 70%, 60%)`;
-    const color2 = `hsl(${(hash * 7) % 360}, 70%, 45%)`;
-    return `linear-gradient(135deg, ${color1}, ${color2})`;
+  const handleAddAndGoCart = async (productId) => {
+    if (!user || !token) {
+      toast.error("Please log in to add items to tray");
+      return;
+    }
+
+    try {
+      await addToCartApi(productId, 1, token);
+      await refreshCart();
+      toast.success("Added to tray 🛒");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add item");
+    }
   };
 
-  // Filter only available products (Product.stock > 0)
-  const availableProducts = shop.products?.filter((p) => p.stock > 0) || [];
+  /* =========================
+     LOADING / ERROR
+  ========================= */
+
+  if (loading) {
+    return <p className="shop-page-friendly-loading">Loading shop...</p>;
+  }
+
+  if (errorMessage || !shop) {
+    return (
+      <p className="shop-page-friendly-not-found">
+        {errorMessage || "Shop not found"}
+      </p>
+    );
+  }
+
+  /* =========================
+     FILTER PRODUCTS
+  ========================= */
+
+  const availableProducts =
+    shop.products?.filter((product) => {
+      const valid =
+        product.status === true &&
+        product.stock >= 1 &&
+        !isExpired(product);
+
+      if (!valid) return false;
+      if (!shop.open) return product.preorder_delivery === true;
+      return true;
+    }) || [];
+
+  /* =========================
+     MOBILE GROUPING
+  ========================= */
+
+  const groupedProducts = (() => {
+    if (!isMobile) return [];
+
+    const instant = [];
+    const preorder = [];
+
+    availableProducts.forEach((p) =>
+      p.preorder_delivery ? preorder.push(p) : instant.push(p)
+    );
+
+    const groupByLabel = (list) => {
+      const groups = {};
+      list.forEach((p) => {
+        const label = getDeliveryLabel(p);
+        groups[label] ||= [];
+        groups[label].push(p);
+      });
+      return groups;
+    };
+
+    const instantGroups = Object.entries(groupByLabel(instant));
+    const preorderGroups = Object.entries(groupByLabel(preorder)).sort(
+      ([, a], [, b]) =>
+        getDeliveryDateTime(a[0]) - getDeliveryDateTime(b[0])
+    );
+
+    return [...instantGroups, ...preorderGroups];
+  })();
+
+  /* =========================
+     RENDER
+  ========================= */
 
   return (
-    <div className="user-shop-page">
-      {/* Shop Header */}
-      <div className="user-shop-page-header">
-        <div className="user-shop-page-image-container">
-          <button className="user-shop-page-back-btn" onClick={() => navigate(-1)}>
+    <div className="shop-page-friendly">
+      {/* ===== HEADER ===== */}
+      <div className="shop-page-friendly-header">
+        <div className="shop-page-friendly-image-container">
+          <button
+            className="shop-page-friendly-back-btn"
+            onClick={() => navigate(-1)}
+          >
             ← Back
           </button>
 
           {shop.image_url ? (
-            <img src={shop.image_url} alt={shop.name} className="user-shop-page-image" />
+            <img
+              src={shop.image_url}
+              alt={shop.name}
+              className="shop-page-friendly-image"
+            />
           ) : (
             <div
-              className="user-shop-page-image-placeholder"
+              className="shop-page-friendly-image-placeholder"
               style={{ background: generateGradientFromId(shop.id) }}
             >
-              <span className="user-shop-page-image-placeholder-text">{shop.name}</span>
+              <span className="shop-page-friendly-image-placeholder-text">
+                {shop.name}
+              </span>
             </div>
           )}
         </div>
 
-        {shop.description && (
-          <p className="user-shop-page-description">{shop.description}</p>
-        )}
-
-        <p className={`user-shop-page-status ${shop.open ? "open" : "closed"}`}>
+        <p className={`shop-status-pill ${shop.open ? "open" : "closed"}`}>
           {shop.open ? "Open" : "Closed"}
         </p>
       </div>
 
-      {/* Products */}
+      {/* ===== PRODUCTS ===== */}
       {availableProducts.length > 0 ? (
-        <div className="user-shop-page-products">
-          <h2 className="user-shop-page-products-header">Available</h2>
-          <div className="products-grid">
-            {availableProducts.map((product) => (
-              <div key={product.id} className="product-card">
-                <ProductCard product={product} clickable={false} />
-              </div>
-            ))}
+        <div className="shop-page-friendly-products">
+          <div className="shop-page-friendly-products-header-wrapper">
+            <h2 className="shop-page-friendly-products-header">Menu</h2>
+
+            <div className="shop-icons-wrapper">
+              {/* CART */}
+              <button
+                className={`shop-page-friendly-cart-btn ${
+                  animateCart ? "cart-badge-animate" : ""
+                }`}
+                onClick={() => navigate("/cart")}
+              >
+                <ShoppingCartIcon className="shop-page-friendly-cart-icon" />
+                {(cart?.item_count ?? 0) > 0 && (
+                  <span className="shop-cart-count">
+                    {cart.item_count}
+                  </span>
+                )}
+              </button>
+
+              {/* ORDERS */}
+              <button
+                className={`shop-page-friendly-cart-btn ${
+                  animateOrders ? "cart-badge-animate" : ""
+                }`}
+                onClick={() => navigate("/orders")}
+              >
+                <ClipboardDocumentListIcon className="shop-page-friendly-cart-icon" />
+                {ordersCount > 0 && (
+                  <span className="shop-cart-count">{ordersCount}</span>
+                )}
+              </button>
+            </div>
           </div>
+
+          {/* MOBILE / DESKTOP */}
+          {isMobile ? (
+            <div className="shop-page-friendly-mobile-menu">
+              {groupedProducts.map(([label, products]) => (
+                <div key={label} className="shop-page-friendly-menu-group">
+                  <div className="shop-page-friendly-menu-group-header">
+                    {label}
+                  </div>
+
+                  {products.map((product) => (
+                    <div
+                      key={product.id}
+                      className="shop-page-friendly-menu-item"
+                    >
+                      <div className="shop-page-friendly-menu-item-main">
+                        <p
+                          className="shop-page-friendly-menu-item-name"
+                          onClick={() =>
+                            navigate(`/product/${product.id}`)
+                          }
+                        >
+                          {product.name}
+                        </p>
+
+                        {product.description && (
+                          <p className="shop-page-friendly-menu-item-desc">
+                            {product.description}
+                          </p>
+                        )}
+
+                        <div className="shop-page-friendly-menu-item-meta">
+                          <span className="shop-page-friendly-menu-item-price">
+                            ₱{Number(product.price).toFixed(2)}
+                          </span>
+                          <span className="shop-page-friendly-menu-item-stock">
+                            {product.stock} left
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        className="shop-page-friendly-menu-add-btn"
+                        disabled={product.stock <= 0}
+                        onClick={() => handleAddAndGoCart(product.id)}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="shop-page-friendly-products-grid">
+              {availableProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className="shop-page-friendly-product-card"
+                >
+                  <ProductCard product={product} clickable={false} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
-        <p className="user-shop-page-no-products">No available products at the moment.</p>
+        <p className="shop-page-friendly-no-products">
+          No available products at the moment.
+        </p>
       )}
 
-      {/* Footer: Owner Info */}
+      {/* ===== FOOTER ===== */}
       {shop.user && (
-        <footer className="user-shop-page-footer">
-          <div className="user-shop-page-info">
-            <p className="user-shop-page-info-item">
-              <span className="user-shop-page-info-icon">📍</span>
-              {formatAddress(shop.user)}
+        <footer className="shop-page-friendly-footer">
+          <div className="shop-page-friendly-info">
+            <p className="shop-page-friendly-info-item">
+              📍 {formatAddress(shop.user)}
             </p>
-            <p className="user-shop-page-info-item">
-              <span className="user-shop-page-info-icon">📞</span>
-              {shop.user.contact_number || "N/A"}
+            <p className="shop-page-friendly-info-item">
+              📞 {shop.user.contact_number || "N/A"}
             </p>
           </div>
         </footer>

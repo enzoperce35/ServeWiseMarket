@@ -6,10 +6,11 @@ module Api
       skip_before_action :authenticate_user, raise: false
 
       def show
-        shop = Shop.includes(:user, :products).find(params[:id])
+        shop = Shop.includes(:user, :products).find_by(id: params[:id])
 
-        # Restore previous behavior
-        update_shop_status(shop)
+        unless shop
+          render json: { shop: nil }, status: :not_found and return
+        end
 
         render json: {
           shop: {
@@ -17,8 +18,10 @@ module Api
             name: shop.name,
             description: shop.description,
             image_url: shop.image_url,
-            open: shop.open,
-            user: {
+            open: shop.open_now?,
+            cross_comm_charge: shop.cross_comm_charge,
+            cross_comm_minimum: shop.cross_comm_minimum,
+            user: shop.user ? {
               id: shop.user.id,
               name: shop.user.name,
               contact_number: shop.user.contact_number,
@@ -27,7 +30,7 @@ module Api
               street: shop.user.street,
               phase: shop.user.phase,
               community: shop.user.community
-            },
+            } : nil,
             products: shop.products.map do |p|
               {
                 id: p.id,
@@ -35,15 +38,15 @@ module Api
                 price: p.price,
                 stock: p.stock,
                 image_url: p.image_url,
-                status: p.status,       # bring back 'status' field
-                featured: p.featured
+                status: p.status,
+                featured: p.featured,
+                preorder_delivery: p.preorder_delivery,
+                delivery_date: p.delivery_date,
+                delivery_time: p.delivery_time,
               }
             end
           }
         }, status: :ok
-
-      rescue ActiveRecord::RecordNotFound
-        render json: { shop: nil }, status: :not_found
       end
     end
   end

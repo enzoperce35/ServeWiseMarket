@@ -1,38 +1,42 @@
 import React from "react";
 import { useCartContext } from "../context/CartProvider";
-import { useAuthContext } from "../context/AuthProvider"; // ✅ import token
+import { useAuthContext } from "../context/AuthProvider";
 import { removeFromCartApi } from "../api/cart";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { checkoutApi } from "../api/orders";
-import "../css/pages/CartPage.css"
+import "../css/pages/CartPage.css";
 
 export default function CartPage() {
   const { cart, fetchCart } = useCartContext();
-  const { token } = useAuthContext(); // ✅ get token
+  const { token } = useAuthContext();
   const navigate = useNavigate();
 
-  if (!cart || cart.shops.length === 0) {
-    return <p>Your cart is empty.</p>;
-  }
+  // ===== BACK BUTTON LOGIC =====
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/"); // fallback to home if no history
+    }
+  };
 
   const handleCheckout = async () => {
     if (!token) {
       toast.error("Please log in to checkout");
       return;
     }
-  
+
     try {
-      const res = await checkoutApi(token);
+      await checkoutApi(token);
       await fetchCart();
-  
       toast.success("Order placed successfully 🎉");
       navigate("/orders");
     } catch (err) {
       toast.error(err.response?.data?.error || "Checkout failed");
     }
   };
-  
+
   const handleRemoveItem = async (cartItemId) => {
     if (!token) {
       alert("You must be logged in to remove items from the cart.");
@@ -40,31 +44,36 @@ export default function CartPage() {
     }
 
     try {
-      await removeFromCartApi(cartItemId, token); // ✅ pass token
-      await fetchCart(); // Refresh cart
+      await removeFromCartApi(cartItemId, token);
+      await fetchCart();
     } catch (err) {
       alert(`Remove failed: ${err.message}`);
     }
   };
 
   // Calculate grand total safely
-  const grandTotal = cart.shops.reduce((acc, shop) => {
+  const grandTotal = cart?.shops?.reduce((acc, shop) => {
     const shopTotal = shop.items.reduce(
       (sum, item) => sum + Number(item.total_price || 0),
       0
     );
     return acc + shopTotal;
-  }, 0);
+  }, 0) || 0;
 
   return (
     <div className="cart-page">
+      {/* ===== BACK BUTTON ===== */}
       <div className="cart-header">
-        <button className="home-btn" onClick={() => navigate("/")}>
-          ← Home
+        <button className="cart-back-btn" onClick={handleBack}>
+          ← Back
         </button>
       </div>
 
-      {cart.shops.map((shop) => (
+      {(!cart || cart.shops.length === 0) && (
+        <p className="cart-empty">Your cart is empty.</p>
+      )}
+
+      {cart?.shops?.map((shop) => (
         <div key={shop.shop_id} className="cart-shop">
           <h3>{shop.shop_name}</h3>
           {shop.items.map((item) => (
@@ -98,13 +107,16 @@ export default function CartPage() {
         </div>
       ))}
 
-      <div className="cart-grand-total">
-        Grand Total: ₱{grandTotal.toFixed(2)}
-      </div>
-
-      <button className="checkout-btn" onClick={handleCheckout}>
-        Place Order
-      </button>
+      {cart?.shops?.length > 0 && (
+        <>
+          <div className="cart-grand-total">
+            Grand Total: ₱{grandTotal.toFixed(2)}
+          </div>
+          <button className="checkout-btn" onClick={handleCheckout}>
+            Place Order
+          </button>
+        </>
+      )}
     </div>
   );
 }

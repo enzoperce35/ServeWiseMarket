@@ -47,9 +47,13 @@ export default function OrdersPage() {
   return (
     <div className="orders-page">
       <div className="orders-header">
-        <button className="home-btn" onClick={() => navigate("/")}>
-          ← Home
-        </button>
+      <button
+        className="orders-back-btn"
+        onClick={() => navigate(-1)}
+      >
+        ← Back
+      </button>
+
       </div>
       
       <div className="orders-grid">

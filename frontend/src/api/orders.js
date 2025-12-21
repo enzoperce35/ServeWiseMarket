@@ -12,3 +12,12 @@ export const checkoutApi = (token) => {
     }
   );
 };
+
+// ✅ ADD THIS
+export const fetchOrdersApi = (token) => {
+  return axiosClient.get("/orders", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
