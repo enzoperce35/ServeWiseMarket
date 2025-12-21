@@ -11,12 +11,9 @@ import { useCartContext } from "../../context/CartProvider";
 import { useOrdersContext } from "../../context/OrdersProvider";
 import { useAuthContext } from "../../context/AuthProvider";
 import { addToCartApi } from "../../api/cart";
+import GlobalCartOrders from "../../components/common/GlobalCartOrders"; // ✅ NEW
 import toast from "react-hot-toast";
 import "../../css/components/seller/ShopPage.css";
-import {
-  ShoppingCartIcon,
-  ClipboardDocumentListIcon,
-} from "@heroicons/react/24/outline";
 
 export default function ShopPage() {
   const { shopId } = useParams();
@@ -37,10 +34,7 @@ export default function ShopPage() {
   const prevCartCountRef = useRef(cart?.item_count || 0);
   const prevOrdersCountRef = useRef(ordersCount || 0);
 
-  /* =========================
-     🔁 REFRESH ON PAGE MOUNT
-     (this fixes stale badges on Back)
-  ========================= */
+  /* 🔁 Refresh badges on mount (Back button fix) */
   useEffect(() => {
     refreshCart();
     refreshOrders();
@@ -98,9 +92,10 @@ export default function ShopPage() {
       (acc, char) => acc + char.charCodeAt(0),
       0
     );
-    const color1 = `hsl(${hash % 360}, 70%, 60%)`;
-    const color2 = `hsl(${(hash * 7) % 360}, 70%, 45%)`;
-    return `linear-gradient(135deg, ${color1}, ${color2})`;
+    return `linear-gradient(135deg,
+      hsl(${hash % 360}, 70%, 60%),
+      hsl(${(hash * 7) % 360}, 70%, 45%)
+    )`;
   };
 
   /* =========================
@@ -117,7 +112,7 @@ export default function ShopPage() {
         }
         setShop(res.data.shop);
       } catch (err) {
-        console.error("Failed to load shop:", err);
+        console.error(err);
         setErrorMessage("Shop not found");
       } finally {
         setLoading(false);
@@ -141,8 +136,7 @@ export default function ShopPage() {
       await addToCartApi(productId, 1, token);
       await refreshCart();
       toast.success("Added to tray 🛒");
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Failed to add item");
     }
   };
@@ -203,13 +197,13 @@ export default function ShopPage() {
       return groups;
     };
 
-    const instantGroups = Object.entries(groupByLabel(instant));
-    const preorderGroups = Object.entries(groupByLabel(preorder)).sort(
-      ([, a], [, b]) =>
-        getDeliveryDateTime(a[0]) - getDeliveryDateTime(b[0])
-    );
-
-    return [...instantGroups, ...preorderGroups];
+    return [
+      ...Object.entries(groupByLabel(instant)),
+      ...Object.entries(groupByLabel(preorder)).sort(
+        ([, a], [, b]) =>
+          getDeliveryDateTime(a[0]) - getDeliveryDateTime(b[0])
+      ),
+    ];
   })();
 
   /* =========================
@@ -218,7 +212,7 @@ export default function ShopPage() {
 
   return (
     <div className="shop-page-friendly">
-      {/* ===== HEADER ===== */}
+      {/* HEADER */}
       <div className="shop-page-friendly-header">
         <div className="shop-page-friendly-image-container">
           <button
@@ -251,41 +245,21 @@ export default function ShopPage() {
         </p>
       </div>
 
-      {/* ===== PRODUCTS ===== */}
+      {/* PRODUCTS */}
       {availableProducts.length > 0 ? (
         <div className="shop-page-friendly-products">
           <div className="shop-page-friendly-products-header-wrapper">
             <h2 className="shop-page-friendly-products-header">Menu</h2>
 
-            <div className="shop-icons-wrapper">
-              {/* CART */}
-              <button
-                className={`shop-page-friendly-cart-btn ${
-                  animateCart ? "cart-badge-animate" : ""
-                }`}
-                onClick={() => navigate("/cart")}
-              >
-                <ShoppingCartIcon className="shop-page-friendly-cart-icon" />
-                {(cart?.item_count ?? 0) > 0 && (
-                  <span className="shop-cart-count">
-                    {cart.item_count}
-                  </span>
-                )}
-              </button>
-
-              {/* ORDERS */}
-              <button
-                className={`shop-page-friendly-cart-btn ${
-                  animateOrders ? "cart-badge-animate" : ""
-                }`}
-                onClick={() => navigate("/orders")}
-              >
-                <ClipboardDocumentListIcon className="shop-page-friendly-cart-icon" />
-                {ordersCount > 0 && (
-                  <span className="shop-cart-count">{ordersCount}</span>
-                )}
-              </button>
-            </div>
+            {/* ✅ GLOBAL ICONS (PAGE-CONTROLLED) */}
+            <GlobalCartOrders
+              wrapperClass="shop-icons-wrapper"
+              buttonClass="shop-page-friendly-cart-btn"
+              iconClass="shop-page-friendly-cart-icon"
+              badgeClass="shop-cart-count"
+              animateCart={animateCart}
+              animateOrders={animateOrders}
+            />
           </div>
 
           {/* MOBILE / DESKTOP */}
@@ -330,7 +304,6 @@ export default function ShopPage() {
 
                       <button
                         className="shop-page-friendly-menu-add-btn"
-                        disabled={product.stock <= 0}
                         onClick={() => handleAddAndGoCart(product.id)}
                       >
                         Add
@@ -359,16 +332,12 @@ export default function ShopPage() {
         </p>
       )}
 
-      {/* ===== FOOTER ===== */}
+      {/* FOOTER */}
       {shop.user && (
         <footer className="shop-page-friendly-footer">
           <div className="shop-page-friendly-info">
-            <p className="shop-page-friendly-info-item">
-              📍 {formatAddress(shop.user)}
-            </p>
-            <p className="shop-page-friendly-info-item">
-              📞 {shop.user.contact_number || "N/A"}
-            </p>
+            <p>📍 {formatAddress(shop.user)}</p>
+            <p>📞 {shop.user.contact_number || "N/A"}</p>
           </div>
         </footer>
       )}
