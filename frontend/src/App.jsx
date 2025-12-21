@@ -19,25 +19,22 @@ import OrdersPage from "./pages/OrdersPage";
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Buyer pages */}
-          <Route path="/" element={<ProductsPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
+      <Routes>
+        {/* Buyer pages */}
+        <Route path="/" element={<ProductsPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
 
-          {/* Seller pages */}
-          <Route path="/seller/create-shop" element={<CreateShop />} />
-          <Route path="/seller/products" element={<Products />} />
-          <Route path="/shop/:shopId" element={<ShopPage />} />
-          <Route path="/orders" element={<OrdersPage />} />
-          <Route path="/seller/products/new" element={<ProductFormPage />} />
-          <Route path="/seller/products/:id/edit" element={<ProductSettingsPage />} />
-          <Route path="/product/:id" element={<ProductPage />} />
-          <Route path="/cart" element={<CartPage />} /> {/* ✅ Add this */}
-
-        </Routes>
-      </AuthProvider>
+        {/* Seller pages */}
+        <Route path="/seller/create-shop" element={<CreateShop />} />
+        <Route path="/seller/products" element={<Products />} />
+        <Route path="/shop/:shopId" element={<ShopPage />} />
+        <Route path="/orders" element={<OrdersPage />} />
+        <Route path="/seller/products/new" element={<ProductFormPage />} />
+        <Route path="/seller/products/:id/edit" element={<ProductSettingsPage />} />
+        <Route path="/product/:id" element={<ProductPage />} />
+        <Route path="/cart" element={<CartPage />} /> {/* ✅ Add this */}
+      </Routes>
     </BrowserRouter>
   );
 }

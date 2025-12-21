@@ -1,0 +1,57 @@
+/* GlobalCartOrders.css */
+
+/* ICONS WRAPPER */
+.global-cart-orders-wrapper {
+  display: flex;
+  gap: 16px;
+}
+
+/* BUTTONS */
+.global-cart-orders-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* ICON SIZE & COLOR */
+.global-cart-orders-icon {
+  width: 28px;
+  height: 28px;
+  color: #ff7a18;
+}
+
+/* BADGE */
+.global-cart-orders-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ff3b30;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(1);
+  transition: transform 0.25s ease, background 0.25s ease;
+  z-index: 10;
+}
+
+/* Hide badge if count is 0 */
+.global-cart-orders-count:empty {
+  display: none;
+}
+
+/* Animation */
+.cart-badge-animate .global-cart-orders-count {
+  transform: scale(1.5);
+  background: #ff453a;
+}

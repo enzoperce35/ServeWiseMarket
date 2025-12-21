@@ -11,7 +11,7 @@ import { useCartContext } from "../../context/CartProvider";
 import { useOrdersContext } from "../../context/OrdersProvider";
 import { useAuthContext } from "../../context/AuthProvider";
 import { addToCartApi } from "../../api/cart";
-import GlobalCartOrders from "../../components/common/GlobalCartOrders"; // ✅ NEW
+import GlobalCartOrders from "../../components/common/GlobalCartOrders"; // ✅
 import toast from "react-hot-toast";
 import "../../css/components/seller/ShopPage.css";
 
@@ -27,14 +27,13 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  /* ===== BADGE ANIMATION ===== */
   const [animateCart, setAnimateCart] = useState(false);
   const [animateOrders, setAnimateOrders] = useState(false);
 
   const prevCartCountRef = useRef(cart?.item_count || 0);
   const prevOrdersCountRef = useRef(ordersCount || 0);
 
-  /* 🔁 Refresh badges on mount (Back button fix) */
+  /* Refresh badges on mount */
   useEffect(() => {
     refreshCart();
     refreshOrders();
@@ -61,29 +60,15 @@ export default function ShopPage() {
 
   const isMobile = window.innerWidth <= 768;
 
-  /* =========================
-     HELPERS
-  ========================= */
-
   const formatAddress = (user) => {
     if (!user) return "N/A";
     const { block, lot, street, phase, community } = user;
-
-    const blockLot = [
-      block && `blk. ${block}`,
-      lot && `lot ${lot}`,
-    ]
+    const blockLot = [block && `blk. ${block}`, lot && `lot ${lot}`]
       .filter(Boolean)
       .join(" - ");
-
-    const rest = [
-      street && `${street} st.`,
-      phase && phase.toLowerCase(),
-      community,
-    ]
+    const rest = [street && `${street} st.`, phase && phase.toLowerCase(), community]
       .filter(Boolean)
       .join(", ");
-
     return [blockLot, rest].filter(Boolean).join(", ");
   };
 
@@ -98,10 +83,7 @@ export default function ShopPage() {
     )`;
   };
 
-  /* =========================
-     FETCH SHOP
-  ========================= */
-
+  /* FETCH SHOP */
   useEffect(() => {
     const loadShop = async () => {
       try {
@@ -118,75 +100,41 @@ export default function ShopPage() {
         setLoading(false);
       }
     };
-
     loadShop();
   }, [shopId]);
 
-  /* =========================
-     ADD TO CART
-  ========================= */
-
+  /* ADD TO CART */
   const handleAddAndGoCart = async (productId) => {
     if (!user || !token) {
       toast.error("Please log in to add items to tray");
       return;
     }
-
     try {
       await addToCartApi(productId, 1, token);
-      await refreshCart();
+      await refreshCart(); // ✅ updates badge immediately
       toast.success("Added to tray 🛒");
     } catch {
       toast.error("Failed to add item");
     }
   };
 
-  /* =========================
-     LOADING / ERROR
-  ========================= */
+  if (loading) return <p className="shop-page-friendly-loading">Loading shop...</p>;
+  if (errorMessage || !shop) return <p className="shop-page-friendly-not-found">{errorMessage || "Shop not found"}</p>;
 
-  if (loading) {
-    return <p className="shop-page-friendly-loading">Loading shop...</p>;
-  }
-
-  if (errorMessage || !shop) {
-    return (
-      <p className="shop-page-friendly-not-found">
-        {errorMessage || "Shop not found"}
-      </p>
-    );
-  }
-
-  /* =========================
-     FILTER PRODUCTS
-  ========================= */
-
+  /* FILTER PRODUCTS */
   const availableProducts =
     shop.products?.filter((product) => {
-      const valid =
-        product.status === true &&
-        product.stock >= 1 &&
-        !isExpired(product);
-
+      const valid = product.status === true && product.stock >= 1 && !isExpired(product);
       if (!valid) return false;
       if (!shop.open) return product.preorder_delivery === true;
       return true;
     }) || [];
 
-  /* =========================
-     MOBILE GROUPING
-  ========================= */
-
+  /* MOBILE GROUPING */
   const groupedProducts = (() => {
     if (!isMobile) return [];
-
-    const instant = [];
-    const preorder = [];
-
-    availableProducts.forEach((p) =>
-      p.preorder_delivery ? preorder.push(p) : instant.push(p)
-    );
-
+    const instant = [], preorder = [];
+    availableProducts.forEach((p) => (p.preorder_delivery ? preorder.push(p) : instant.push(p)));
     const groupByLabel = (list) => {
       const groups = {};
       list.forEach((p) => {
@@ -196,19 +144,13 @@ export default function ShopPage() {
       });
       return groups;
     };
-
     return [
       ...Object.entries(groupByLabel(instant)),
       ...Object.entries(groupByLabel(preorder)).sort(
-        ([, a], [, b]) =>
-          getDeliveryDateTime(a[0]) - getDeliveryDateTime(b[0])
+        ([, a], [, b]) => getDeliveryDateTime(a[0]) - getDeliveryDateTime(b[0])
       ),
     ];
   })();
-
-  /* =========================
-     RENDER
-  ========================= */
 
   return (
     <div className="shop-page-friendly">
@@ -233,9 +175,7 @@ export default function ShopPage() {
               className="shop-page-friendly-image-placeholder"
               style={{ background: generateGradientFromId(shop.id) }}
             >
-              <span className="shop-page-friendly-image-placeholder-text">
-                {shop.name}
-              </span>
+              <span className="shop-page-friendly-image-placeholder-text">{shop.name}</span>
             </div>
           )}
         </div>
@@ -251,7 +191,7 @@ export default function ShopPage() {
           <div className="shop-page-friendly-products-header-wrapper">
             <h2 className="shop-page-friendly-products-header">Menu</h2>
 
-            {/* ✅ GLOBAL ICONS (PAGE-CONTROLLED) */}
+            {/* GLOBAL ICONS */}
             <GlobalCartOrders
               wrapperClass="shop-icons-wrapper"
               buttonClass="shop-page-friendly-cart-btn"
@@ -262,36 +202,23 @@ export default function ShopPage() {
             />
           </div>
 
-          {/* MOBILE / DESKTOP */}
           {isMobile ? (
             <div className="shop-page-friendly-mobile-menu">
               {groupedProducts.map(([label, products]) => (
                 <div key={label} className="shop-page-friendly-menu-group">
-                  <div className="shop-page-friendly-menu-group-header">
-                    {label}
-                  </div>
-
+                  <div className="shop-page-friendly-menu-group-header">{label}</div>
                   {products.map((product) => (
-                    <div
-                      key={product.id}
-                      className="shop-page-friendly-menu-item"
-                    >
+                    <div key={product.id} className="shop-page-friendly-menu-item">
                       <div className="shop-page-friendly-menu-item-main">
                         <p
                           className="shop-page-friendly-menu-item-name"
-                          onClick={() =>
-                            navigate(`/product/${product.id}`)
-                          }
+                          onClick={() => navigate(`/product/${product.id}`)}
                         >
                           {product.name}
                         </p>
-
                         {product.description && (
-                          <p className="shop-page-friendly-menu-item-desc">
-                            {product.description}
-                          </p>
+                          <p className="shop-page-friendly-menu-item-desc">{product.description}</p>
                         )}
-
                         <div className="shop-page-friendly-menu-item-meta">
                           <span className="shop-page-friendly-menu-item-price">
                             ₱{Number(product.price).toFixed(2)}
@@ -316,10 +243,7 @@ export default function ShopPage() {
           ) : (
             <div className="shop-page-friendly-products-grid">
               {availableProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="shop-page-friendly-product-card"
-                >
+                <div key={product.id} className="shop-page-friendly-product-card">
                   <ProductCard product={product} clickable={false} />
                 </div>
               ))}
@@ -327,9 +251,7 @@ export default function ShopPage() {
           )}
         </div>
       ) : (
-        <p className="shop-page-friendly-no-products">
-          No available products at the moment.
-        </p>
+        <p className="shop-page-friendly-no-products">No available products at the moment.</p>
       )}
 
       {/* FOOTER */}

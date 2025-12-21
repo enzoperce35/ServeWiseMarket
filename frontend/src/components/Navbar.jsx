@@ -2,24 +2,25 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthProvider";
 import { useCartContext } from "../context/CartProvider";
+import { useOrdersContext } from "../context/OrdersProvider";
 import brandLogo from "../assets/images/brand-logo.png";
+import GlobalCartOrders from "./common/GlobalCartOrders";
 import "../css/components/Navbar.css";
-import {
-  ShoppingCartIcon,
-  ClipboardDocumentListIcon,
-} from "@heroicons/react/24/outline";
 
 export default function Navbar() {
   const { user, handleLogout } = useAuthContext();
-  const { cart } = useCartContext();
+  const { cart, refreshCart } = useCartContext();
+  const { ordersCount, refreshOrders } = useOrdersContext();
   const navigate = useNavigate();
 
-  const itemCount = cart?.item_count || 0;
-  const ongoingOrdersCount = user?.ongoing_orders_count || 0;
+  React.useEffect(() => {
+    refreshCart();
+    refreshOrders();
+  }, []);
 
   return (
     <nav className="navbar">
-      {/* Top row: logo + auth/shop buttons */}
+      {/* Top row: Logo + Auth/Shop Buttons */}
       <div className="navbar-top">
         <div className="navbar-logo">
           <Link to="/">
@@ -49,7 +50,10 @@ export default function Navbar() {
                   Shop
                 </Link>
               ) : (
-                <Link to="/seller/create-shop" className="nav-btn nav-btn-primary">
+                <Link
+                  to="/seller/create-shop"
+                  className="nav-btn nav-btn-primary"
+                >
                   Sell?
                 </Link>
               )}
@@ -65,28 +69,17 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Bottom row: greetings + icons (responsive for all devices) */}
+      {/* Desktop: Greeting left + GlobalCartOrders right */}
       {user && (
         <div className="navbar-bottom">
           <span className="navbar-user">Hi, {user.name} 👋</span>
-          <div className="nav-icons">
-            {/* Orders icon */}
-            {ongoingOrdersCount > 0 && (
-              <button
-                className="orders-btn"
-                onClick={() => navigate("/orders")}
-              >
-                <ClipboardDocumentListIcon className="icon" />
-                <span className="orders-badge">{ongoingOrdersCount}</span>
-              </button>
-            )}
 
-            {/* Cart icon */}
-            <button className="cart-btn" onClick={() => navigate("/cart")}>
-              <ShoppingCartIcon className="icon" />
-              {itemCount > 0 && <span className="cart-count">{itemCount}</span>}
-            </button>
-          </div>
+          <GlobalCartOrders
+            wrapperClass="navbar-icons-wrapper"
+            buttonClass="navbar-icon-btn"
+            iconClass="navbar-icon"
+            badgeClass="navbar-badge"
+          />
         </div>
       )}
     </nav>
