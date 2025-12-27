@@ -1,0 +1,334 @@
+/* ===== PAGE WRAPPER ===== */
+.edit-seller-shop-page {
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* ===== SHOP PAGE FOOTER SECTIONS ===== */
+.shop-page-friendly-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* gap between footer sections */
+  border-top: 1px solid #e5e7eb; /* subtle top border */
+}
+
+.shop-page-friendly-info,
+.shop-delivery-info,
+.shop-payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* gap between contents inside each section */
+}
+
+
+.edit-seller-shop-page h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* ===== FORM BASICS ===== */
+.edit-seller-shop-page form label {
+  display: block;
+  margin: 12px 0 4px;
+  font-weight: 600;
+}
+
+.edit-seller-shop-page form input[type="text"],
+.edit-seller-shop-page form input[type="number"],
+.edit-seller-shop-page form textarea,
+.edit-seller-shop-page form select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+.edit-seller-shop-page form textarea {
+  min-height: 80px;
+}
+
+.edit-seller-shop-page form input[type="checkbox"] {
+  margin-right: 6px;
+}
+
+/* ===== SAVE BUTTON ===== */
+.save-btn {
+  margin-top: 24px;
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  background: #111;
+  color: #fff;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  background: #000;
+}
+
+/* ===== LOADING ===== */
+.loading-text {
+  text-align: center;
+  margin-top: 50px;
+  font-size: 16px;
+}
+
+/* ===== PAYMENT SECTIONS ===== */
+.payment-accounts-section {
+  margin-top: 24px;
+}
+
+.payment-accounts-section h3 {
+  margin-bottom: 8px;
+}
+
+/* ===== PAYMENT ACCOUNT ROW ===== */
+.payment-account-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/* Inputs & selects inside payment rows */
+.payment-account-row input,
+.payment-account-row select {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+/* Existing provider text */
+.provider-text {
+  font-weight: 500;
+}
+
+/* Existing account row */
+.payment-account-row.existing-account {
+  grid-template-columns: 36px 1fr auto;
+}
+
+.existing-account .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ===== ICON BUTTON BASE ===== */
+.icon-circle-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  padding: 0;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+/* ===== ADD (+) BUTTON ===== */
+.add-account-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.add-account-icon-btn {
+  background-color: #22c55e;
+  box-shadow: 0 4px 10px rgba(34, 197, 94, 0.35);
+}
+
+.add-account-icon-btn:hover {
+  background-color: #16a34a;
+  box-shadow: 0 6px 14px rgba(22, 163, 74, 0.45);
+}
+
+.add-account-icon-btn:active {
+  transform: scale(0.92);
+}
+
+/* ===== NEW ACCOUNT ACTIONS ===== */
+.new-account-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.new-account-cancel {
+  color: #ef4444;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.new-account-cancel:hover {
+  text-decoration: underline;
+}
+
+.new-account-add {
+  color: #22c55e;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.new-account-add:hover {
+  text-decoration: underline;
+}
+
+/* ===== DELETE BUTTON (CIRCLE) ===== */
+.delete-existing-account-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #fee2e2;
+  color: #ef4444;
+  font-size: 20px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.delete-existing-account-btn:hover {
+  background-color: #fecaca;
+  color: #dc2626;
+  transform: scale(1.05);
+}
+
+/* ===== INPUT ERROR STATE ===== */
+.input-error {
+  border: 1.5px solid #ef4444 !important;
+  background-color: #fff5f5;
+}
+
+.error-text {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: 4px;
+}
+
+.shop-page-friendly-info p {
+  margin: 0 0 0 14px;
+}
+
+/* ===== PAYMENT METHODS (HORIZONTAL) ===== */
+.shop-payment-methods ul {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 0 0 0 14px;
+  list-style: none;
+  flex-wrap: wrap;
+}
+
+.shop-payment-methods ul li {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  cursor: default;
+  transition: transform 0.15s;
+}
+
+.shop-payment-methods ul li:hover {
+  transform: scale(1.05);
+}
+
+/* Brand Colors */
+.shop-payment-methods ul li[data-provider="COD"] {
+  background: #374151; /* dark gray */
+  color: #fff;
+}
+
+.shop-payment-methods ul li[data-provider="GCash"] {
+  background: #2563eb; /* official blue */
+  color: #fff;
+}
+
+.shop-payment-methods ul li[data-provider="Maya"] {
+  background: #16a34a; /* official green */
+  color: #fff;
+}
+
+.shop-info{
+  margin-bottom: 0;
+}
+
+/* ===== DELIVERY INFO ===== */
+.shop-delivery-info {
+  margin: 1rem 0;
+}
+
+.shop-delivery-info h4 {
+  margin-bottom: 0.5rem;
+}
+
+.shop-delivery-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0 14px;
+}
+
+.shop-delivery-info-list li {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
+  align-items: baseline;
+}
+
+.delivery-community {
+  font-weight: 600;
+}
+
+.delivery-charge {
+  font-weight: 500;
+}
+
+.delivery-charge.free,
+.free {
+  color: #28a745; /* bright green */
+  font-weight: bold;
+}
+
+
+/* ===== MOBILE ===== */
+@media (max-width: 640px) {
+  .payment-account-row {
+    grid-template-columns: 1fr;
+  }
+
+  .delete-existing-account-btn {
+    margin-bottom: 4px;
+  }
+
+  .shop-payment-methods ul {
+    justify-content: flex-start;
+  }
+}

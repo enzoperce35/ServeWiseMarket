@@ -9,6 +9,7 @@ import ProductFormPage from "./pages/seller/ProductFormPage";
 import ProductSettingsPage from "./pages/seller/ProductSettingsPage";
 import ProductPage from "./pages/ProductPage";
 import CartPage from "./pages/CartPage";
+import EditSellerShopPage from "./components/seller/EditSellerShopPage";
 
 
 // Seller pages
@@ -29,11 +30,13 @@ export default function App() {
         <Route path="/seller/create-shop" element={<CreateShop />} />
         <Route path="/seller/products" element={<Products />} />
         <Route path="/shop/:shopId" element={<ShopPage />} />
+        <Route path="/shops/:shopId" element={<ShopPage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/seller/products/new" element={<ProductFormPage />} />
         <Route path="/seller/products/:id/edit" element={<ProductSettingsPage />} />
         <Route path="/product/:id" element={<ProductPage />} />
         <Route path="/cart" element={<CartPage />} /> {/* ✅ Add this */}
+        <Route path="/shops/:shopId/edit" element={<EditSellerShopPage />} />
       </Routes>
     </BrowserRouter>
   );

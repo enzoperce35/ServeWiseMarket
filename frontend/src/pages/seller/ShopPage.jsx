@@ -11,7 +11,7 @@ import { useCartContext } from "../../context/CartProvider";
 import { useOrdersContext } from "../../context/OrdersProvider";
 import { useAuthContext } from "../../context/AuthProvider";
 import { addToCartApi } from "../../api/cart";
-import GlobalCartOrders from "../../components/common/GlobalCartOrders"; // ✅
+import GlobalCartOrders from "../../components/common/GlobalCartOrders";
 import toast from "react-hot-toast";
 import "../../css/components/seller/ShopPage.css";
 
@@ -63,10 +63,10 @@ export default function ShopPage() {
   const formatAddress = (user) => {
     if (!user) return "N/A";
     const { block, lot, street, phase, community } = user;
-    const blockLot = [block && `blk. ${block}`, lot && `lot ${lot}`]
+    const blockLot = [block && `B${block}`, lot && `L${lot}`]
       .filter(Boolean)
       .join(" - ");
-    const rest = [street && `${street} st.`, phase && phase.toLowerCase(), community]
+    const rest = [street && `${street}`, phase && phase.toLowerCase(), community]
       .filter(Boolean)
       .join(", ");
     return [blockLot, rest].filter(Boolean).join(", ");
@@ -111,7 +111,7 @@ export default function ShopPage() {
     }
     try {
       await addToCartApi(productId, 1, token);
-      await refreshCart(); // ✅ updates badge immediately
+      await refreshCart();
       toast.success("Added to tray 🛒");
     } catch {
       toast.error("Failed to add item");
@@ -152,37 +152,24 @@ export default function ShopPage() {
     ];
   })();
 
+  /* Determine other community name */
+  const otherCommunity = shop.community === "Sampaguita Homes" ? "Sampaguita West" : "Sampaguita Homes";
+
   return (
     <div className="shop-page-friendly">
       {/* HEADER */}
       <div className="shop-page-friendly-header">
         <div className="shop-page-friendly-image-container">
-          <button
-            className="shop-page-friendly-back-btn"
-            onClick={() => navigate(-1)}
-          >
-            ← Back
-          </button>
-
+          <button className="shop-page-friendly-back-btn" onClick={() => navigate(-1)}>← Back</button>
           {shop.image_url ? (
-            <img
-              src={shop.image_url}
-              alt={shop.name}
-              className="shop-page-friendly-image"
-            />
+            <img src={shop.image_url} alt={shop.name} className="shop-page-friendly-image" />
           ) : (
-            <div
-              className="shop-page-friendly-image-placeholder"
-              style={{ background: generateGradientFromId(shop.id) }}
-            >
+            <div className="shop-page-friendly-image-placeholder" style={{ background: generateGradientFromId(shop.id) }}>
               <span className="shop-page-friendly-image-placeholder-text">{shop.name}</span>
             </div>
           )}
         </div>
-
-        <p className={`shop-status-pill ${shop.open ? "open" : "closed"}`}>
-          {shop.open ? "Open" : "Closed"}
-        </p>
+        <p className={`shop-status-pill ${shop.open ? "open" : "closed"}`}>{shop.open ? "Open" : "Closed"}</p>
       </div>
 
       {/* PRODUCTS */}
@@ -190,8 +177,6 @@ export default function ShopPage() {
         <div className="shop-page-friendly-products">
           <div className="shop-page-friendly-products-header-wrapper">
             <h2 className="shop-page-friendly-products-header">Menu</h2>
-
-            {/* GLOBAL ICONS */}
             <GlobalCartOrders
               wrapperClass="shop-icons-wrapper"
               buttonClass="shop-page-friendly-cart-btn"
@@ -210,31 +195,14 @@ export default function ShopPage() {
                   {products.map((product) => (
                     <div key={product.id} className="shop-page-friendly-menu-item">
                       <div className="shop-page-friendly-menu-item-main">
-                        <p
-                          className="shop-page-friendly-menu-item-name"
-                          onClick={() => navigate(`/product/${product.id}`)}
-                        >
-                          {product.name}
-                        </p>
-                        {product.description && (
-                          <p className="shop-page-friendly-menu-item-desc">{product.description}</p>
-                        )}
+                        <p className="shop-page-friendly-menu-item-name" onClick={() => navigate(`/product/${product.id}`)}>{product.name}</p>
+                        {product.description && <p className="shop-page-friendly-menu-item-desc">{product.description}</p>}
                         <div className="shop-page-friendly-menu-item-meta">
-                          <span className="shop-page-friendly-menu-item-price">
-                            ₱{Number(product.price).toFixed(2)}
-                          </span>
-                          <span className="shop-page-friendly-menu-item-stock">
-                            {product.stock} left
-                          </span>
+                          <span className="shop-page-friendly-menu-item-price">₱{Number(product.price).toFixed(2)}</span>
+                          <span className="shop-page-friendly-menu-item-stock">{product.stock} left</span>
                         </div>
                       </div>
-
-                      <button
-                        className="shop-page-friendly-menu-add-btn"
-                        onClick={() => handleAddAndGoCart(product.id)}
-                      >
-                        Add
-                      </button>
+                      <button className="shop-page-friendly-menu-add-btn" onClick={() => handleAddAndGoCart(product.id)}>Add</button>
                     </div>
                   ))}
                 </div>
@@ -257,11 +225,89 @@ export default function ShopPage() {
       {/* FOOTER */}
       {shop.user && (
         <footer className="shop-page-friendly-footer">
+          <h4 className="shop-info">Shop Info</h4>
           <div className="shop-page-friendly-info">
             <p>📍 {formatAddress(shop.user)}</p>
             <p>📞 {shop.user.contact_number || "N/A"}</p>
           </div>
+
+          {/* DELIVERY INFO */}
+          <div className="shop-delivery-info">
+            <h4>Delivery</h4>
+            <ul className="shop-delivery-info-list">
+              {user?.id === shop.user?.id ? (
+                // Shop owner sees both deliveries
+                <>
+                  <li>
+                    <span className="delivery-community">
+                      {shop.community.includes("Homes") ? "Homes" : "West"}:
+                    </span>
+                    <span className="delivery-charge free">Free</span>
+                  </li>
+                  <li>
+                    <span className="delivery-community">
+                      {otherCommunity.includes("Homes") ? "Homes" : "West"}:
+                    </span>
+                    <span
+                      className={`delivery-charge ${Number(shop.cross_comm_charge) === 0 ? "free" : ""
+                        }`}
+                    >
+                      {Number(shop.cross_comm_charge) === 0
+                        ? `Free`
+                        : Number(shop.cross_comm_minimum) === 0
+                          ? `₱${shop.cross_comm_charge}`
+                          : `₱${shop.cross_comm_charge} charge for orders below ₱${Number(
+                            shop.cross_comm_minimum
+                          ).toFixed(2)}`}
+                    </span>
+                  </li>
+                </>
+              ) : (
+                // Other users see only the delivery that applies to their community
+                <li>
+                  <span
+                    className={`delivery-charge ${Number(shop.cross_comm_charge) === 0 ? "free" : ""
+                      }`}
+                  >
+                    {user.community === shop.community
+                      ? <span className="free">Free</span>
+                      : Number(shop.cross_comm_charge) === 0
+                        ? <span className="free">Free</span>
+                        : Number(shop.cross_comm_minimum) === 0
+                          ? `₱${shop.cross_comm_charge}`
+                          : `₱${shop.cross_comm_charge} charge for orders below ₱${Number(
+                            shop.cross_comm_minimum
+                          ).toFixed(2)}`}
+                  </span>
+                </li>
+              )}
+            </ul>
+          </div>
+
+          {/* PAYMENT METHODS */}
+          <div className="shop-payment-methods">
+            <h4>Payment</h4>
+            <ul>
+              <li data-provider="COD">COD</li>
+              {[
+                ...new Set(
+                  shop.shop_payment_accounts
+                    ?.filter(acc => acc.active)
+                    .map(acc => acc.provider)
+                ),
+              ].map(provider => (
+                <li key={provider} data-provider={provider}>{provider}</li>
+              ))}
+            </ul>
+          </div>
         </footer>
+      )}
+
+      {/* OWNER ACTIONS */}
+      {user?.id === shop.user?.id && (
+        <div className="shop-owner-actions">
+          <button className="shop-edit-btn" onClick={() => navigate(`/shops/${shop.id}/edit`)}>✏️ Edit Shop</button>
+        </div>
       )}
     </div>
   );

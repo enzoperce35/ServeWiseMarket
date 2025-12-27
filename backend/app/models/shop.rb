@@ -4,6 +4,8 @@ class Shop < ApplicationRecord
   has_many :products, dependent: :destroy
   has_many :orders
 
+  has_many :shop_payment_accounts, dependent: :destroy
+
   validates :name, presence: true
 
   # Auto-close shop if outside business hours or user hasn't opened today
