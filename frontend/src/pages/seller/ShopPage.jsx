@@ -2,17 +2,14 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import ProductCard from "../../components/ProductCard";
-import {
-  isExpired,
-  getDeliveryLabel,
-  getDeliveryDateTime,
-} from "../../utils/deliveryDateTime";
+import { isExpired, getDeliveryLabel, getDeliveryDateTime } from "../../utils/deliveryDateTime";
 import { useCartContext } from "../../context/CartProvider";
 import { useOrdersContext } from "../../context/OrdersProvider";
 import { useAuthContext } from "../../context/AuthProvider";
 import { addToCartApi } from "../../api/cart";
 import GlobalCartOrders from "../../components/common/GlobalCartOrders";
 import toast from "react-hot-toast";
+import "../../css/components/seller/EditSellerShopPage.css";
 import "../../css/components/seller/ShopPage.css";
 
 export default function ShopPage() {
@@ -33,7 +30,6 @@ export default function ShopPage() {
   const prevCartCountRef = useRef(cart?.item_count || 0);
   const prevOrdersCountRef = useRef(ordersCount || 0);
 
-  /* Refresh badges on mount */
   useEffect(() => {
     refreshCart();
     refreshOrders();
@@ -63,27 +59,16 @@ export default function ShopPage() {
   const formatAddress = (user) => {
     if (!user) return "N/A";
     const { block, lot, street, phase, community } = user;
-    const blockLot = [block && `B${block}`, lot && `L${lot}`]
-      .filter(Boolean)
-      .join(" - ");
-    const rest = [street && `${street}`, phase && phase.toLowerCase(), community]
-      .filter(Boolean)
-      .join(", ");
+    const blockLot = [block && `B${block}`, lot && `L${lot}`].filter(Boolean).join(" - ");
+    const rest = [street, phase?.toLowerCase(), community].filter(Boolean).join(", ");
     return [blockLot, rest].filter(Boolean).join(", ");
   };
 
   const generateGradientFromId = (id) => {
-    const hash = Array.from(String(id)).reduce(
-      (acc, char) => acc + char.charCodeAt(0),
-      0
-    );
-    return `linear-gradient(135deg,
-      hsl(${hash % 360}, 70%, 60%),
-      hsl(${(hash * 7) % 360}, 70%, 45%)
-    )`;
+    const hash = Array.from(String(id)).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return `linear-gradient(135deg, hsl(${hash % 360}, 70%, 60%), hsl(${(hash * 7) % 360}, 70%, 45%))`;
   };
 
-  /* FETCH SHOP */
   useEffect(() => {
     const loadShop = async () => {
       try {
@@ -93,8 +78,7 @@ export default function ShopPage() {
           return;
         }
         setShop(res.data.shop);
-      } catch (err) {
-        console.error(err);
+      } catch {
         setErrorMessage("Shop not found");
       } finally {
         setLoading(false);
@@ -103,7 +87,6 @@ export default function ShopPage() {
     loadShop();
   }, [shopId]);
 
-  /* ADD TO CART */
   const handleAddAndGoCart = async (productId) => {
     if (!user || !token) {
       toast.error("Please log in to add items to tray");
@@ -118,19 +101,16 @@ export default function ShopPage() {
     }
   };
 
-  if (loading) return <p className="shop-page-friendly-loading">Loading shop...</p>;
+  if (loading) return <p className="loading-text">Loading shop...</p>;
   if (errorMessage || !shop) return <p className="shop-page-friendly-not-found">{errorMessage || "Shop not found"}</p>;
 
-  /* FILTER PRODUCTS */
-  const availableProducts =
-    shop.products?.filter((product) => {
-      const valid = product.status === true && product.stock >= 1 && !isExpired(product);
-      if (!valid) return false;
-      if (!shop.open) return product.preorder_delivery === true;
-      return true;
-    }) || [];
+  const availableProducts = shop.products?.filter(product => {
+    const valid = product.status === true && product.stock >= 1 && !isExpired(product);
+    if (!valid) return false;
+    if (!shop.open) return product.preorder_delivery === true;
+    return true;
+  }) || [];
 
-  /* MOBILE GROUPING */
   const groupedProducts = (() => {
     if (!isMobile) return [];
     const instant = [], preorder = [];
@@ -146,13 +126,10 @@ export default function ShopPage() {
     };
     return [
       ...Object.entries(groupByLabel(instant)),
-      ...Object.entries(groupByLabel(preorder)).sort(
-        ([, a], [, b]) => getDeliveryDateTime(a[0]) - getDeliveryDateTime(b[0])
-      ),
+      ...Object.entries(groupByLabel(preorder)).sort(([ , a], [ , b]) => getDeliveryDateTime(a[0]) - getDeliveryDateTime(b[0])),
     ];
   })();
 
-  /* Determine other community name */
   const otherCommunity = shop.community === "Sampaguita Homes" ? "Sampaguita West" : "Sampaguita Homes";
 
   return (
@@ -160,7 +137,17 @@ export default function ShopPage() {
       {/* HEADER */}
       <div className="shop-page-friendly-header">
         <div className="shop-page-friendly-image-container">
-          <button className="shop-page-friendly-back-btn" onClick={() => navigate(-1)}>← Back</button>
+        <button
+  className="shop-page-friendly-back-btn"
+  onClick={() =>
+    user?.id === shop.user?.id
+      ? navigate("/seller/products")
+      : navigate(-1)
+  }
+>
+  ← Back
+</button>
+
           {shop.image_url ? (
             <img src={shop.image_url} alt={shop.name} className="shop-page-friendly-image" />
           ) : (
@@ -192,14 +179,14 @@ export default function ShopPage() {
               {groupedProducts.map(([label, products]) => (
                 <div key={label} className="shop-page-friendly-menu-group">
                   <div className="shop-page-friendly-menu-group-header">{label}</div>
-                  {products.map((product) => (
+                  {products.map(product => (
                     <div key={product.id} className="shop-page-friendly-menu-item">
                       <div className="shop-page-friendly-menu-item-main">
                         <p className="shop-page-friendly-menu-item-name" onClick={() => navigate(`/product/${product.id}`)}>{product.name}</p>
                         {product.description && <p className="shop-page-friendly-menu-item-desc">{product.description}</p>}
                         <div className="shop-page-friendly-menu-item-meta">
                           <span className="shop-page-friendly-menu-item-price">₱{Number(product.price).toFixed(2)}</span>
-                          <span className="shop-page-friendly-menu-item-stock">{product.stock} left</span>
+                          <span>{product.stock} left</span>
                         </div>
                       </div>
                       <button className="shop-page-friendly-menu-add-btn" onClick={() => handleAddAndGoCart(product.id)}>Add</button>
@@ -210,8 +197,8 @@ export default function ShopPage() {
             </div>
           ) : (
             <div className="shop-page-friendly-products-grid">
-              {availableProducts.map((product) => (
-                <div key={product.id} className="shop-page-friendly-product-card">
+              {availableProducts.map(product => (
+                <div key={product.id}>
                   <ProductCard product={product} clickable={false} />
                 </div>
               ))}
@@ -225,77 +212,43 @@ export default function ShopPage() {
       {/* FOOTER */}
       {shop.user && (
         <footer className="shop-page-friendly-footer">
-          <h4 className="shop-info">Shop Info</h4>
           <div className="shop-page-friendly-info">
+          <h4>Shop Info</h4>
             <p>📍 {formatAddress(shop.user)}</p>
             <p>📞 {shop.user.contact_number || "N/A"}</p>
           </div>
 
-          {/* DELIVERY INFO */}
           <div className="shop-delivery-info">
             <h4>Delivery</h4>
             <ul className="shop-delivery-info-list">
               {user?.id === shop.user?.id ? (
-                // Shop owner sees both deliveries
                 <>
                   <li>
-                    <span className="delivery-community">
-                      {shop.community.includes("Homes") ? "Homes" : "West"}:
-                    </span>
+                    <span className="delivery-community">{shop.community.includes("Homes") ? "Homes" : "West"}:</span>
                     <span className="delivery-charge free">Free</span>
                   </li>
                   <li>
-                    <span className="delivery-community">
-                      {otherCommunity.includes("Homes") ? "Homes" : "West"}:
-                    </span>
-                    <span
-                      className={`delivery-charge ${Number(shop.cross_comm_charge) === 0 ? "free" : ""
-                        }`}
-                    >
-                      {Number(shop.cross_comm_charge) === 0
-                        ? `Free`
-                        : Number(shop.cross_comm_minimum) === 0
-                          ? `₱${shop.cross_comm_charge}`
-                          : `₱${shop.cross_comm_charge} charge for orders below ₱${Number(
-                            shop.cross_comm_minimum
-                          ).toFixed(2)}`}
+                    <span className="delivery-community">{otherCommunity.includes("Homes") ? "Homes" : "West"}:</span>
+                    <span className={`delivery-charge ${Number(shop.cross_comm_charge) === 0 ? "free" : ""}`}>
+                      {Number(shop.cross_comm_charge) === 0 ? "Free" : `₱${shop.cross_comm_charge} charge for orders below ₱${Number(shop.cross_comm_minimum).toFixed(2)}`}
                     </span>
                   </li>
                 </>
               ) : (
-                // Other users see only the delivery that applies to their community
                 <li>
-                  <span
-                    className={`delivery-charge ${Number(shop.cross_comm_charge) === 0 ? "free" : ""
-                      }`}
-                  >
-                    {user.community === shop.community
-                      ? <span className="free">Free</span>
-                      : Number(shop.cross_comm_charge) === 0
-                        ? <span className="free">Free</span>
-                        : Number(shop.cross_comm_minimum) === 0
-                          ? `₱${shop.cross_comm_charge}`
-                          : `₱${shop.cross_comm_charge} charge for orders below ₱${Number(
-                            shop.cross_comm_minimum
-                          ).toFixed(2)}`}
+                  <span className={`delivery-charge ${Number(shop.cross_comm_charge) === 0 ? "free" : ""}`}>
+                    {user.community === shop.community ? <span className="free">Free</span> : Number(shop.cross_comm_charge) === 0 ? <span className="free">Free</span> : `₱${shop.cross_comm_charge} charge`}
                   </span>
                 </li>
               )}
             </ul>
           </div>
 
-          {/* PAYMENT METHODS */}
           <div className="shop-payment-methods">
             <h4>Payment</h4>
             <ul>
               <li data-provider="COD">COD</li>
-              {[
-                ...new Set(
-                  shop.shop_payment_accounts
-                    ?.filter(acc => acc.active)
-                    .map(acc => acc.provider)
-                ),
-              ].map(provider => (
+              {[...new Set(shop.shop_payment_accounts?.filter(acc => acc.active).map(acc => acc.provider))].map(provider => (
                 <li key={provider} data-provider={provider}>{provider}</li>
               ))}
             </ul>

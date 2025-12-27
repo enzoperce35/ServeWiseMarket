@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../context/AuthProvider";
 import axiosClient from "../../api/axiosClient";
 import toast from "react-hot-toast";
-import "../../css/components/seller/EditSellerShopPage.css";
+import "../../css/pages/seller/product_settings.css";
 
 export default function EditSellerShopPage() {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ export default function EditSellerShopPage() {
 
   const [shopId, setShopId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [shopCommunity, setShopCommunity] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -23,7 +24,6 @@ export default function EditSellerShopPage() {
   const [existingAccounts, setExistingAccounts] = useState([]);
   const [newAccounts, setNewAccounts] = useState([]);
   const [errors, setErrors] = useState({});
-  const [shopCommunity, setShopCommunity] = useState(""); // For dynamic labels
 
   /* ================= LOAD SHOP ================= */
   useEffect(() => {
@@ -46,8 +46,7 @@ export default function EditSellerShopPage() {
         });
 
         setExistingAccounts(shop.shop_payment_accounts || []);
-      } catch (err) {
-        console.error(err);
+      } catch {
         toast.error("Failed to load shop");
       } finally {
         setLoading(false);
@@ -57,22 +56,14 @@ export default function EditSellerShopPage() {
     if (token) fetchShop();
   }, [token]);
 
-  /* ================= DISABLE MINIMUM IF CHARGE IS ZERO ================= */
-  useEffect(() => {
-    if (Number(form.cross_comm_charge) === 0) {
-      setForm((prev) => ({
-        ...prev,
-        cross_comm_minimum: 0,
-      }));
-    }
-  }, [form.cross_comm_charge]);
-
-  /* ================= FORM HANDLERS ================= */
+  /* ================= HANDLERS ================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    // Prevent negative values
-    if ((name === "cross_comm_charge" || name === "cross_comm_minimum") && Number(value) < 0) return;
+    if (
+      (name === "cross_comm_charge" || name === "cross_comm_minimum") &&
+      Number(value) < 0
+    )
+      return;
 
     setForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -94,9 +85,7 @@ export default function EditSellerShopPage() {
       return updated;
     });
 
-    if (name === "account_number") {
-      validatePHNumber(index, value);
-    }
+    if (name === "account_number") validatePHNumber(index, value);
   };
 
   const handleAddNewAccount = () => {
@@ -108,7 +97,6 @@ export default function EditSellerShopPage() {
     setErrors({});
   };
 
-  /* ================= PH NUMBER VALIDATION ================= */
   const validatePHNumber = (index, value) => {
     const phRegex = /^(09|\+639)\d{9}$/;
 
@@ -118,23 +106,22 @@ export default function EditSellerShopPage() {
         ...prev[index],
         account_number: phRegex.test(value)
           ? null
-          : "Enter a valid PH mobile number (09XXXXXXXXX or +639XXXXXXXXX)",
+          : "Enter valid PH number (09XXXXXXXXX or +639XXXXXXXXX)",
       },
     }));
   };
 
-  /* ================= SAVE NEW PAYMENT ACCOUNT ================= */
   const handleSaveNewAccount = async (index) => {
     const account = newAccounts[index];
     const accountErrors = errors[index];
 
     if (!account.provider || !account.account_name || !account.account_number) {
-      toast.error("Please complete all fields");
+      toast.error("Complete all fields");
       return;
     }
 
     if (accountErrors?.account_number) {
-      toast.error("Please fix validation errors");
+      toast.error("Fix validation errors");
       return;
     }
 
@@ -148,7 +135,7 @@ export default function EditSellerShopPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      toast.success("Payment account added ✅");
+      toast.success("Payment account added");
 
       const res = await axiosClient.get("/seller/shop", {
         headers: { Authorization: `Bearer ${token}` },
@@ -157,18 +144,13 @@ export default function EditSellerShopPage() {
       setExistingAccounts(res.data.shop.shop_payment_accounts || []);
       setNewAccounts([]);
       setErrors({});
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to add payment account");
+    } catch {
+      toast.error("Failed to add account");
     }
   };
 
-  /* ================= DELETE EXISTING ACCOUNT ================= */
   const handleDeleteExistingAccount = async (accountId) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this payment account?"
-    );
-    if (!confirmed) return;
+    if (!window.confirm("Delete this payment account?")) return;
 
     try {
       await axiosClient.delete(
@@ -181,13 +163,11 @@ export default function EditSellerShopPage() {
       setExistingAccounts((prev) =>
         prev.filter((acc) => acc.id !== accountId)
       );
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to delete payment account");
+    } catch {
+      toast.error("Failed to delete account");
     }
   };
 
-  /* ================= SAVE SHOP ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -201,148 +181,183 @@ export default function EditSellerShopPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      toast.success("Shop updated successfully ✅");
+      toast.success("Shop updated ✅");
       navigate(`/shops/${shopId}`);
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Update failed");
     }
   };
 
-  if (loading) return <p className="loading-text">Loading shop data...</p>;
+  if (loading) return <p className="loading">Loading...</p>;
 
-  /* Determine other community for labels */
   const otherCommunity =
     shopCommunity === "Sampaguita Homes" ? "West" : "Homes";
 
+  /* ================= JSX ================= */
   return (
-    <div className="edit-seller-shop-page">
-      <h2>Edit Your Shop</h2>
+    <div className="settings-page">
+      <h2 className="settings-title">Edit Shop</h2>
 
       <form onSubmit={handleSubmit}>
         {/* SHOP INFO */}
-        <label>Shop Name</label>
-        <input name="name" value={form.name} onChange={handleChange} required />
+        <div className="settings-section">
+          <div className="section-header">
+            <h3>Shop Information</h3>
+          </div>
 
-        <label>Image URL</label>
-        <input name="image_url" value={form.image_url} onChange={handleChange} />
+          <div className="section-body">
+            <div className="settings-item">
+              <label>Shop Name</label>
+              <input name="name" value={form.name} onChange={handleChange} />
+            </div>
 
-        <label>Free Delivery Minimum ({otherCommunity})</label>
-        <input
-          type="number"
-          name="cross_comm_minimum"
-          min="0"
-          value={form.cross_comm_minimum}
-          disabled={Number(form.cross_comm_charge) === 0}
-          onChange={(e) => {
-            const intValue = e.target.value.replace(/\D/g, "");
-            setForm((prev) => ({
-              ...prev,
-              cross_comm_minimum: intValue,
-            }));
-          }}
-        />
+            <div className="settings-item">
+              <label>Image URL</label>
+              <input
+                name="image_url"
+                value={form.image_url}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+        </div>
 
-        <label>Delivery Charge ({otherCommunity})</label>
-        <input
-          type="number"
-          name="cross_comm_charge"
-          min="0"
-          value={form.cross_comm_charge}
-          onChange={handleChange}
-        />
-        
-        {/* EXISTING ACCOUNTS */}
-        <div className="payment-accounts-section">
-          <h3>Existing Payment Accounts</h3>
+        {/* DELIVERY SETTINGS */}
+        <div className="settings-section">
+          <div className="section-header">
+            <h3>Delivery Settings</h3>
+          </div>
 
-          {existingAccounts.map((acc, index) => (
-            <div key={acc.id} className="payment-account-row existing-account">
+          <div className="section-body">
+            <div className="settings-item">
+              <label>Free Delivery Minimum ({otherCommunity})</label>
+              <input
+                type="number"
+                name="cross_comm_minimum"
+                value={form.cross_comm_minimum}
+                disabled={Number(form.cross_comm_charge) === 0}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="settings-item">
+              <label>Delivery Charge ({otherCommunity})</label>
+              <input
+                type="number"
+                name="cross_comm_charge"
+                value={form.cross_comm_charge}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* PAYMENT ACCOUNTS */}
+        <div className="settings-section">
+          <div className="section-header">
+            <h3>Payment Accounts</h3>
+          </div>
+
+          <div className="section-body">
+            {existingAccounts.map((acc, index) => (
+              <div key={acc.id} className="cross-delivery-row">
               <span
-                className="delete-existing-account-btn"
+                className="delete-dash"
                 onClick={() => handleDeleteExistingAccount(acc.id)}
-              >
-                −
-              </span>
-
-              <span className="provider-text">
+                title="Delete this account"
+              ></span>
+              <span>
                 {acc.provider} ({acc.account_number})
               </span>
+            
+              <input
+                type="checkbox"
+                checked={acc.active}
+                onChange={(e) =>
+                  handleExistingAccountToggle(index, e.target.checked)
+                }
+              />
+            </div>
+            
+            ))}
 
-              <label className="checkbox-label">
+            {newAccounts.map((acc, index) => (
+              <div key={index} className="settings-item">
+                <select
+                  name="provider"
+                  value={acc.provider}
+                  onChange={(e) => handleNewAccountChange(index, e)}
+                >
+                  <option value="">Select Provider</option>
+                  <option value="GCash">GCash</option>
+                  <option value="Maya">Maya</option>
+                </select>
+
                 <input
-                  type="checkbox"
-                  checked={acc.active}
-                  onChange={(e) =>
-                    handleExistingAccountToggle(index, e.target.checked)
-                  }
+                  name="account_name"
+                  placeholder="Account Name"
+                  value={acc.account_name}
+                  onChange={(e) => handleNewAccountChange(index, e)}
                 />
-                Active
-              </label>
-            </div>
-          ))}
-        </div>
 
-        {/* NEW ACCOUNT */}
-        <div className="payment-accounts-section">
-          {newAccounts.map((acc, index) => (
-            <div key={index} className="payment-account-row new-account">
-              <select
-                name="provider"
-                value={acc.provider}
-                onChange={(e) => handleNewAccountChange(index, e)}
-              >
-                <option value="">Select Provider</option>
-                <option value="GCash">GCash</option>
-                <option value="Maya">Maya</option>
-              </select>
+                <input
+                  name="account_number"
+                  placeholder="Account Number"
+                  value={acc.account_number}
+                  onChange={(e) => handleNewAccountChange(index, e)}
+                  className={errors[index]?.account_number ? "input-error" : ""}
+                />
 
-              <input
-                name="account_name"
-                placeholder="Account Name"
-                value={acc.account_name}
-                onChange={(e) => handleNewAccountChange(index, e)}
-              />
+                {errors[index]?.account_number && (
+                  <small className="error-text">
+                    {errors[index].account_number}
+                  </small>
+                )}
 
-              <input
-                name="account_number"
-                placeholder="Account Number"
-                value={acc.account_number}
-                onChange={(e) => handleNewAccountChange(index, e)}
-                className={errors[index]?.account_number ? "input-error" : ""}
-              />
-
-              {errors[index]?.account_number && (
-                <div className="error-text">{errors[index].account_number}</div>
-              )}
-
-              <div className="new-account-actions">
-                <span className="new-account-cancel" onClick={handleCancelNewAccount}>
-                  Cancel
-                </span>
-                <span className="new-account-add" onClick={() => handleSaveNewAccount(index)}>
-                  Add
-                </span>
+                <div className="settings-actions">
+                  <button
+                    type="button"
+                    className="cancel-btn"
+                    onClick={handleCancelNewAccount}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="save-btn"
+                    onClick={() => handleSaveNewAccount(index)}
+                  >
+                    Add
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
 
-          {newAccounts.length === 0 && (
-            <div className="add-account-wrapper">
+            {newAccounts.length === 0 && (
               <button
                 type="button"
-                className="icon-circle-btn add-account-icon-btn"
+                className="save-btn"
                 onClick={handleAddNewAccount}
               >
-                +
+                + Add Payment Account
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        <button type="submit" className="save-btn">
-          Save Changes
-        </button>
+        {/* ACTIONS */}
+        <div className="settings-actions">
+          <button type="submit" className="save-btn">
+            Save Changes
+          </button>
+          <button
+            type="button"
+            className="cancel-btn"
+            onClick={() => navigate(-1)}
+          >
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );
