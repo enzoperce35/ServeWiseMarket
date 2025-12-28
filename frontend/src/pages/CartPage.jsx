@@ -3,6 +3,7 @@ import { useCartContext } from "../context/CartProvider";
 import { useAuthContext } from "../context/AuthProvider";
 import { removeFromCartApi } from "../api/cart";
 import { useNavigate } from "react-router-dom";
+import BackButton from "../components/common/BackButton";
 import toast from "react-hot-toast";
 import { checkoutApi } from "../api/orders";
 import "../css/pages/CartPage.css";
@@ -11,15 +12,6 @@ export default function CartPage() {
   const { cart, fetchCart } = useCartContext();
   const { token } = useAuthContext();
   const navigate = useNavigate();
-
-  // ===== BACK BUTTON LOGIC =====
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate("/"); // fallback to home if no history
-    }
-  };
 
   const handleCheckout = async () => {
     if (!token) {
@@ -64,9 +56,10 @@ export default function CartPage() {
     <div className="cart-page">
       {/* ===== BACK BUTTON ===== */}
       <div className="cart-header">
-        <button className="cart-back-btn" onClick={handleBack}>
-          ← Back
-        </button>
+        <BackButton
+          className="cart-back-btn"
+          fallback="/"
+        />
       </div>
 
       {(!cart || cart.shops.length === 0) && (

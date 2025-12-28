@@ -8,6 +8,7 @@ import { useOrdersContext } from "../../context/OrdersProvider";
 import { useAuthContext } from "../../context/AuthProvider";
 import { addToCartApi } from "../../api/cart";
 import GlobalCartOrders from "../../components/common/GlobalCartOrders";
+import BackButton from "../../components/common/BackButton";
 import toast from "react-hot-toast";
 import "../../css/components/seller/EditSellerShopPage.css";
 import "../../css/components/seller/ShopPage.css";
@@ -137,16 +138,11 @@ export default function ShopPage() {
       {/* HEADER */}
       <div className="shop-page-friendly-header">
         <div className="shop-page-friendly-image-container">
-        <button
-  className="shop-page-friendly-back-btn"
-  onClick={() =>
-    user?.id === shop.user?.id
-      ? navigate("/seller/products")
-      : navigate(-1)
-  }
->
-  ← Back
-</button>
+          <BackButton
+            className="shop-page-friendly-back-btn"
+            condition={user?.id === shop.user?.id}
+            conditionalTo="/seller/products"
+          />
 
           {shop.image_url ? (
             <img src={shop.image_url} alt={shop.name} className="shop-page-friendly-image" />

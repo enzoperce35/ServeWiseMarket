@@ -6,6 +6,7 @@ import { addToCartApi } from "../api/cart";
 import axiosClient from "../api/axiosClient";
 import { getDeliveryLabel } from "../utils/deliveryDateTime";
 import { isOwner, getPriceString } from "../utils/userProducts";
+import BackButton from "../components/common/BackButton";
 import toast from "react-hot-toast";
 import "../css/pages/ProductPage.css";
 
@@ -98,9 +99,7 @@ export default function ProductPage() {
 
   return (
     <div className="product-page">
-      <button className="back-btn" onClick={() => navigate(-1)}>
-        ← Back
-      </button>
+     <BackButton className="back-btn" />
 
       <img
         className="product-page-image"

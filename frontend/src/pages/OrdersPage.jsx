@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axiosClient from "../api/axiosClient";
-import { useNavigate } from "react-router-dom";
+import BackButton from "../components/common/BackButton";
 import "../css/pages/OrdersPage.css"; // Create this CSS file
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   const loadOrders = async () => {
     try {
@@ -47,13 +46,7 @@ export default function OrdersPage() {
   return (
     <div className="orders-page">
       <div className="orders-header">
-      <button
-        className="orders-back-btn"
-        onClick={() => navigate(-1)}
-      >
-        ← Back
-      </button>
-
+        <BackButton className="orders-back-btn" />
       </div>
       
       <div className="orders-grid">
