@@ -9,6 +9,7 @@ import { useAuthContext } from "../../context/AuthProvider";
 import { addToCartApi } from "../../api/cart";
 import GlobalCartOrders from "../../components/common/GlobalCartOrders";
 import BackButton from "../../components/common/BackButton";
+import { isProductAvailable } from "../../utils/productAvailability";
 import toast from "react-hot-toast";
 import "../../css/components/seller/EditSellerShopPage.css";
 import "../../css/components/seller/ShopPage.css";
@@ -105,12 +106,7 @@ export default function ShopPage() {
   if (loading) return <p className="loading-text">Loading shop...</p>;
   if (errorMessage || !shop) return <p className="shop-page-friendly-not-found">{errorMessage || "Shop not found"}</p>;
 
-  const availableProducts = shop.products?.filter(product => {
-    const valid = product.status === true && product.stock >= 1 && !isExpired(product);
-    if (!valid) return false;
-    if (!shop.open) return product.preorder_delivery === true;
-    return true;
-  }) || [];
+  const availableProducts = shop.products.filter(p => isProductAvailable(p, shop.open));
 
   const groupedProducts = (() => {
     if (!isMobile) return [];
