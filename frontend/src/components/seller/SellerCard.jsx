@@ -46,9 +46,8 @@ export default function SellerCard({ product, user, onClick, onStatusClick }) {
 
   return (
     <div
-      className={`seller-product-card clickable-card ${
-        product.preorder_delivery ? "instant-card" : "preorder-card"
-      }`}
+      className={`seller-product-card clickable-card ${product.preorder_delivery ? "instant-card" : "preorder-card"
+        }`}
       onClick={onClick}
     >
       <div className="seller-product-img-wrapper">
@@ -57,13 +56,12 @@ export default function SellerCard({ product, user, onClick, onStatusClick }) {
           <span
             className="status-dot"
             style={{ backgroundColor: getStatusColor() }}
-            title={`Status: ${
-              !status
-                ? "Inactive"
-                : product.delivery_date || product.delivery_time
+            title={`Status: ${!status
+              ? "Inactive"
+              : product.delivery_date || product.delivery_time
                 ? "Scheduled"
                 : "Active"
-            }`}
+              }`}
           />
         </span>
       </div>
@@ -74,6 +72,15 @@ export default function SellerCard({ product, user, onClick, onStatusClick }) {
         <div className="price-stock-container">
           <p className="price-stock"><strong>Price:</strong> ₱{price.toFixed(2)}</p>
           <p className="price-stock"><strong>Stock:</strong> {stock}</p>
+
+          {/* Show community checks inline on mobile/tablet */}
+          {/* Show community checks inline on mobile/tablet */}
+          {(window.innerWidth <= 768 && user?.community) && (
+            <div className="community-checks-inline">
+              <span><strong>{otherCommunity}: {getCheckIcon(otherCommunity) === "✅" ? "Yes" : "No"}</strong></span>
+            </div>
+          )}
+
         </div>
 
         {product.availability_type === "pre_order" && (

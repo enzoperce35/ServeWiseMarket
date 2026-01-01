@@ -146,28 +146,55 @@
 }
 
 /* ================================
-   Responsive
+   Mobile & Tablet – Delivery Groups
 ================================= */
 @media (max-width: 768px) {
-  .seller-header {
-    flex-direction: column;
-    gap: 0.5rem;
+  .seller-mobile-groups .delivery-group {
+    margin-bottom: 2.5rem; /* space between groups */
+    border-bottom: 1px solid rgba(0,0,0,0.05); /* subtle divider */
+    padding-bottom: 0.5rem;
+  }
+
+  /* Header: group name left, toggle arrow right */
+  .delivery-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 0 0.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .delivery-group-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .group-toggle-arrow {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+    user-select: none;
+    transition: transform 0.2s ease;
+  }
+
+  /* ================================
+     Product grid inside group
+  ================================= */
+  .seller-product-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Default: 1 card per row */
+    gap: 0.75rem;
+  }
+
+  /* Tablet adjustments (481px – 768px) */
+  @media (min-width: 481px) and (max-width: 768px) {
+    .seller-product-grid {
+      grid-template-columns: repeat(2, 1fr); /* 2 cards per row on tablet */
+      gap: 1rem;
+    }
   }
 }
 
-/* ================================
-   iPad Layout: 3 cards per row
-================================= */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .seller-product-grid {
-    grid-template-columns: repeat(3, 1fr); /* 3 cards in one row */
-    gap: 1rem; /* optional: adjust spacing */
-  }
-}
 
-@media (max-width: 480px) {
-  .seller-product-grid {
-    grid-template-columns: repeat(2, 1fr); /* ✅ two cards per row */
-    gap: 0.75rem;                          /* optional: slightly smaller gap */
-  }
-}
