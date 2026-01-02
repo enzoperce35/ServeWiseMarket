@@ -35,7 +35,7 @@ module Api
 
         # DELETE /api/v1/seller/products/:id
         def destroy
-          @product.destroy
+          @product.soft_delete!
           render json: { message: "Product deleted" }, status: :ok
         end
 

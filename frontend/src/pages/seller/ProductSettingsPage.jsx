@@ -139,7 +139,7 @@ export default function ProductSettingsPage() {
 
 
   const deleteProductHandler = async () => {
-    if (!window.confirm("Delete this product permanently?")) return;
+    if (!window.confirm("Delete this product?")) return;
     await deleteProduct(id);
     navigate("/seller/products");
   };

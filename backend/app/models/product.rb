@@ -1,4 +1,6 @@
 class Product < ApplicationRecord
+  include SoftDeletable
+  
   belongs_to :shop
   has_many :product_ratings, dependent: :destroy
   has_many :cart_items

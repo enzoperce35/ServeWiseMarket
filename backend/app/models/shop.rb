@@ -1,5 +1,7 @@
 # app/models/shop.rb
 class Shop < ApplicationRecord
+  include SoftDeletable
+  
   belongs_to :user
   has_many :products, dependent: :destroy
   has_many :orders

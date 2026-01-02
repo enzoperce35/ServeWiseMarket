@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_22_053658) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_02_122244) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -55,6 +55,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_053658) do
     t.integer "cross_comm_charge", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
     t.index ["shop_id"], name: "index_orders_on_shop_id"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
@@ -88,6 +89,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_053658) do
     t.integer "delivery_date_gap", default: 0, null: false
     t.boolean "preorder_delivery", default: false, null: false
     t.boolean "cross_comm_delivery", default: false, null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_products_on_deleted_at"
     t.index ["shop_id"], name: "index_products_on_shop_id"
   end
 
@@ -115,6 +118,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_053658) do
     t.string "community", null: false
     t.integer "cross_comm_charge", default: 0, null: false
     t.decimal "cross_comm_minimum", precision: 10, scale: 2, default: "0.0", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_shops_on_deleted_at"
     t.index ["user_id"], name: "index_shops_on_user_id"
   end
 
@@ -131,6 +136,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_22_053658) do
     t.datetime "updated_at", null: false
     t.string "community", default: "", null: false
     t.string "phase", default: "", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_users_on_deleted_at"
   end
 
   add_foreign_key "cart_items", "carts"
