@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { getDeliveryLabel } from "../../utils/deliveryDateTime";
+import React, { useEffect, useState } from "react";
+import { getDeliveryLabel, isOutOfStock } from "../../utils/deliveryDateTime";
 import "../../css/components/seller/SellerCard.css";
 
 export default function SellerCard({ product, user, onClick, onStatusClick }) {
@@ -44,59 +44,82 @@ export default function SellerCard({ product, user, onClick, onStatusClick }) {
     return community === userCommunity ? "✅" : "❌";
   };
 
+  // Only grey out and hide status dot for out-of-stock products
+  const outOfStock = isOutOfStock(product);
+
   return (
     <div
-      className={`seller-product-card clickable-card ${product.preorder_delivery ? "instant-card" : "preorder-card"
-        }`}
+      className={`seller-product-card clickable-card ${
+        product.preorder_delivery ? "instant-card" : "preorder-card"
+      } ${outOfStock ? "out-of-stock-product" : ""}`}
       onClick={onClick}
     >
       <div className="seller-product-img-wrapper">
         <img src={imageUrl} alt={product.name} className="seller-product-img" />
-        <span className="status-dot-wrapper" onClick={handleStatusClick}>
-          <span
-            className="status-dot"
-            style={{ backgroundColor: getStatusColor() }}
-            title={`Status: ${!status
-              ? "Inactive"
-              : product.delivery_date || product.delivery_time
-                ? "Scheduled"
-                : "Active"
+
+        {/* Hide status dot for out-of-stock only */}
+        {!outOfStock && (
+          <span className="status-dot-wrapper" onClick={handleStatusClick}>
+            <span
+              className="status-dot"
+              style={{ backgroundColor: getStatusColor() }}
+              title={`Status: ${
+                !status
+                  ? "Inactive"
+                  : product.delivery_date || product.delivery_time
+                  ? "Scheduled"
+                  : "Active"
               }`}
-          />
-        </span>
+            />
+          </span>
+        )}
       </div>
 
       <div className="seller-product-name">
         <h3>{product.name}</h3>
 
         <div className="price-stock-container">
-          <p className="price-stock"><strong>Price:</strong> ₱{price.toFixed(2)}</p>
-          <p className="price-stock"><strong>Stock:</strong> {stock}</p>
+          <p className="price-stock">
+            <strong>Price:</strong> ₱{price.toFixed(2)}
+          </p>
+          
+          <p className="price-stock" style={{ color: stock <= 0 ? "red" : "inherit" }}>
+            <strong>Stock:</strong> {stock}
+          </p>
 
-          {/* Show community checks inline on mobile/tablet */}
-          {/* Show community checks inline on mobile/tablet */}
-          {(window.innerWidth <= 768 && user?.community) && (
+          {/* Mobile/tablet community checks */}
+          {window.innerWidth <= 768 && user?.community && (
             <div className="community-checks-inline">
-              <span><strong>{otherCommunity}: {getCheckIcon(otherCommunity) === "✅" ? "Yes" : "No"}</strong></span>
+              <span>
+                <strong>
+                  {otherCommunity}: {getCheckIcon(otherCommunity) === "✅" ? "Yes" : "No"}
+                </strong>
+              </span>
             </div>
           )}
-
         </div>
 
         {product.availability_type === "pre_order" && (
-          <p><strong>Next Available:</strong> {nextAvailable}</p>
+          <p>
+            <strong>Next Available:</strong> {nextAvailable}
+          </p>
         )}
 
         <div className="bottom-row">
           <p className="delivery-label">
-            <span>Deliver:</span><br />
+            <span>Deliver:</span>
+            <br />
             <span className="delivery-date">{deliveryLabel}</span>
           </p>
 
           {user?.community && (
             <div className="community-checks">
-              <span>{userCommunity} {getCheckIcon(userCommunity)}</span>
-              <span>{otherCommunity} {getCheckIcon(otherCommunity)}</span>
+              <span>
+                {userCommunity} {getCheckIcon(userCommunity)}
+              </span>
+              <span>
+                {otherCommunity} {getCheckIcon(otherCommunity)}
+              </span>
             </div>
           )}
         </div>

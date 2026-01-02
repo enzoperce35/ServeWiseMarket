@@ -11,6 +11,7 @@ import SellerNavbar from "../../components/seller/SellerNavbar";
 import { updateProduct } from "../../api/seller/products";
 import {
   isExpired,
+  isOutOfStock,
   getDeliveryDateTime,
   getDeliveryLabel,
 } from "../../utils/deliveryDateTime";
@@ -29,46 +30,48 @@ export default function Products() {
   const isMobileOrTablet = useIsMobileOrTablet();
 
   // ============================================================
-  // ⭐ EXPIRED CHECK
+  // ⭐ EXPIRED / OUT OF STOCK CHECK
   // ============================================================
   useEffect(() => {
     if (!products || products.length === 0) return;
     if (expiredCheckDone.current) return;
     expiredCheckDone.current = true;
 
-    const checkAndUpdateExpired = async () => {
+    const checkAndDeactivate = async () => {
       for (const product of products) {
-        if (!isExpired(product)) continue;
+        const expired = isExpired(product);
+        const outOfStock = isOutOfStock(product);
 
+        // Skip if product is active and neither expired nor out of stock
+        if (!expired && !outOfStock) continue;
+
+        // Compute new delivery date if expired
         const daysToAdd = (product.delivery_gap ?? 0) + 1;
-        const newDeliveryDate = getDeliveryDateTime(product, daysToAdd);
-        const currentDelivery = getDeliveryDateTime(product);
+        const newDeliveryDate = expired
+          ? getDeliveryDateTime(product, daysToAdd)
+          : getDeliveryDateTime(product);
 
-        if (
-          newDeliveryDate &&
-          currentDelivery &&
-          newDeliveryDate.getTime() === currentDelivery.getTime()
-        )
-          continue;
+        const updatedData = {
+          status: false, // deactivate
+        };
+        if (expired && newDeliveryDate) {
+          updatedData.delivery_date = newDeliveryDate.toLocaleDateString("en-CA");
+        }
 
         try {
-          const updatedProduct = await updateProduct(product.id, {
-            delivery_date: newDeliveryDate.toLocaleDateString("en-CA"),
-            status: false,
-          });
-
+          const updatedProduct = await updateProduct(product.id, updatedData);
           setProducts((prev) =>
             prev.map((p) =>
               p.id === updatedProduct.id ? updatedProduct : p
             )
           );
         } catch (err) {
-          console.error("Failed to update expired product:", err);
+          console.error("Failed to deactivate expired/out-of-stock product:", err);
         }
       }
     };
 
-    checkAndUpdateExpired();
+    checkAndDeactivate();
   }, [products, setProducts]);
 
   // ============================================================
@@ -171,12 +174,8 @@ export default function Products() {
               <div className="seller-mobile-groups">
                 {groupOrder.map((label) => {
                   const allItems = groupedByDelivery[label];
-                  const activeItems = allItems.filter(
-                    (p) => p.status
-                  );
-                  const inactiveItems = allItems.filter(
-                    (p) => !p.status
-                  );
+                  const activeItems = allItems.filter((p) => p.status);
+                  const inactiveItems = allItems.filter((p) => !p.status);
                   const showInactiveItems = showInactive[label];
 
                   return (
@@ -195,9 +194,7 @@ export default function Products() {
 
                         {inactiveItems.length > 0 && (
                           <span className="group-toggle-arrow">
-                            {showInactiveItems
-                              ? `▼`
-                              : `▶`}
+                            {showInactiveItems ? `▼` : `▶`}
                           </span>
                         )}
                       </div>
@@ -211,12 +208,8 @@ export default function Products() {
                             product={product}
                             user={user}
                             isMobile={isMobileOrTablet}
-                            onClick={() =>
-                              handleEdit(product)
-                            }
-                            onStatusClick={() =>
-                              handleStatusToggle(product)
-                            }
+                            onClick={() => handleEdit(product)}
+                            onStatusClick={() => handleStatusToggle(product)}
                           />
                         ))}
 
@@ -228,12 +221,8 @@ export default function Products() {
                               product={product}
                               user={user}
                               isMobile={isMobileOrTablet}
-                              onClick={() =>
-                                handleEdit(product)
-                              }
-                              onStatusClick={() =>
-                                handleStatusToggle(product)
-                              }
+                              onClick={() => handleEdit(product)}
+                              onStatusClick={() => handleStatusToggle(product)}
                             />
                           ))}
                       </div>
@@ -256,12 +245,8 @@ export default function Products() {
                     product={product}
                     user={user}
                     isMobile={false}
-                    onClick={() =>
-                      handleEdit(product)
-                    }
-                    onStatusClick={() =>
-                      handleStatusToggle(product)
-                    }
+                    onClick={() => handleEdit(product)}
+                    onStatusClick={() => handleStatusToggle(product)}
                   />
                 ))}
 

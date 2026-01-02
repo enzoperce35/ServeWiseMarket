@@ -122,3 +122,15 @@ export const isExpired = (product) => {
 
   return Date.now() > date.getTime();
 };
+
+// ===============================================================
+// 📦 OUT OF STOCK CHECK
+// ===============================================================
+export const isOutOfStock = (product) => {
+  if (!product) return true;
+
+  const stock = Number(product.stock);
+
+  // Treat missing, null, NaN, or <= 0 as out of stock
+  return !Number.isFinite(stock) || stock <= 0;
+};
