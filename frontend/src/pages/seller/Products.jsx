@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import useProducts from "../../hooks/seller/useProducts";
 import { useAuthContext } from "../../context/AuthProvider";
+import { useIsMobileOrTablet } from "../../hooks/useDevice";
 
 import SellerCard from "../../components/seller/SellerCard";
 import SellerNavbar from "../../components/seller/SellerNavbar";
@@ -23,18 +24,9 @@ export default function Products() {
   const expiredCheckDone = useRef(false);
 
   // ============================================================
-  // 📱 DEVICE DETECTION
+  // 📱 DEVICE DETECTION (GLOBAL HOOK)
   // ============================================================
-  const [isMobileOrTablet, setIsMobileOrTablet] = useState(
-    window.innerWidth <= 768
-  );
-
-  useEffect(() => {
-    const handleResize = () =>
-      setIsMobileOrTablet(window.innerWidth <= 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const isMobileOrTablet = useIsMobileOrTablet();
 
   // ============================================================
   // ⭐ EXPIRED CHECK
@@ -70,7 +62,9 @@ export default function Products() {
             updatedProductData
           );
           setProducts((prev) =>
-            prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
+            prev.map((p) =>
+              p.id === updatedProduct.id ? updatedProduct : p
+            )
           );
         } catch (err) {
           console.error("Failed to update expired product:", err);
@@ -86,6 +80,7 @@ export default function Products() {
   // ============================================================
   const handleEdit = (product) =>
     navigate(`/seller/products/${product.id}/edit`);
+
   const handleCreate = () => navigate("/seller/products/new");
 
   const handleStatusToggle = async (product) => {
@@ -95,7 +90,9 @@ export default function Products() {
         status: newStatus,
       });
       setProducts((prev) =>
-        prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
+        prev.map((p) =>
+          p.id === updatedProduct.id ? updatedProduct : p
+        )
       );
     } catch (err) {
       console.error("Failed to toggle status:", err);
@@ -103,7 +100,7 @@ export default function Products() {
   };
 
   // ============================================================
-  // GROUP TOGGLE STATE
+  // GROUP TOGGLE STATE (MOBILE/TABLET)
   // ============================================================
   const [groupExpanded, setGroupExpanded] = useState({});
 
@@ -113,7 +110,7 @@ export default function Products() {
     const initialExpanded = {};
     products.forEach((product) => {
       const label = getDeliveryLabel(product) || "Other";
-      initialExpanded[label] = true; // expanded by default
+      initialExpanded[label] = true;
     });
     setGroupExpanded(initialExpanded);
   }, [products]);
@@ -125,7 +122,9 @@ export default function Products() {
     }));
   };
 
-  if (productsLoading || userLoading) return <p>Loading products...</p>;
+  if (productsLoading || userLoading) {
+    return <p>Loading products...</p>;
+  }
 
   // ============================================================
   // DESKTOP SORTED PRODUCTS
@@ -140,6 +139,7 @@ export default function Products() {
   // ============================================================
   let groupedByDelivery = {};
   let groupOrder = [];
+
   if (isMobileOrTablet) {
     products.forEach((product) => {
       const label = getDeliveryLabel(product) || "Other";
@@ -159,10 +159,13 @@ export default function Products() {
         {products.length === 0 ? (
           <div className="no-products-message">
             <p>
-              You have no products yet. Click the button below to create your
-              first product!
+              You have no products yet. Click the button below to create
+              your first product!
             </p>
-            <button className="add-product-button" onClick={handleCreate}>
+            <button
+              className="add-product-button"
+              onClick={handleCreate}
+            >
               + Create Product
             </button>
           </div>
@@ -180,7 +183,9 @@ export default function Products() {
                         className="delivery-group-header"
                         onClick={() => toggleGroup(label)}
                       >
-                        <span className="delivery-group-title">{label}</span>
+                        <span className="delivery-group-title">
+                          {label}
+                        </span>
                         <span className="group-toggle-arrow">
                           {expanded ? "▼" : "▶"}
                         </span>
@@ -195,7 +200,9 @@ export default function Products() {
                               user={user}
                               isMobile={isMobileOrTablet}
                               onClick={() => handleEdit(product)}
-                              onStatusClick={() => handleStatusToggle(product)}
+                              onStatusClick={() =>
+                                handleStatusToggle(product)
+                              }
                             />
                           ))}
                         </div>
@@ -220,9 +227,12 @@ export default function Products() {
                     user={user}
                     isMobile={isMobileOrTablet}
                     onClick={() => handleEdit(product)}
-                    onStatusClick={() => handleStatusToggle(product)}
+                    onStatusClick={() =>
+                      handleStatusToggle(product)
+                    }
                   />
                 ))}
+
                 <button
                   className="add-product-circle"
                   onClick={handleCreate}
