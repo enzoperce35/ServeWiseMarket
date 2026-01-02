@@ -24,7 +24,7 @@ export default function Products() {
   const expiredCheckDone = useRef(false);
 
   // ============================================================
-  // 📱 DEVICE DETECTION (GLOBAL HOOK)
+  // 📱 DEVICE DETECTION
   // ============================================================
   const isMobileOrTablet = useIsMobileOrTablet();
 
@@ -51,16 +51,12 @@ export default function Products() {
         )
           continue;
 
-        const updatedProductData = {
-          delivery_date: newDeliveryDate.toLocaleDateString("en-CA"),
-          status: false,
-        };
-
         try {
-          const updatedProduct = await updateProduct(
-            product.id,
-            updatedProductData
-          );
+          const updatedProduct = await updateProduct(product.id, {
+            delivery_date: newDeliveryDate.toLocaleDateString("en-CA"),
+            status: false,
+          });
+
           setProducts((prev) =>
             prev.map((p) =>
               p.id === updatedProduct.id ? updatedProduct : p
@@ -84,11 +80,11 @@ export default function Products() {
   const handleCreate = () => navigate("/seller/products/new");
 
   const handleStatusToggle = async (product) => {
-    const newStatus = !product.status;
     try {
       const updatedProduct = await updateProduct(product.id, {
-        status: newStatus,
+        status: !product.status,
       });
+
       setProducts((prev) =>
         prev.map((p) =>
           p.id === updatedProduct.id ? updatedProduct : p
@@ -100,23 +96,23 @@ export default function Products() {
   };
 
   // ============================================================
-  // GROUP TOGGLE STATE (MOBILE/TABLET)
+  // MOBILE/TABLET: SHOW INACTIVE TOGGLE STATE
   // ============================================================
-  const [groupExpanded, setGroupExpanded] = useState({});
+  const [showInactive, setShowInactive] = useState({});
 
   useEffect(() => {
     if (!products || products.length === 0) return;
 
-    const initialExpanded = {};
+    const initialState = {};
     products.forEach((product) => {
       const label = getDeliveryLabel(product) || "Other";
-      initialExpanded[label] = true;
+      initialState[label] = false; // inactive hidden by default
     });
-    setGroupExpanded(initialExpanded);
+    setShowInactive(initialState);
   }, [products]);
 
-  const toggleGroup = (label) => {
-    setGroupExpanded((prev) => ({
+  const toggleInactive = (label) => {
+    setShowInactive((prev) => ({
       ...prev,
       [label]: !prev[label],
     }));
@@ -127,7 +123,7 @@ export default function Products() {
   }
 
   // ============================================================
-  // DESKTOP SORTED PRODUCTS
+  // DESKTOP SORT
   // ============================================================
   const sortedProducts = [...products].sort((a, b) => {
     if (a.status !== b.status) return a.status ? -1 : 1;
@@ -174,39 +170,73 @@ export default function Products() {
             {isMobileOrTablet ? (
               <div className="seller-mobile-groups">
                 {groupOrder.map((label) => {
-                  const items = groupedByDelivery[label];
-                  const expanded = groupExpanded[label];
+                  const allItems = groupedByDelivery[label];
+                  const activeItems = allItems.filter(
+                    (p) => p.status
+                  );
+                  const inactiveItems = allItems.filter(
+                    (p) => !p.status
+                  );
+                  const showInactiveItems = showInactive[label];
 
                   return (
                     <div key={label} className="delivery-group">
+                      {/* GROUP HEADER */}
                       <div
                         className="delivery-group-header"
-                        onClick={() => toggleGroup(label)}
+                        onClick={() =>
+                          inactiveItems.length > 0 &&
+                          toggleInactive(label)
+                        }
                       >
                         <span className="delivery-group-title">
                           {label}
                         </span>
-                        <span className="group-toggle-arrow">
-                          {expanded ? "▼" : "▶"}
-                        </span>
+
+                        {inactiveItems.length > 0 && (
+                          <span className="group-toggle-arrow">
+                            {showInactiveItems
+                              ? `▼`
+                              : `▶`}
+                          </span>
+                        )}
                       </div>
 
-                      {expanded && (
-                        <div className="seller-product-grid">
-                          {items.map((product) => (
+                      {/* PRODUCTS */}
+                      <div className="seller-product-grid">
+                        {/* ACTIVE (always visible) */}
+                        {activeItems.map((product) => (
+                          <SellerCard
+                            key={product.id}
+                            product={product}
+                            user={user}
+                            isMobile={isMobileOrTablet}
+                            onClick={() =>
+                              handleEdit(product)
+                            }
+                            onStatusClick={() =>
+                              handleStatusToggle(product)
+                            }
+                          />
+                        ))}
+
+                        {/* INACTIVE (toggleable) */}
+                        {showInactiveItems &&
+                          inactiveItems.map((product) => (
                             <SellerCard
                               key={product.id}
                               product={product}
                               user={user}
                               isMobile={isMobileOrTablet}
-                              onClick={() => handleEdit(product)}
+                              onClick={() =>
+                                handleEdit(product)
+                              }
                               onStatusClick={() =>
                                 handleStatusToggle(product)
                               }
                             />
                           ))}
-                        </div>
-                      )}
+                      </div>
                     </div>
                   );
                 })}
@@ -225,8 +255,10 @@ export default function Products() {
                     key={product.id}
                     product={product}
                     user={user}
-                    isMobile={isMobileOrTablet}
-                    onClick={() => handleEdit(product)}
+                    isMobile={false}
+                    onClick={() =>
+                      handleEdit(product)
+                    }
                     onStatusClick={() =>
                       handleStatusToggle(product)
                     }
