@@ -8,4 +8,12 @@ class Order < ApplicationRecord
   scope :ongoing, -> { where(status: ONGOING_STATUSES) }
 
   validates :status, presence: true
+
+  def pending?
+    status == "pending"
+  end
+
+  def accepted?
+    status == "confirmed"
+  end
 end

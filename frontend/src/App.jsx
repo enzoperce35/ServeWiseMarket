@@ -16,6 +16,7 @@ import EditSellerShopPage from "./components/seller/EditSellerShopPage";
 import Products from "./pages/seller/Products";
 import ShopPage from "./pages/seller/ShopPage";
 import OrdersPage from "./pages/OrdersPage";
+import SellerOrdersPage from "./pages/seller/SellerOrdersPage";
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/product/:id" element={<ProductPage />} />
         <Route path="/cart" element={<CartPage />} /> {/* ✅ Add this */}
         <Route path="/shops/:shopId/edit" element={<EditSellerShopPage />} />
+        <Route path="/seller/orders" element={<SellerOrdersPage />} />
       </Routes>
     </BrowserRouter>
   );

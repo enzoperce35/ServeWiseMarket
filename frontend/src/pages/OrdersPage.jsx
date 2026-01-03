@@ -32,7 +32,7 @@ export default function OrdersPage() {
         return "status-pending";
       case "preparing":
         return "status-preparing";
-      case "accepted":
+      case "confirmed":
         return "status-accepted";
       case "completed":
         return "status-completed";

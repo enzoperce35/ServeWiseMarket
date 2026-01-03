@@ -27,6 +27,11 @@ Rails.application.routes.draw do
         resource :shop, only: [:show, :create, :update]
         resources :products, only: [:index, :create, :update, :destroy]
         resources :shop_payment_accounts, only: [:destroy]
+        resources :orders, only: [:index] do
+          member do
+            patch :confirm
+          end
+        end
         # Optional: future shop settings routes
         # resources :shops, only: [:show, :update]
       end
