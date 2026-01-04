@@ -43,12 +43,28 @@ export default function OrdersPage() {
     }
   };
 
+  const cancelOrder = async (orderId) => {
+    const confirmCancel = window.confirm("Are you sure you want to cancel this order?");
+    if (!confirmCancel) return;
+
+    try {
+      const res = await axiosClient.patch(`/orders/${orderId}/cancel`);
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === orderId ? { ...o, status: res.data.status } : o
+        )
+      );
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to cancel order");
+    }
+  };
+
   return (
     <div className="orders-page">
       <div className="orders-header">
         <BackButton className="orders-back-btn" />
       </div>
-      
+
       <div className="orders-grid">
         {orders.map((order) => (
           <div key={order.id} className="order-card">
@@ -76,6 +92,15 @@ export default function OrdersPage() {
             <button className="view-order-btn" onClick={() => window.location.href = `/orders/${order.id}`}>
               View Details
             </button>
+
+            {order.status === "pending" && (
+              <button
+                className="cancel-order-btn"
+                onClick={() => cancelOrder(order.id)}
+              >
+                Cancel Order
+              </button>
+            )}
           </div>
         ))}
       </div>
