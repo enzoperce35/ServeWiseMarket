@@ -1,0 +1,64 @@
+.time-filter-bar {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 20;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Day Tabs */
+.day-switch {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding: 0.75rem 0;
+  font-weight: 600;
+}
+
+.day-switch span {
+  cursor: pointer;
+  opacity: 0.4;
+}
+
+.day-switch span.active {
+  opacity: 1;
+}
+
+/* Carousel */
+.time-carousel {
+  display: flex;
+  overflow-x: auto;
+  padding: 0.75rem 1rem 1rem;
+  gap: 1rem;
+}
+
+/* Day group */
+.day-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.day-label {
+  font-size: 0.8rem;
+  opacity: 0.5;
+  margin-right: 0.25rem;
+}
+
+/* Time chip */
+.time-chip {
+  min-width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  background: #f2f2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.time-chip.selected {
+  background: #111;
+  color: #fff;
+}

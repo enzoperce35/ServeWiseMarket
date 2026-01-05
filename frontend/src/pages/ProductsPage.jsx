@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
-import Filters from "../components/Filters";
+import TimeFilterBar from "../components/TimeFilterBar";
 import "../css/pages/ProductsPage.css";
 import { fetchProducts } from "../api/productApi";
 import { useAuthContext } from "../context/AuthProvider";
@@ -29,11 +29,18 @@ export default function ProductsPage() {
       <div className="header-filters-container">
         <Navbar />
         <div className="filters-container">
-          <Filters
-            products={products}
-            setFilteredProducts={setFilteredProducts}
-            user={user} // 🟢 may be NULL — fine
+          <TimeFilterBar
+            onChange={(slot) => {
+              setFilteredProducts(
+                products.filter(p => {
+                  // example:
+                  // return matches slot.day / slot.hour
+                  return true;
+                })
+              );
+            }}
           />
+
         </div>
       </div>
 
