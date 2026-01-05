@@ -1,265 +1,198 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import useProducts from "../../hooks/seller/useProducts";
 import { useAuthContext } from "../../context/AuthProvider";
-import { useIsMobileOrTablet } from "../../hooks/useDevice";
 
 import SellerCard from "../../components/seller/SellerCard";
 import SellerNavbar from "../../components/seller/SellerNavbar";
 
 import { updateProduct } from "../../api/seller/products";
-import {
-  isExpired,
-  isOutOfStock,
-  getDeliveryDateTime,
-  getDeliveryLabel,
-} from "../../utils/deliveryDateTime";
 
 import "../../css/seller/products.css";
+
+/* ================================
+   TIME CONFIG
+================================ */
+const HOURS_24 = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+const BUFFER_HOURS = 2;
+
+/* ================================
+   HELPERS
+================================ */
+const formatHourLabel = (hour) => {
+  if (hour === "Now") return "Now";
+
+  const h = Number(hour);
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  const ampm = h >= 12 ? "pm" : "am";
+
+  return `${hour12}${ampm}`;
+};
 
 export default function Products() {
   const { products, loading: productsLoading, setProducts } = useProducts();
   const { user, loading: userLoading } = useAuthContext();
   const navigate = useNavigate();
-  const expiredCheckDone = useRef(false);
 
-  // ============================================================
-  // 📱 DEVICE DETECTION
-  // ============================================================
-  const isMobileOrTablet = useIsMobileOrTablet();
+  /* ================================
+     DAY SELECTION
+  ================================ */
+  const [selectedDay, setSelectedDay] = useState("today");
 
-  // ============================================================
-  // ⭐ EXPIRED / OUT OF STOCK CHECK
-  // ============================================================
-  useEffect(() => {
-    if (!products || products.length === 0) return;
-    if (expiredCheckDone.current) return;
-    expiredCheckDone.current = true;
+  /* ================================
+     BUILD TIME GROUPS
+  ================================ */
+  const buildHourGroups = () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const minHourToday = currentHour + BUFFER_HOURS;
 
-    const checkAndDeactivate = async () => {
-      for (const product of products) {
-        const expired = isExpired(product);
-        const outOfStock = isOutOfStock(product);
+    const today = ["Now"];
+    const tomorrow = [];
 
-        // Skip if product is active and neither expired nor out of stock
-        if (!expired && !outOfStock) continue;
-
-        // Compute new delivery date if expired
-        const daysToAdd = (product.delivery_gap ?? 0) + 1;
-        const newDeliveryDate = expired
-          ? getDeliveryDateTime(product, daysToAdd)
-          : getDeliveryDateTime(product);
-
-        const updatedData = {
-          status: false, // deactivate
-        };
-        if (expired && newDeliveryDate) {
-          updatedData.delivery_date = newDeliveryDate.toLocaleDateString("en-CA");
-        }
-
-        try {
-          const updatedProduct = await updateProduct(product.id, updatedData);
-          setProducts((prev) =>
-            prev.map((p) =>
-              p.id === updatedProduct.id ? updatedProduct : p
-            )
-          );
-        } catch (err) {
-          console.error("Failed to deactivate expired/out-of-stock product:", err);
-        }
+    HOURS_24.forEach((hour) => {
+      if (hour >= minHourToday) {
+        today.push(hour);
+      } else {
+        tomorrow.push(hour);
       }
-    };
+    });
 
-    checkAndDeactivate();
-  }, [products, setProducts]);
+    return { today, tomorrow };
+  };
 
-  // ============================================================
-  // HANDLERS
-  // ============================================================
+  const hourGroups = buildHourGroups();
+
+  /* ================================
+     NAVIGATION
+  ================================ */
   const handleEdit = (product) =>
     navigate(`/seller/products/${product.id}/edit`);
 
   const handleCreate = () => navigate("/seller/products/new");
 
-  const handleStatusToggle = async (product) => {
+  /* ================================
+     ADD/REMOVE DELIVERY TIME
+  ================================ */
+  const handleAddDeliveryTime = async (product, hour) => {
+    const resolvedHour = hour === "Now" ? -1 : Number(hour);
+
+    const alreadyExists = (product.delivery_times || []).some(
+      (slot) => Number(slot.hour) === resolvedHour
+    );
+
+    let updatedDeliveryTimes;
+    if (alreadyExists) {
+      // Remove the hour
+      updatedDeliveryTimes = (product.delivery_times || []).filter(
+        (slot) => Number(slot.hour) !== resolvedHour
+      );
+    } else {
+      // Add the hour
+      updatedDeliveryTimes = [
+        ...(product.delivery_times || []),
+        { hour: resolvedHour },
+      ];
+    }
+
     try {
       const updatedProduct = await updateProduct(product.id, {
-        status: !product.status,
+        delivery_times: updatedDeliveryTimes,
       });
 
       setProducts((prev) =>
-        prev.map((p) =>
-          p.id === updatedProduct.id ? updatedProduct : p
-        )
+        prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
       );
     } catch (err) {
-      console.error("Failed to toggle status:", err);
+      console.error("Failed to update delivery time:", err);
     }
   };
 
-  // ============================================================
-  // MOBILE/TABLET: SHOW INACTIVE TOGGLE STATE
-  // ============================================================
-  const [showInactive, setShowInactive] = useState({});
-
-  useEffect(() => {
-    if (!products || products.length === 0) return;
-
-    const initialState = {};
-    products.forEach((product) => {
-      const label = getDeliveryLabel(product) || "Other";
-      initialState[label] = false; // inactive hidden by default
-    });
-    setShowInactive(initialState);
-  }, [products]);
-
-  const toggleInactive = (label) => {
-    setShowInactive((prev) => ({
-      ...prev,
-      [label]: !prev[label],
-    }));
-  };
-
+  /* ================================
+     LOADING / EMPTY STATES
+  ================================ */
   if (productsLoading || userLoading) {
     return <p>Loading products...</p>;
   }
 
-  // ============================================================
-  // DESKTOP SORT
-  // ============================================================
-  const sortedProducts = [...products].sort((a, b) => {
-    if (a.status !== b.status) return a.status ? -1 : 1;
-    return new Date(b.updated_at) - new Date(a.updated_at);
-  });
-
-  // ============================================================
-  // MOBILE/TABLET GROUPING
-  // ============================================================
-  let groupedByDelivery = {};
-  let groupOrder = [];
-
-  if (isMobileOrTablet) {
-    products.forEach((product) => {
-      const label = getDeliveryLabel(product) || "Other";
-      if (!groupedByDelivery[label]) {
-        groupedByDelivery[label] = [];
-        groupOrder.push(label);
-      }
-      groupedByDelivery[label].push(product);
-    });
+  if (!products || products.length === 0) {
+    return (
+      <div className="seller-page">
+        <SellerNavbar />
+        <div className="seller-content">
+          <div className="no-products-message">
+            <p>
+              You have no products yet. Click the button below to create your
+              first product!
+            </p>
+            <button className="add-product-button" onClick={handleCreate}>
+              + Create Product
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
-
+  console.log(products)
+  /* ================================
+     RENDER
+  ================================ */
   return (
     <div className="seller-page">
       <SellerNavbar />
 
-      <div className="p-4">
-        {products.length === 0 ? (
-          <div className="no-products-message">
-            <p>
-              You have no products yet. Click the button below to create
-              your first product!
-            </p>
+      <div className="seller-content">
+        {/* DAY TOGGLE */}
+        <div className="day-toggle">
+          {["today", "tomorrow"].map((day) => (
             <button
-              className="add-product-button"
-              onClick={handleCreate}
+              key={day}
+              className={`day-btn ${selectedDay === day ? "active" : ""}`}
+              onClick={() => setSelectedDay(day)}
             >
-              + Create Product
+              {day.charAt(0).toUpperCase() + day.slice(1)}
             </button>
-          </div>
-        ) : (
-          <>
-            {isMobileOrTablet ? (
-              <div className="seller-mobile-groups">
-                {groupOrder.map((label) => {
-                  const allItems = groupedByDelivery[label];
-                  const activeItems = allItems.filter((p) => p.status);
-                  const inactiveItems = allItems.filter((p) => !p.status);
-                  const showInactiveItems = showInactive[label];
+          ))}
+        </div>
 
-                  return (
-                    <div key={label} className="delivery-group">
-                      {/* GROUP HEADER */}
-                      <div
-                        className="delivery-group-header"
-                        onClick={() =>
-                          inactiveItems.length > 0 &&
-                          toggleInactive(label)
-                        }
-                      >
-                        <span className="delivery-group-title">
-                          {label}
-                        </span>
+        {/* Big green + below toggle */}
+        <div className="add-product-container">
+          <button className="add-product-circle" onClick={handleCreate}>
+            +
+          </button>
+        </div>
 
-                        {inactiveItems.length > 0 && (
-                          <span className="group-toggle-arrow">
-                            {showInactiveItems ? `▼` : `▶`}
-                          </span>
-                        )}
-                      </div>
+        {/* DELIVERY GROUPS */}
+        {hourGroups[selectedDay].map((hour, idx) => {
+          const resolvedHour = hour === "Now" ? -1 : Number(hour);
 
-                      {/* PRODUCTS */}
-                      <div className="seller-product-grid">
-                        {/* ACTIVE (always visible) */}
-                        {activeItems.map((product) => (
-                          <SellerCard
-                            key={product.id}
-                            product={product}
-                            user={user}
-                            isMobile={isMobileOrTablet}
-                            onClick={() => handleEdit(product)}
-                            onStatusClick={() => handleStatusToggle(product)}
-                          />
-                        ))}
-
-                        {/* INACTIVE (toggleable) */}
-                        {showInactiveItems &&
-                          inactiveItems.map((product) => (
-                            <SellerCard
-                              key={product.id}
-                              product={product}
-                              user={user}
-                              isMobile={isMobileOrTablet}
-                              onClick={() => handleEdit(product)}
-                              onStatusClick={() => handleStatusToggle(product)}
-                            />
-                          ))}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                <button
-                  className="add-product-circle"
-                  onClick={handleCreate}
-                >
-                  +
-                </button>
+          return (
+            <div key={`${hour}-${idx}`} className="delivery-group">
+              <div className="delivery-group-header">
+                <h3 className="delivery-group-title">
+                  {hour === "Now"
+                    ? "Now"
+                    : `${selectedDay.charAt(0).toUpperCase() + selectedDay.slice(1)} ${formatHourLabel(hour)}`}
+                </h3>
               </div>
-            ) : (
+
               <div className="seller-product-grid">
-                {sortedProducts.map((product) => (
+                {products.map((product) => (
                   <SellerCard
                     key={product.id}
                     product={product}
-                    user={user}
-                    isMobile={false}
                     onClick={() => handleEdit(product)}
-                    onStatusClick={() => handleStatusToggle(product)}
+                    onStatusClick={(updatedProduct) =>
+                      handleAddDeliveryTime(product, hour)
+                    }
+                    deliveryHour={resolvedHour}
                   />
                 ))}
-
-                <button
-                  className="add-product-circle"
-                  onClick={handleCreate}
-                >
-                  +
-                </button>
               </div>
-            )}
-          </>
-        )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

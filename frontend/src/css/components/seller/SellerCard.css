@@ -56,6 +56,7 @@
   height: 18px;
   border-radius: 50%;
   border: 1px solid #aa7a7a;
+  transition: background-color 0.2s ease;
 }
 
 /* ================================
@@ -91,44 +92,9 @@
   line-height: 1.1;
 }
 
-/* ================================
-   Bottom Row
-================================= */
-.bottom-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
-  gap: 4px;
-}
-
-.delivery-label {
-  font-size: 0.75rem;
-  color: #555;
-}
-
-.delivery-date {
-  color: rgb(0, 140, 255);
-}
-
-.community-checks {
-  display: flex;
-  gap: 0.3rem;
-  font-size: 0.75rem;
-  align-items: center; /* align with price/stock */
-}
-
-/* ================================
-   Card Variants
-================================= */
-.preorder-card {
-  background-color: rgba(32, 84, 26, 0.1);
-  border: 2px solid rgb(160, 209, 160);
-}
-
-.instant-card {
-  background-color: rgba(157, 40, 8, 0.1);
-  border: 2px solid rgb(241, 204, 135);
+/* Out-of-stock styling */
+.out-of-stock-product {
+  opacity: 0.6;
 }
 
 /* ================================
@@ -136,7 +102,6 @@
 ================================= */
 @media (max-width: 768px) {
 
-  /* Grouped layout: one card per row */
   .seller-product-grid {
     display: flex;
     flex-direction: column;
@@ -153,13 +118,11 @@
     gap: 2px;
   }
 
-  /* Product name */
   .seller-product-name h3 {
     font-size: 0.8rem;
     margin: 2px 0 10px;
   }
 
-  /* Price + Stock inline, one line only */
   .price-stock-container {
     display: flex;
     flex-wrap: wrap;
@@ -172,21 +135,7 @@
     white-space: nowrap;
   }
 
-  /* Bottom row: hide delivery label, keep community checks inline */
-  .bottom-row {
-    margin-top: 2px;
-    gap: 6px;
-    flex-wrap: nowrap;    /* force inline items */
-    justify-content: flex-start;
-    align-items: center;
-  }
-
-  .delivery-label {
-    display: none;
-  }
-
-
-  /* Hide product image */
+  /* Hide product image on mobile */
   .seller-product-img {
     display: none;
   }
@@ -204,9 +153,5 @@
   .status-dot {
     width: 14px;
     height: 14px;
-  }
-
-  .bottom-row {
-    display: none; /* hide bottom row on mobile/tablet since delivery is hidden */
   }
 }

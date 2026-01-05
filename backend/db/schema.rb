@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_02_122244) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_04_132020) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -90,7 +90,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_02_122244) do
     t.boolean "preorder_delivery", default: false, null: false
     t.boolean "cross_comm_delivery", default: false, null: false
     t.datetime "deleted_at"
+    t.jsonb "delivery_times", default: [], null: false
     t.index ["deleted_at"], name: "index_products_on_deleted_at"
+    t.index ["delivery_times"], name: "index_products_on_delivery_times", using: :gin
     t.index ["shop_id"], name: "index_products_on_shop_id"
   end
 

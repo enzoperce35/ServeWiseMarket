@@ -1,200 +1,165 @@
 /* ================================
-   General Page Styles
-================================= */
+   Base Layout (Mobile First)
+================================ */
 .seller-page {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 1rem;
-  font-family: sans-serif; 
 }
 
-.seller-header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.seller-header h2 {
-  font-size: 1.75rem;
-  margin-bottom: 0.5rem;
+.seller-content {
+  padding: 0.5rem;
 }
 
 /* ================================
-   Buttons
+   Day Toggle Styles (Today/Tomorrow)
 ================================= */
-.seller-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+.day-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding-bottom: 0.5rem;
+}
+
+.day-btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid #3b82f6;
+  background-color: #fff;
+  color: #3b82f6;
   font-weight: 600;
   cursor: pointer;
-  border: none;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.seller-btn-primary {
-  background-color: #1d4ed8;
+.day-btn:hover {
+  background-color: #eff6ff;
+}
+
+.day-btn.active {
+  background-color: #3b82f6;
   color: #fff;
-}
-
-.seller-btn-primary:hover {
-  background-color: #2563eb;
-}
-
-.seller-btn-success {
-  background-color: #16a34a;
-  color: #fff;
-}
-
-.seller-btn-success:hover {
-  background-color: #22c55e;
-}
-
-.seller-btn-danger {
-  background-color: #dc2626;
-  color: #fff;
-}
-
-.seller-btn-danger:hover {
-  background-color: #ef4444;
-}
-
-.seller-btn-gray {
-  background-color: #6b7280;
-  color: #fff;
-}
-
-.seller-btn-gray:hover {
-  background-color: #4b5563;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* ================================
-   Inputs & Form
-================================= */
-.seller-product-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+   Delivery Groups
+================================ */
+.delivery-group {
   margin-bottom: 2rem;
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-.seller-input {
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  border: 1px solid #d1d5db;
+.delivery-group-header {
   font-size: 1rem;
-  width: 100%;
-}
-
-.seller-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.seller-checkbox-label {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding-bottom: 0.25rem;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
+  cursor: pointer;
+}
+
+.delivery-group-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Highlight 'Now' group */
+.delivery-group.now {
+  background-color: #eff6ff; /* light blue background */
+  border-left: 4px solid #3b82f6; /* blue accent */
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.delivery-group.now .delivery-group-header {
+  font-weight: 700;
+  color: #1d4ed8;
+  position: relative;
+}
+
+.delivery-group.now .delivery-group-header::after {
+  content: "NOW";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #3b82f6;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.4rem;
+  border-radius: 9999px;
+  letter-spacing: 0.5px;
 }
 
 /* ================================
-   Product Grid & Card
+   Product Grid
 ================================= */
 .seller-product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  gap: 0.75rem;
+  grid-template-columns: 1fr; /* mobile first */
 }
 
-.add-product-circle {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background-color: #28a745;
-  color: white;
-  font-size: 2rem;
-  border: none;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease;
+/* Tablets */
+@media (min-width: 480px) {
+  .seller-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 
-  /* Centering rules */
-  margin: 0 auto; /* horizontally center when full row */
-  align-self: center; /* center relative to grid row height */
+/* Laptops */
+@media (min-width: 900px) {
+  .seller-product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Large desktops */
+@media (min-width: 1200px) {
+  .seller-product-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Container below day toggle */
+.add-product-container {
+  display: flex;
+  justify-content: flex-end; /* pushes + to far right */
+  margin-bottom: 1rem;
+}
+
+/* Simple green + */
+.add-product-circle {
+  background: none;       /* transparent background */
+  color: #16a34a;         /* green color */
+  font-size: 1.8rem;      /* thick and visible */
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: transform 0.2s ease;
 }
 
 .add-product-circle:hover {
-  transform: scale(1.1);
+  transform: scale(1.2);  /* slight hover feedback */
 }
 
-/* Mobile Responsive */
-@media (max-width: 600px) {
-  .add-product-circle {
-    width: 55px;
-    height: 55px;
-    font-size: 1.8rem;
-  }
-}
 
 /* ================================
-   Mobile & Tablet – Delivery Groups
+   Responsive Adjustments
 ================================= */
 @media (max-width: 768px) {
-  .seller-mobile-groups .delivery-group {
-    margin-bottom: 2.5rem; /* space between groups */
-    border-bottom: 1px solid rgba(0,0,0,0.05); /* subtle divider */
-    padding-bottom: 0.5rem;
-  }
-
-  /* Header: group name left, toggle arrow right */
-  .delivery-group-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    padding: 0 0.25rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .delivery-group-title {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .group-toggle-arrow {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #555;
-    user-select: none;
-    transition: transform 0.2s ease;
-  }
-
-  /* ================================
-     Product grid inside group
-  ================================= */
-  .seller-product-grid {
-    display: grid;
-    grid-template-columns: 1fr; /* Default: 1 card per row */
-    gap: 0.75rem;
-  }
-
-  /* Tablet adjustments (481px – 768px) */
-  @media (min-width: 481px) and (max-width: 768px) {
-    .seller-product-grid {
-      grid-template-columns: repeat(2, 1fr); /* 2 cards per row on tablet */
-      gap: 1rem;
-    }
+  .day-toggle {
+    gap: 0.5rem;
   }
 }
-
-

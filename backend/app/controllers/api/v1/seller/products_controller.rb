@@ -27,11 +27,11 @@ module Api
         # PUT/PATCH /api/v1/seller/products/:id
         def update
           if @product.update(product_params)
-            render json: @product, status: :ok
+            render json: @product
           else
             render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
           end
-        end
+        end          
 
         # DELETE /api/v1/seller/products/:id
         def destroy
@@ -67,7 +67,8 @@ module Api
             :delivery_time,
             :cross_comm_delivery,
             :cross_comm_charge,
-            :preorder_delivery # newly added
+            :preorder_delivery,
+            delivery_times: [:hour]
           )
         end
       end

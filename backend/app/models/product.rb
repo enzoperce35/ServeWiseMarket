@@ -1,5 +1,7 @@
 class Product < ApplicationRecord
   include SoftDeletable
+
+  validate :delivery_times_format
   
   belongs_to :shop
   has_many :product_ratings, dependent: :destroy
@@ -69,4 +71,16 @@ class Product < ApplicationRecord
       self.image_url = nil
     end
   end
+
+  def delivery_times_format
+    return if delivery_times.blank?
+  
+    delivery_times.each do |slot|
+      unless slot.is_a?(Hash) &&
+             slot["hour"].is_a?(Integer) &&
+             (slot["hour"] == -1 || (0..23).include?(slot["hour"]))
+        errors.add(:delivery_times, "has invalid hour")
+      end
+    end
+  end   
 end
