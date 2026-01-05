@@ -298,6 +298,59 @@ input:disabled {
   border-color: #e37f05;
 }
 
+/* ===================== DELIVERY HOURS (Multi-select) ===================== */
+.time-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.time-box {
+  flex: 1 1 50px;        /* responsive boxes */
+  min-width: 50px;
+  padding: 10px 0;
+  text-align: center;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  background: #f2f2f2;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.time-box:hover {
+  background: #d1f5d3;   /* light green hover */
+}
+
+.time-box.selected {
+  background: #10b981;   /* thick green for selected */
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 3px 7px rgba(16, 185, 129, 0.4);
+}
+
+.time-box.disabled {
+  background: #e0e0e0;
+  color: #888;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Optional: make the label more readable */
+.delivery-date-label {
+  display: block;
+  margin-top: 12px;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.delivery-date-label span {
+  color: #e76d3d;
+}
+
+
 /* ---------------------- RESPONSIVE ---------------------- */
 
 /* Tablet */

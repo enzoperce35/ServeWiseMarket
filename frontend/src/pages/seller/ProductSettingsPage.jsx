@@ -237,89 +237,24 @@ export default function ProductSettingsPage() {
 
       {/* DELIVERY TIME */}
       <div className="settings-section">
-        <div className="section-header"><h3>Delivery Time</h3></div>
+        <div className="section-header">
+          <h3>Delivery Hours</h3>
+        </div>
         <div className="section-body">
-          <div className="cross-delivery-row">
-            <label>Pre-Order Delivery</label>
-            <input
-              type="checkbox"
-              checked={product.preorder_delivery ?? false}
-              onChange={e => {
-                const checked = e.target.checked;
-                update("preorder_delivery", checked);
-
-                if (!checked) {
-                  const todayStr = localDateString(new Date());
-                  const defaultTime = new Date(Date.now() + 30 * 60 * 1000);
-                  update("delivery_date", todayStr);
-                  update("delivery_time", defaultTime);
-                  update("delivery_time_label", "");
-                } else {
-                  // only on manual toggle we pick first available slot
-                  const now = new Date();
-                  const todayStr = localDateString(now);
-                  let slots = buildTimeSlots().map(slot => {
-                    const slotDate = slotToDate(slot.label, new Date(todayStr));
-                    const isPast = slotDate < new Date(now.getTime() + 60 * 60 * 1000);
-                    return { ...slot, isPast };
-                  });
-                  slots = [...slots.filter(s => !s.isPast), ...slots.filter(s => s.isPast)];
-                  const firstAvailableSlot = slots.find(s => !s.isPast) || slots[0];
-
-                  update("delivery_time_label", firstAvailableSlot.label);
-                  update(
-                    "delivery_time",
-                    slotToDate(
-                      firstAvailableSlot.label,
-                      new Date(firstAvailableSlot.isPast ? Date.now() + 24 * 60 * 60 * 1000 : todayStr)
-                    )
-                  );
-                  update(
-                    "delivery_date",
-                    firstAvailableSlot.isPast
-                      ? localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000))
-                      : todayStr
-                  );
-                }
-              }}
-            />
-          </div>
-
-          <label className="delivery-date-label">
-            Delivery: <span>{getDeliveryLabel(product)}</span>
-          </label>
-
-          <div className={`time-picker ${!product.preorder_delivery ? "disabled" : ""}`}>
-            {(() => {
-              const now = new Date();
-              const todayStr = localDateString(now);
-              let slots = buildTimeSlots().map(slot => {
-                const slotDate = slotToDate(slot.label, new Date(todayStr));
-                const isPast = slotDate < new Date(now.getTime() + 60 * 60 * 1000);
-                return { ...slot, isPast };
-              });
-              slots = [...slots.filter(s => !s.isPast), ...slots.filter(s => s.isPast)];
-              return slots.map((slot, i) => {
-                const isSelected = slot.label === product.delivery_time_label;
+          <div className="time-picker">
+            {["6am", "7am", "8am", "9am", "10am", "11am", "12pm",
+              "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", "Now"].map((slot, i) => {
+                const isSelected = slot === product.delivery_time_label;
                 return (
                   <div
                     key={i}
-                    className={`time-box ${isSelected ? "selected" : ""} ${slot.isPast ? "past" : ""}`}
-                    onClick={() => {
-                      if (!product.preorder_delivery) return;
-                      const slotDeliveryDate = slot.isPast
-                        ? localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000))
-                        : localDateString(new Date());
-                      update("delivery_time_label", slot.label);
-                      update("delivery_time", slotToDate(slot.label, new Date(slotDeliveryDate)));
-                      update("delivery_date", slotDeliveryDate);
-                    }}
+                    className={`time-box ${isSelected ? "selected" : ""}`}
+                    onClick={() => update("delivery_time_label", slot)}
                   >
-                    {slot.hour}
+                    {slot}
                   </div>
                 );
-              });
-            })()}
+              })}
           </div>
         </div>
       </div>
