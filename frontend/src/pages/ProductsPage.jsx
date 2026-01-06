@@ -2,56 +2,51 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
 import TimeFilterBar from "../components/TimeFilterBar";
+import axiosClient from "../api/axiosClient";
 import "../css/pages/ProductsPage.css";
-import { fetchProducts } from "../api/productApi";
-import { useAuthContext } from "../context/AuthProvider";
 
 export default function ProductsPage() {
-  const { user, loading } = useAuthContext(); // user can be null — allowed
-  const [products, setProducts] = useState([]);
+  const [deliveryGroups, setDeliveryGroups] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [activeSlot, setActiveSlot] = useState(null);
 
+  // 1️⃣ Fetch delivery groups
   useEffect(() => {
-    const loadProducts = async () => {
-      const data = await fetchProducts();
-      setProducts(data);
-      setFilteredProducts(data); // default
+    const loadGroups = async () => {
+      const { data } = await axiosClient.get("/delivery_groups");
+      setDeliveryGroups(data);
+
+      // 2️⃣ Automatically select "Now" if it exists
+      const nowSlot = data.find((g) => g.ph_timestamp === -1); // Now has ph_timestamp = -1
+      if (nowSlot) {
+        setActiveSlot(nowSlot);
+        setFilteredProducts(nowSlot.products || []);
+      } else if (data.length > 0) {
+        // fallback: first slot
+        setActiveSlot(data[0]);
+        setFilteredProducts(data[0].products || []);
+      }
     };
-    loadProducts();
+
+    loadGroups();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-
-  /* ================================
-     FILTER BY DELIVERY GROUP
-  ================================ */
+  // 3️⃣ When user clicks a slot in TimeFilterBar
   const handleSlotChange = (slot) => {
-    if (!slot) {
-      setFilteredProducts(products);
-      return;
-    }
-
-    const filtered = products.filter((product) =>
-      product.delivery_groups?.some(
-        (group) => group.id === slot.id
-      )
-    );
-
-    setFilteredProducts(filtered);
+    setActiveSlot(slot);
+    const group = deliveryGroups.find((g) => g.id === slot.id);
+    setFilteredProducts(group?.products || []);
   };
 
   return (
     <div className="products-page-wrapper">
-      {/* Navbar & Filters */}
       <div className="header-filters-container">
         <Navbar />
-
         <div className="filters-container">
           <TimeFilterBar onChange={handleSlotChange} />
         </div>
       </div>
 
-      {/* Products Grid */}
       <div className="products-grid">
         {filteredProducts.map((product) => (
           <ProductCard key={product.id} product={product} />

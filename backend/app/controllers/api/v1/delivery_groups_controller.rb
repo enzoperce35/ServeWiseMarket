@@ -5,11 +5,23 @@ module Api
       # GET /api/v1/delivery_groups
       def index
         groups = DeliveryGroup.active.order(:ph_timestamp)
+      
         render json: groups.as_json(
           only: [:id, :name, :ph_timestamp, :active],
-          include: { products: { only: [:id, :name, :price, :stock, :image_url] } }
-        )
+          include: {
+            products: {
+              only: [:id, :name, :price, :stock, :status, :image_url],
+              methods: [:cross_comm_charge],
+              # only include products that are available
+              include: :shop
+            }
+          }
+        ).map do |group|
+          group["products"] = group["products"].select { |p| p["status"] && p["stock"].to_i > 0 }
+          group
+        end
       end
+      
 
       # POST /api/v1/delivery_groups/find_or_create
       def find_or_create

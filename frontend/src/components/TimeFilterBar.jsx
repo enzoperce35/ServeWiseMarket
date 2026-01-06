@@ -10,66 +10,68 @@ export default function TimeFilterBar({ onChange }) {
   const [slots, setSlots] = useState({ today: [], tomorrow: [] });
   const [activeDay, setActiveDay] = useState("today");
   const [activeSlot, setActiveSlot] = useState(null);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    buildSlotsFromBackend();
-  }, []);
+    const fetchSlots = async () => {
+      try {
+        const { data } = await axiosClient.get("/delivery_groups");
 
-  const buildSlotsFromBackend = async () => {
-    const { data } = await axiosClient.get("/delivery_groups");
+        const now = new Date();
+        const currentHour = now.getHours();
+        const minHour = currentHour + BUFFER_HOURS;
 
-    const now = new Date();
-    const currentHour = now.getHours();
-    const minHour = currentHour + BUFFER_HOURS;
+        const today = [];
+        const tomorrow = [];
 
-    const today = [];
-    const tomorrow = [];
+        data.forEach((group) => {
+          if (!group.active || !group.products || group.products.length === 0)
+            return;
 
-    data.forEach((group) => {
-      const hour = group.ph_timestamp;
+          const hour = group.ph_timestamp;
 
-      // 🚫 Ignore inactive or out-of-range slots
-      if (!group.active) return;
-      if (hour !== -1 && (hour < 6 || hour > 20)) return;
+          // Hide Now when it 7pm
+          if (hour === -1) {
+            if (currentHour >= 6 && currentHour <= 18) {
+              today.unshift({
+                ...group,
+                label: "Now",
+                hour24: currentHour,
+                day: "today",
+                isNow: true,
+              });
+            }
+            return;
+          }
 
-      // ⏱ NOW
-      if (hour === -1) {
-        if (currentHour >= 6 && currentHour <= 20) {
-          today.unshift({
-            id: group.id,
-            label: "Now",
-            hour24: currentHour,
-            day: "today",
-            isNow: true,
-          });
+          const slot = { ...group, label: group.name, hour24: hour };
+
+          if (hour >= minHour) {
+            today.push({ ...slot, day: "today" });
+          } else {
+            tomorrow.push({ ...slot, day: "tomorrow" });
+          }
+        });
+
+        setSlots({ today, tomorrow });
+
+        // auto-select first slot only once
+        if (!initialized) {
+          const firstSlot = today[0] || tomorrow[0];
+          if (firstSlot) {
+            setActiveSlot(firstSlot.label);
+            setActiveDay(firstSlot.day);
+            onChange?.(firstSlot);
+            setInitialized(true);
+          }
         }
-        return;
+      } catch (err) {
+        console.error("Failed to fetch delivery groups:", err);
       }
+    };
 
-      const slot = {
-        id: group.id,
-        label: group.name,
-        hour24: hour,
-      };
-
-      // TODAY vs TOMORROW (same logic as before)
-      if (hour >= minHour) {
-        today.push({ ...slot, day: "today" });
-      } else {
-        tomorrow.push({ ...slot, day: "tomorrow" });
-      }
-    });
-
-    setSlots({ today, tomorrow });
-
-    // 🎯 Auto-select first valid slot
-    const initial = today[0] || tomorrow[0];
-    if (initial) {
-      setActiveSlot(initial.label);
-      setActiveDay(initial.day);
-      onChange?.(initial);
-    }
-  };
+    fetchSlots();
+  }, [onChange, initialized]);
 
   const selectSlot = (slot) => {
     setActiveSlot(slot.label);
@@ -88,51 +90,40 @@ export default function TimeFilterBar({ onChange }) {
 
   return (
     <div className="time-filter-bar">
-      {/* DAY TABS */}
       <div className="day-switch">
-        <span
-          className={activeDay === "today" ? "active" : ""}
-          onClick={() => jumpToDay("today")}
-        >
-          Today
-        </span>
-        <span
-          className={activeDay === "tomorrow" ? "active" : ""}
-          onClick={() => jumpToDay("tomorrow")}
-        >
-          Tomorrow
-        </span>
+        {["today", "tomorrow"].map((day) => (
+          <span
+            key={day}
+            className={activeDay === day ? "active" : ""}
+            onClick={() => jumpToDay(day)}
+          >
+            {day.charAt(0).toUpperCase() + day.slice(1)}
+          </span>
+        ))}
       </div>
 
-      {/* TIME CAROUSEL */}
       <div className="time-carousel" ref={scrollRef}>
-        {slots.today.length > 0 && (
-          <div className="day-group" data-day="today">
-            <div className="day-label">Today</div>
-            {slots.today.map((slot) => (
-              <TimeChip
-                key={`t-${slot.id}`}
-                slot={slot}
-                activeSlot={activeSlot}
-                onClick={selectSlot}
-              />
-            ))}
-          </div>
-        )}
+        {["today", "tomorrow"].map((day) => {
+          if (!slots[day] || slots[day].length === 0) return null;
 
-        {slots.tomorrow.length > 0 && (
-          <div className="day-group" data-day="tomorrow">
-            <div className="day-label">Tomorrow</div>
-            {slots.tomorrow.map((slot) => (
-              <TimeChip
-                key={`tm-${slot.id}`}
-                slot={slot}
-                activeSlot={activeSlot}
-                onClick={selectSlot}
-              />
-            ))}
-          </div>
-        )}
+          return (
+            <div className="day-group" key={day} data-day={day}>
+              <div className="day-label">
+                {day.charAt(0).toUpperCase() + day.slice(1)}
+              </div>
+              <div className="slots-row">
+                {slots[day].map((slot) => (
+                  <TimeChip
+                    key={slot.id}
+                    slot={slot}
+                    activeSlot={activeSlot}
+                    onClick={selectSlot}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -141,9 +132,7 @@ export default function TimeFilterBar({ onChange }) {
 function TimeChip({ slot, activeSlot, onClick }) {
   return (
     <div
-      className={`time-chip ${
-        activeSlot === slot.label ? "selected" : ""
-      }`}
+      className={`time-chip ${activeSlot === slot.label ? "selected" : ""}`}
       onClick={() => onClick(slot)}
     >
       {slot.label}

@@ -30,19 +30,28 @@
   overflow-x: auto;
   padding: 0.75rem 1rem 1rem;
   gap: 1rem;
+  align-items: center;
 }
 
 /* Day group */
 .day-group {
   display: flex;
-  align-items: center;
+  flex-direction: row; /* label beside slots */
+  align-items: center; /* vertically center label with chips */
   gap: 0.5rem;
 }
 
+.slots-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: nowrap; /* horizontal row, no wrap */
+}
+
+/* Day label */
 .day-label {
   font-size: 0.8rem;
   opacity: 0.5;
-  margin-right: 0.25rem;
+  min-width: 30px; /* optional, to keep some spacing */
 }
 
 /* Time chip */
@@ -56,6 +65,7 @@
   justify-content: center;
   font-weight: 600;
   cursor: pointer;
+  flex-shrink: 0; /* prevent shrinking in flex row */
 }
 
 .time-chip.selected {
