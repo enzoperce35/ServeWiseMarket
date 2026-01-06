@@ -1,46 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  fetchSellerProducts,
-  updateProduct,
-  createProduct,
-  deleteProduct,
-} from "../../api/seller/products";
+import { fetchSellerProducts, updateProduct, createProduct, deleteProduct } from "../../api/seller/products";
 import { fetchShop } from "../../api/seller/shops";
+import { fetchDeliveryGroups } from "../../api/delivery_groups";
 import { useAuthContext } from "../../context/AuthProvider";
 import "../../css/pages/seller/product_settings.css";
 import { localDateString } from "../../utils/deliveryDateTime";
 
-// ----------------- CONSTANTS -----------------
 const CATEGORIES = [
   "merienda", "lutong ulam", "lutong gulay", "rice meal", "pasta",
   "almusal", "dessert", "delicacy", "specialty", "frozen", "pulutan", "refreshment",
 ];
 
-const TIME_HOURS = [6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8];
-
-const parseAMPM = (t) => {
-  const [_, h, ap] = t.match(/(\d+)(am|pm)/i) || [];
-  let hour = parseInt(h);
-  if (ap === "pm" && hour !== 12) hour += 12;
-  if (ap === "am" && hour === 12) hour = 0;
-  return hour;
-};
-
-const slotToDate = (slot, referenceDate = new Date()) => {
-  if (!slot) return null;
-  const hour = parseAMPM(slot);
-  const date = new Date(referenceDate);
-  date.setHours(hour, 0, 0, 0);
-  return date;
-};
-
-const buildTimeSlots = () => TIME_HOURS.map((hour, i) => {
-  const isPM = i >= 6;
-  return { hour, label: `${hour}${isPM ? "pm" : "am"} - ${hour}:30${isPM ? "pm" : "am"}` };
-});
-
-// ----------------- COMPONENT -----------------
 export default function ProductSettingsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -48,20 +19,37 @@ export default function ProductSettingsPage() {
 
   const [shop, setShop] = useState(null);
   const [product, setProduct] = useState(null);
+  const [deliveryGroups, setDeliveryGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [basicInfoOpen, setBasicInfoOpen] = useState(false);
 
   const update = (key, value) => setProduct(prev => ({ ...prev, [key]: value }));
 
+  const toggleDeliveryGroup = (groupId) => {
+    setProduct(prev => {
+      const exists = prev.delivery_group_ids?.includes(groupId);
+      const updated = exists
+        ? prev.delivery_group_ids.filter(id => id !== groupId)
+        : [...(prev.delivery_group_ids || []), groupId];
+      return { ...prev, delivery_group_ids: updated };
+    });
+  };
+
+  const isGroupSelected = (groupId) => product.delivery_group_ids?.includes(groupId);
+
+  // ----------------- LOAD DATA -----------------
   useEffect(() => {
     (async () => {
       const s = await fetchShop();
       setShop(s);
 
+      const groups = await fetchDeliveryGroups();
+      setDeliveryGroups(groups);
+
       const today = new Date();
       const todayStr = localDateString(today);
-      const eightPM = new Date(today);
-      eightPM.setHours(20, 0, 0, 0);
+      const defaultTime = new Date(today);
+      defaultTime.setHours(20, 0, 0, 0);
 
       let initialProduct;
       if (id) {
@@ -69,10 +57,9 @@ export default function ProductSettingsPage() {
         const found = prods.find(p => p.id === parseInt(id));
         initialProduct = {
           ...found,
+          delivery_group_ids: found.delivery_groups?.map(dg => dg.id) || [],
           delivery_date: found.delivery_date ? localDateString(new Date(found.delivery_date)) : todayStr,
-          delivery_time: found.delivery_time ? new Date(found.delivery_time) : eightPM,
-          // IMPORTANT: do NOT highlight on load
-          delivery_time_label: "",
+          delivery_time: found.delivery_time ? new Date(found.delivery_time) : defaultTime,
         };
       } else {
         initialProduct = {
@@ -85,8 +72,8 @@ export default function ProductSettingsPage() {
           status: true,
           preorder_delivery: false,
           delivery_date: todayStr,
-          delivery_time: eightPM,
-          delivery_time_label: "",
+          delivery_time: defaultTime,
+          delivery_group_ids: [],
           cross_comm_delivery: false,
         };
       }
@@ -100,35 +87,10 @@ export default function ProductSettingsPage() {
 
   // ----------------- SAVE PRODUCT -----------------
   const saveProduct = async () => {
-    const today = new Date();
-    const todayStr = localDateString(today);
-
-    let deliveryDate = product.delivery_date;
-    let deliveryTime = product.delivery_time;
-
-    if (!product.preorder_delivery) {
-      deliveryDate = todayStr;
-      const defaultTime = new Date(Date.now() + 30 * 60 * 1000);
-      deliveryTime = defaultTime;
-    }
-
-    let gap = 0;
-    if (product.preorder_delivery && deliveryDate) {
-      const d1 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const d2 = new Date(deliveryDate);
-      const d2Clean = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate());
-      gap = Math.max(Math.floor((d2Clean - d1) / (1000 * 60 * 60 * 24)), 0);
-    }
-
-    // Include cross_comm_delivery only
     const body = {
       ...product,
       shop_id: shop.id,
-      preorder_delivery: product.preorder_delivery,
-      delivery_date: deliveryDate,
-      delivery_time: deliveryTime,
-      delivery_date_gap: gap,
-      cross_comm_delivery: product.cross_comm_delivery, // ✅ keep checkbox value
+      delivery_group_ids: product.delivery_group_ids,
     };
 
     if (id) await updateProduct(id, body);
@@ -136,7 +98,6 @@ export default function ProductSettingsPage() {
 
     navigate("/seller/products");
   };
-
 
   const deleteProductHandler = async () => {
     if (!window.confirm("Delete this product?")) return;
@@ -150,31 +111,6 @@ export default function ProductSettingsPage() {
     const reader = new FileReader();
     reader.onload = () => update("image_url", reader.result);
     reader.readAsDataURL(file);
-  };
-
-  const getDeliveryLabel = (product) => {
-    if (!product.preorder_delivery) return "In 30 minutes";
-
-    const todayStr = localDateString(new Date());
-    const tomorrowStr = localDateString(new Date(Date.now() + 24 * 60 * 60 * 1000));
-
-    let dayLabel = product.delivery_date;
-    if (product.delivery_date === todayStr) dayLabel = "Today";
-    else if (product.delivery_date === tomorrowStr) dayLabel = "Tomorrow";
-
-    // If no label yet, build from delivery_time
-    const timeLabel = product.delivery_time_label
-      || (() => {
-        if (!product.delivery_time) return "";
-        const hour = product.delivery_time.getHours();
-        const minutes = product.delivery_time.getMinutes();
-        const formatHour = hour % 12 === 0 ? 12 : hour % 12;
-        const ampm = hour >= 12 ? "pm" : "am";
-        const nextHalfHour = minutes === 0 ? `${formatHour}:30${ampm}` : `${formatHour + 1}:00${ampm}`;
-        return `${formatHour}${ampm} - ${nextHalfHour}`;
-      })();
-
-    return `${dayLabel}, ${timeLabel}`;
   };
 
   const communityText = user.community === "Sampaguita West"
@@ -235,26 +171,20 @@ export default function ProductSettingsPage() {
         </div>
       </div>
 
-      {/* DELIVERY TIME */}
+      {/* DELIVERY GROUPS */}
       <div className="settings-section">
-        <div className="section-header">
-          <h3>Delivery Hours</h3>
-        </div>
+        <div className="section-header"><h3>Delivery Groups</h3></div>
         <div className="section-body">
           <div className="time-picker">
-            {["6am", "7am", "8am", "9am", "10am", "11am", "12pm",
-              "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm", "Now"].map((slot, i) => {
-                const isSelected = slot === product.delivery_time_label;
-                return (
-                  <div
-                    key={i}
-                    className={`time-box ${isSelected ? "selected" : ""}`}
-                    onClick={() => update("delivery_time_label", slot)}
-                  >
-                    {slot}
-                  </div>
-                );
-              })}
+            {deliveryGroups.map(group => (
+              <div
+                key={group.id}
+                className={`time-box ${isGroupSelected(group.id) ? "selected" : ""}`}
+                onClick={() => toggleDeliveryGroup(group.id)}
+              >
+                {group.name}
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -271,7 +201,6 @@ export default function ProductSettingsPage() {
               onChange={e => update("cross_comm_delivery", e.target.checked)}
             />
           </div>
-
         </div>
       </div>
 

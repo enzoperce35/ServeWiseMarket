@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_04_132020) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_05_112458) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -31,6 +31,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_04_132020) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_carts_on_user_id"
+  end
+
+  create_table "delivery_groups", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "active", default: true, null: false
+    t.integer "ph_timestamp", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_delivery_groups_on_active"
+    t.index ["ph_timestamp"], name: "index_delivery_groups_on_ph_timestamp"
   end
 
   create_table "order_items", force: :cascade do |t|
@@ -58,6 +68,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_04_132020) do
     t.datetime "deleted_at"
     t.index ["shop_id"], name: "index_orders_on_shop_id"
     t.index ["user_id"], name: "index_orders_on_user_id"
+  end
+
+  create_table "product_delivery_groups", force: :cascade do |t|
+    t.bigint "product_id", null: false
+    t.bigint "delivery_group_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["delivery_group_id"], name: "index_product_delivery_groups_on_delivery_group_id"
+    t.index ["product_id", "delivery_group_id"], name: "index_product_delivery_groups_unique", unique: true
+    t.index ["product_id"], name: "index_product_delivery_groups_on_product_id"
   end
 
   create_table "product_ratings", force: :cascade do |t|
@@ -149,6 +169,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_04_132020) do
   add_foreign_key "order_items", "products"
   add_foreign_key "orders", "shops"
   add_foreign_key "orders", "users"
+  add_foreign_key "product_delivery_groups", "delivery_groups"
+  add_foreign_key "product_delivery_groups", "products"
   add_foreign_key "product_ratings", "products"
   add_foreign_key "product_ratings", "users"
   add_foreign_key "products", "shops"

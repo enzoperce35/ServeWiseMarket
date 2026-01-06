@@ -1,4 +1,3 @@
-# app/controllers/api/v1/seller/products_controller.rb
 module Api
   module V1
     module Seller
@@ -9,29 +8,36 @@ module Api
 
         # GET /api/v1/seller/products
         def index
-          products = @shop.products.order(created_at: :desc)
-          render json: products, status: :ok
+          products = @shop.products.includes(:delivery_groups).order(created_at: :desc)
+          render json: products.as_json(
+            include: {
+              delivery_groups: { only: [:id, :name, :ph_timestamp] }
+            }
+          ), status: :ok
         end
 
         # POST /api/v1/seller/products
         def create
-          product = @shop.products.build(product_params)
+          product = @shop.products.build(product_params.except(:delivery_group_ids))
 
           if product.save
-            render json: product, status: :created
+            # assign delivery groups
+            update_delivery_groups(product)
+            render json: product.as_json(include: :delivery_groups), status: :created
           else
             render json: { errors: product.errors.full_messages }, status: :unprocessable_entity
           end
         end
 
-        # PUT/PATCH /api/v1/seller/products/:id
+        # PUT /api/v1/seller/products/:id
         def update
-          if @product.update(product_params)
-            render json: @product
+          if @product.update(product_params.except(:delivery_group_ids))
+            update_delivery_groups(@product)
+            render json: @product.as_json(include: :delivery_groups)
           else
             render json: { errors: @product.errors.full_messages }, status: :unprocessable_entity
           end
-        end          
+        end
 
         # DELETE /api/v1/seller/products/:id
         def destroy
@@ -52,24 +58,21 @@ module Api
           render json: { error: "Product not found" }, status: :not_found
         end
 
+        # Strong params
         def product_params
           params.require(:product).permit(
-            :name,
-            :description,
-            :price,
-            :stock,
-            :category,
-            :image_url,
-            :status,
-            :featured,
-            :delivery_date_gap,
-            :delivery_date,
-            :delivery_time,
-            :cross_comm_delivery,
-            :cross_comm_charge,
-            :preorder_delivery,
-            delivery_times: [:hour]
+            :name, :description, :price, :stock, :category,
+            :image_url, :status, :featured, :delivery_date_gap,
+            :delivery_date, :delivery_time, :cross_comm_delivery,
+            :cross_comm_charge, :preorder_delivery,
+            delivery_group_ids: [] # <-- this is important
           )
+        end
+
+        # Assigns delivery groups
+        def update_delivery_groups(product)
+          group_ids = product_params[:delivery_group_ids] || []
+          product.delivery_groups = DeliveryGroup.where(id: group_ids)
         end
       end
     end

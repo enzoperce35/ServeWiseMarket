@@ -28,6 +28,14 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :delivery_groups, only: [:index] do
+        collection do
+          post :find_or_create
+        end
+      end
+  
+      resources :product_delivery_groups, only: [:create]
+
       # Seller-specific products (dashboard)
       namespace :seller do
         resource :shop, only: [:show, :create, :update]

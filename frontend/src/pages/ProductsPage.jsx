@@ -15,32 +15,39 @@ export default function ProductsPage() {
     const loadProducts = async () => {
       const data = await fetchProducts();
       setProducts(data);
-      setFilteredProducts(data);
+      setFilteredProducts(data); // default
     };
     loadProducts();
   }, []);
 
-  // Wait for auth check — prevents flicker
   if (loading) return <div>Loading...</div>;
+
+  /* ================================
+     FILTER BY DELIVERY GROUP
+  ================================ */
+  const handleSlotChange = (slot) => {
+    if (!slot) {
+      setFilteredProducts(products);
+      return;
+    }
+
+    const filtered = products.filter((product) =>
+      product.delivery_groups?.some(
+        (group) => group.id === slot.id
+      )
+    );
+
+    setFilteredProducts(filtered);
+  };
 
   return (
     <div className="products-page-wrapper">
       {/* Navbar & Filters */}
       <div className="header-filters-container">
         <Navbar />
-        <div className="filters-container">
-          <TimeFilterBar
-            onChange={(slot) => {
-              setFilteredProducts(
-                products.filter(p => {
-                  // example:
-                  // return matches slot.day / slot.hour
-                  return true;
-                })
-              );
-            }}
-          />
 
+        <div className="filters-container">
+          <TimeFilterBar onChange={handleSlotChange} />
         </div>
       </div>
 
@@ -51,7 +58,9 @@ export default function ProductsPage() {
         ))}
 
         {filteredProducts.length === 0 && (
-          <div className="no-products">No products found.</div>
+          <div className="no-products">
+            No products available for this time slot.
+          </div>
         )}
       </div>
     </div>

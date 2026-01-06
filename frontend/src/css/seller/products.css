@@ -70,35 +70,6 @@
   font-weight: 600;
 }
 
-/* Highlight 'Now' group */
-.delivery-group.now {
-  background-color: #eff6ff; /* light blue background */
-  border-left: 4px solid #3b82f6; /* blue accent */
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  margin-bottom: 2rem;
-}
-
-.delivery-group.now .delivery-group-header {
-  font-weight: 700;
-  color: #1d4ed8;
-  position: relative;
-}
-
-.delivery-group.now .delivery-group-header::after {
-  content: "NOW";
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: #3b82f6;
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.15rem 0.4rem;
-  border-radius: 9999px;
-  letter-spacing: 0.5px;
-}
 
 /* ================================
    Product Grid
@@ -133,7 +104,8 @@
 /* Container below day toggle */
 .add-product-container {
   display: flex;
-  justify-content: flex-end; /* pushes + to far right */
+  justify-content: flex-end; /* pushes buttons to right */
+  gap: 0.5rem; /* space between + and No Group */
   margin-bottom: 1rem;
 }
 
@@ -154,6 +126,29 @@
   transform: scale(1.2);  /* slight hover feedback */
 }
 
+/* ================================
+   No Group Icon Button (📦)
+================================= */
+.no-group-btn {
+  background: none;           /* transparent background */
+  color: #3b82f6;             /* blue color */
+  font-size: 1.2rem;          /* same size as + button */
+  border: none;
+  cursor: pointer;
+  margin-left: 0.5rem;        /* space between + and 📦 */
+  line-height: 1;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.no-group-btn:hover {
+  transform: scale(1.2);      /* slight zoom on hover */
+  color: #2563eb;             /* darker blue on hover */
+}
+
+.no-group-btn.active {
+  color: #1e40af;             /* dark blue when active */
+  transform: scale(1.2);      /* indicate active state */
+}
 
 /* ================================
    Responsive Adjustments
@@ -161,5 +156,8 @@
 @media (max-width: 768px) {
   .day-toggle {
     gap: 0.5rem;
+  }
+  .add-product-container {
+    justify-content: space-between;
   }
 }

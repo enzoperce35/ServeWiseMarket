@@ -7,6 +7,9 @@ class Product < ApplicationRecord
   has_many :product_ratings, dependent: :destroy
   has_many :cart_items
 
+  has_many :product_delivery_groups, dependent: :destroy
+  has_many :delivery_groups, through: :product_delivery_groups
+
   has_many :order_items
 
   PLACEHOLDER_URL = "https://via.placeholder.com/300x200.png?text=Product+Image"

@@ -1,74 +1,75 @@
 import React, { useEffect, useRef, useState } from "react";
+import axiosClient from "../api/axiosClient";
 import "../css/components/TimeFilterBar.css";
-
-const HOURS_24 = [
-  6, 7, 8, 9, 10, 11,
-  12, 13, 14, 15, 16, 17, 18, 19, 20
-];
 
 const BUFFER_HOURS = 2;
 
-const formatHour = (h) => {
-  const hour12 = h % 12 === 0 ? 12 : h % 12;
-  const ampm = h >= 12 ? "pm" : "am";
-  return `${hour12}${ampm}`;
-};
-
-const buildSlots = () => {
-  const now = new Date();
-  const currentHour = now.getHours();
-  const minHour = currentHour + BUFFER_HOURS;
-
-  const today = [];
-  const tomorrow = [];
-
-  // ✅ Add "Now" as the very first Today slot
-  today.push({
-    hour24: currentHour,
-    label: "Now",
-    day: "today",
-    isNow: true,
-  });
-
-  HOURS_24.forEach(hour24 => {
-    if (hour24 >= minHour) {
-      today.push({
-        hour24,
-        label: formatHour(hour24),
-        day: "today",
-      });
-    } else {
-      tomorrow.push({
-        hour24,
-        label: formatHour(hour24),
-        day: "tomorrow",
-      });
-    }
-  });
-
-  return { today, tomorrow };
-};
-
 export default function TimeFilterBar({ onChange }) {
   const scrollRef = useRef(null);
+
   const [slots, setSlots] = useState({ today: [], tomorrow: [] });
   const [activeDay, setActiveDay] = useState("today");
   const [activeSlot, setActiveSlot] = useState(null);
 
   useEffect(() => {
-    const built = buildSlots();
-    setSlots(built);
+    buildSlotsFromBackend();
+  }, []);
 
-    const firstToday = built.today[0];
-    const firstTomorrow = built.tomorrow[0];
+  const buildSlotsFromBackend = async () => {
+    const { data } = await axiosClient.get("/delivery_groups");
 
-    const initial = firstToday || firstTomorrow;
+    const now = new Date();
+    const currentHour = now.getHours();
+    const minHour = currentHour + BUFFER_HOURS;
+
+    const today = [];
+    const tomorrow = [];
+
+    data.forEach((group) => {
+      const hour = group.ph_timestamp;
+
+      // 🚫 Ignore inactive or out-of-range slots
+      if (!group.active) return;
+      if (hour !== -1 && (hour < 6 || hour > 20)) return;
+
+      // ⏱ NOW
+      if (hour === -1) {
+        if (currentHour >= 6 && currentHour <= 20) {
+          today.unshift({
+            id: group.id,
+            label: "Now",
+            hour24: currentHour,
+            day: "today",
+            isNow: true,
+          });
+        }
+        return;
+      }
+
+      const slot = {
+        id: group.id,
+        label: group.name,
+        hour24: hour,
+      };
+
+      // TODAY vs TOMORROW (same logic as before)
+      if (hour >= minHour) {
+        today.push({ ...slot, day: "today" });
+      } else {
+        tomorrow.push({ ...slot, day: "tomorrow" });
+      }
+    });
+
+    setSlots({ today, tomorrow });
+
+    // 🎯 Auto-select first valid slot
+    const initial = today[0] || tomorrow[0];
     if (initial) {
       setActiveSlot(initial.label);
-      onChange?.(initial);
       setActiveDay(initial.day);
+      onChange?.(initial);
     }
-  }, []);
+  };
 
   const selectSlot = (slot) => {
     setActiveSlot(slot.label);
@@ -108,9 +109,9 @@ export default function TimeFilterBar({ onChange }) {
         {slots.today.length > 0 && (
           <div className="day-group" data-day="today">
             <div className="day-label">Today</div>
-            {slots.today.map((slot, i) => (
+            {slots.today.map((slot) => (
               <TimeChip
-                key={`t-${i}`}
+                key={`t-${slot.id}`}
                 slot={slot}
                 activeSlot={activeSlot}
                 onClick={selectSlot}
@@ -122,9 +123,9 @@ export default function TimeFilterBar({ onChange }) {
         {slots.tomorrow.length > 0 && (
           <div className="day-group" data-day="tomorrow">
             <div className="day-label">Tomorrow</div>
-            {slots.tomorrow.map((slot, i) => (
+            {slots.tomorrow.map((slot) => (
               <TimeChip
-                key={`tm-${i}`}
+                key={`tm-${slot.id}`}
                 slot={slot}
                 activeSlot={activeSlot}
                 onClick={selectSlot}

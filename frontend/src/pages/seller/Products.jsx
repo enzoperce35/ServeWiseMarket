@@ -1,140 +1,89 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import useProducts from "../../hooks/seller/useProducts";
-import { useAuthContext } from "../../context/AuthProvider";
-
-import SellerCard from "../../components/seller/SellerCard";
 import SellerNavbar from "../../components/seller/SellerNavbar";
+import SellerCard from "../../components/seller/SellerCard";
 
-import { updateProduct } from "../../api/seller/products";
+import { fetchSellerProducts } from "../../api/seller/products";
+import { fetchDeliveryGroups } from "../../api/delivery_groups";
 
 import "../../css/seller/products.css";
-
-/* ================================
-   TIME CONFIG
-================================ */
-const HOURS_24 = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
-const BUFFER_HOURS = 2;
 
 /* ================================
    HELPERS
 ================================ */
 const formatHourLabel = (hour) => {
-  if (hour === "Now") return "Now";
-
-  const h = Number(hour);
-  const hour12 = h % 12 === 0 ? 12 : h % 12;
-  const ampm = h >= 12 ? "pm" : "am";
-
-  return `${hour12}${ampm}`;
+  if (hour === -1) return "Now";
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  const ampm = hour >= 12 ? "pm" : "am";
+  return `${h12}${ampm}`;
 };
 
 export default function Products() {
-  const { products, loading: productsLoading, setProducts } = useProducts();
-  const { user, loading: userLoading } = useAuthContext();
   const navigate = useNavigate();
 
-  /* ================================
-     DAY SELECTION
-  ================================ */
+  const [products, setProducts] = useState([]);
+  const [deliveryGroups, setDeliveryGroups] = useState({ today: [], tomorrow: [] });
   const [selectedDay, setSelectedDay] = useState("today");
+  const [showNoGroup, setShowNoGroup] = useState(false);
 
   /* ================================
-     BUILD TIME GROUPS
+     LOAD DATA
   ================================ */
-  const buildHourGroups = () => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const minHourToday = currentHour + BUFFER_HOURS;
+  useEffect(() => {
+    const load = async () => {
+      const prods = await fetchSellerProducts();
+      setProducts(prods);
 
-    const today = ["Now"];
-    const tomorrow = [];
+      const groups = await fetchDeliveryGroups();
 
-    HOURS_24.forEach((hour) => {
-      if (hour >= minHourToday) {
-        today.push(hour);
-      } else {
-        tomorrow.push(hour);
-      }
-    });
+      const now = new Date();
+      const currentHour = now.getHours();
 
-    return { today, tomorrow };
-  };
+      const today = [];
+      const tomorrow = [];
 
-  const hourGroups = buildHourGroups();
+      groups.forEach((group) => {
+        if (!group.active) return;
+
+        const hour = group.ph_timestamp;
+        if (hour !== -1 && (hour < 6 || hour > 20)) return;
+
+        const slot = {
+          ...group,
+          hour24: hour,
+        };
+
+        if (hour === -1) {
+          today.unshift({ ...slot, isNow: true });
+          return;
+        }
+
+        const minHourToday = currentHour + 2;
+        if (hour >= minHourToday) today.push(slot);
+        else tomorrow.push(slot);
+      });
+
+      setDeliveryGroups({ today, tomorrow });
+    };
+
+    load();
+  }, []);
 
   /* ================================
      NAVIGATION
   ================================ */
   const handleEdit = (product) =>
     navigate(`/seller/products/${product.id}/edit`);
-
   const handleCreate = () => navigate("/seller/products/new");
 
   /* ================================
-     ADD/REMOVE DELIVERY TIME
+     PRODUCTS WITH NO GROUP
   ================================ */
-  const handleAddDeliveryTime = async (product, hour) => {
-    const resolvedHour = hour === "Now" ? -1 : Number(hour);
+  const productsWithNoGroup = products.filter(
+    (p) => !p.delivery_groups || p.delivery_groups.length === 0
+  );
 
-    const alreadyExists = (product.delivery_times || []).some(
-      (slot) => Number(slot.hour) === resolvedHour
-    );
-
-    let updatedDeliveryTimes;
-    if (alreadyExists) {
-      // Remove the hour
-      updatedDeliveryTimes = (product.delivery_times || []).filter(
-        (slot) => Number(slot.hour) !== resolvedHour
-      );
-    } else {
-      // Add the hour
-      updatedDeliveryTimes = [
-        ...(product.delivery_times || []),
-        { hour: resolvedHour },
-      ];
-    }
-
-    try {
-      const updatedProduct = await updateProduct(product.id, {
-        delivery_times: updatedDeliveryTimes,
-      });
-
-      setProducts((prev) =>
-        prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
-      );
-    } catch (err) {
-      console.error("Failed to update delivery time:", err);
-    }
-  };
-
-  /* ================================
-     LOADING / EMPTY STATES
-  ================================ */
-  if (productsLoading || userLoading) {
-    return <p>Loading products...</p>;
-  }
-
-  if (!products || products.length === 0) {
-    return (
-      <div className="seller-page">
-        <SellerNavbar />
-        <div className="seller-content">
-          <div className="no-products-message">
-            <p>
-              You have no products yet. Click the button below to create your
-              first product!
-            </p>
-            <button className="add-product-button" onClick={handleCreate}>
-              + Create Product
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  console.log(products)
   /* ================================
      RENDER
   ================================ */
@@ -156,37 +105,65 @@ export default function Products() {
           ))}
         </div>
 
-        {/* Big green + below toggle */}
+        {/* ADD + NO GROUP */}
         <div className="add-product-container">
+          <button
+            className={`no-group-btn ${showNoGroup ? "active" : ""}`}
+            title="Products with no delivery group"
+            onClick={() => setShowNoGroup((prev) => !prev)}
+          >
+            📦
+          </button>
           <button className="add-product-circle" onClick={handleCreate}>
             +
           </button>
         </div>
 
+        {/* NO GROUP */}
+        {showNoGroup && productsWithNoGroup.length > 0 && (
+          <div className="delivery-group">
+            <div className="delivery-group-header">
+              <h3 className="delivery-group-title">No Group</h3>
+            </div>
+            <div className="seller-product-grid">
+              {productsWithNoGroup.map((product) => (
+                <SellerCard
+                  key={product.id}
+                  product={product}
+                  onClick={() => handleEdit(product)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* DELIVERY GROUPS */}
-        {hourGroups[selectedDay].map((hour, idx) => {
-          const resolvedHour = hour === "Now" ? -1 : Number(hour);
+        {deliveryGroups[selectedDay].map((group) => {
+          const groupProducts = products.filter((p) =>
+            p.delivery_groups?.some((dg) => dg.id === group.id)
+          );
+
+          if (groupProducts.length === 0) return null;
 
           return (
-            <div key={`${hour}-${idx}`} className="delivery-group">
+            <div
+              key={group.id}
+              className={`delivery-group ${group.isNow ? "now" : ""}`}
+            >
               <div className="delivery-group-header">
                 <h3 className="delivery-group-title">
-                  {hour === "Now"
+                  {group.hour24 === -1
                     ? "Now"
-                    : `${selectedDay.charAt(0).toUpperCase() + selectedDay.slice(1)} ${formatHourLabel(hour)}`}
+                    : `${formatHourLabel(group.hour24)}`}
                 </h3>
               </div>
 
               <div className="seller-product-grid">
-                {products.map((product) => (
+                {groupProducts.map((product) => (
                   <SellerCard
                     key={product.id}
                     product={product}
                     onClick={() => handleEdit(product)}
-                    onStatusClick={(updatedProduct) =>
-                      handleAddDeliveryTime(product, hour)
-                    }
-                    deliveryHour={resolvedHour}
                   />
                 ))}
               </div>
