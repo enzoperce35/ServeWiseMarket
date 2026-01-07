@@ -34,7 +34,12 @@ Rails.application.routes.draw do
         end
       end
   
-      resources :product_delivery_groups, only: [:create]
+      resources :product_delivery_groups, only: [:create] do
+        member do
+          put :activate
+          put :deactivate
+        end
+      end
 
       # Seller-specific products (dashboard)
       namespace :seller do

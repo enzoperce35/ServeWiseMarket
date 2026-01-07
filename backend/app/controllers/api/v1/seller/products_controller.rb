@@ -8,10 +8,17 @@ module Api
 
         # GET /api/v1/seller/products
         def index
-          products = @shop.products.includes(:delivery_groups).order(created_at: :desc)
+          products = current_user.shop.products.includes(:product_delivery_groups, :delivery_groups)
+
           render json: products.as_json(
+            only: [:id, :name, :price, :stock, :image_url, :status],
             include: {
-              delivery_groups: { only: [:id, :name, :ph_timestamp] }
+              product_delivery_groups: {
+                only: [:id, :delivery_group_id, :active]
+              },
+              delivery_groups: {
+                only: [:id, :name, :ph_timestamp]
+              }
             }
           ), status: :ok
         end
