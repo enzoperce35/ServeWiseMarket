@@ -3,8 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthProvider";
 import { useCartContext } from "../context/CartProvider";
 import { addToCartApi } from "../api/cart";
-import { getDeliveryLabel } from "../utils/deliveryDateTime";
-import { isOwner, getPriceString } from "../utils/userProducts";
+import { isOwner } from "../utils/userProducts";
 import toast from "react-hot-toast";
 import "../css/components/ProductCard.css";
 
@@ -12,7 +11,7 @@ export default function ProductCard({ product, clickable = true }) {
   const { user, token } = useAuthContext();
   const { refreshCart } = useCartContext();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false); // ✅ prevent double clicks
+  const [loading, setLoading] = useState(false);
 
   const handleCardClick = () => {
     if (clickable) navigate(`/product/${product.id}`);
@@ -20,12 +19,10 @@ export default function ProductCard({ product, clickable = true }) {
 
   const addToCart = async (e, quantity = 1) => {
     e.stopPropagation();
-
     if (!user || !token) {
       toast.error("Please log in to add items to tray");
       return;
     }
-
     if (loading) return;
 
     try {
@@ -39,7 +36,7 @@ export default function ProductCard({ product, clickable = true }) {
             <span>Added to tray</span>
           </div>
         ),
-        { duration: 2000 } // ✅ auto-dismiss
+        { duration: 2000 }
       );
     } catch (err) {
       console.error(err);
@@ -49,8 +46,10 @@ export default function ProductCard({ product, clickable = true }) {
     }
   };
 
-  const deliveryDisplay = getDeliveryLabel(product);
-  const priceString = getPriceString(product, user);
+  const getPriceString = (product) => {
+    const basePrice = parseFloat(product.price ?? 0);
+    return `₱${basePrice.toFixed(2)}`;
+  };
 
   return (
     <div
@@ -67,15 +66,10 @@ export default function ProductCard({ product, clickable = true }) {
 
       <div className="product-info">
         <h3 className="product-name">{product.name}</h3>
-
-        {deliveryDisplay && (
-          <p className="delivery">
-            Delivery: <span className="delivery-time">{deliveryDisplay}</span>
-          </p>
-        )}
-
-        <p className="product-price">{priceString}</p>
       </div>
+
+      {/* Show price instead of inactive label */}
+      <p className="product-price-label">{getPriceString(product)}</p>
 
       {!isOwner(user, product) && (
         <button
@@ -90,8 +84,6 @@ export default function ProductCard({ product, clickable = true }) {
           {loading ? "Adding..." : "Add to Tray"}
         </button>
       )}
-
-      {!product.status && <p className="inactive-label">Inactive</p>}
     </div>
   );
 }
