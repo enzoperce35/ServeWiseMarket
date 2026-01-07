@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import axiosClient from "../api/axiosClient";
 import "../css/components/TimeFilterBar.css";
+import { getSlotDay } from "../utils/deliverySlotRotation";
 
-const BUFFER_HOURS = 2;
+const BUFFER_HOURS = 1;
 
 export default function TimeFilterBar({ onChange }) {
   const scrollRef = useRef(null);
@@ -30,7 +31,7 @@ export default function TimeFilterBar({ onChange }) {
 
           const hour = group.ph_timestamp;
 
-          // Hide Now when it 7pm
+          // NOW slot
           if (hour === -1) {
             if (currentHour >= 6 && currentHour <= 18) {
               today.unshift({
@@ -46,8 +47,13 @@ export default function TimeFilterBar({ onChange }) {
 
           const slot = { ...group, label: group.name, hour24: hour };
 
-          if (hour >= minHour) {
+          const day = getSlotDay(hour);
+
+          if (day === "today" && hour >= minHour) {
             today.push({ ...slot, day: "today" });
+          } else if (day === "today" && hour < minHour) {
+            // too early → send tomorrow anyway
+            tomorrow.push({ ...slot, day: "tomorrow" });
           } else {
             tomorrow.push({ ...slot, day: "tomorrow" });
           }
@@ -55,7 +61,7 @@ export default function TimeFilterBar({ onChange }) {
 
         setSlots({ today, tomorrow });
 
-        // auto-select first slot only once
+        // auto-select first slot
         if (!initialized) {
           const firstSlot = today[0] || tomorrow[0];
           if (firstSlot) {
@@ -82,9 +88,7 @@ export default function TimeFilterBar({ onChange }) {
   const jumpToDay = (day) => {
     const el = scrollRef.current;
     const target = el?.querySelector(`[data-day="${day}"]`);
-    if (target) {
-      el.scrollTo({ left: target.offsetLeft - 16, behavior: "smooth" });
-    }
+    if (target) el.scrollTo({ left: target.offsetLeft - 16, behavior: "smooth" });
     setActiveDay(day);
   };
 
@@ -111,6 +115,7 @@ export default function TimeFilterBar({ onChange }) {
               <div className="day-label">
                 {day.charAt(0).toUpperCase() + day.slice(1)}
               </div>
+
               <div className="slots-row">
                 {slots[day].map((slot) => (
                   <TimeChip
