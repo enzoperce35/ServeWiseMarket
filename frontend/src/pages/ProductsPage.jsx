@@ -10,32 +10,41 @@ export default function ProductsPage() {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [activeSlot, setActiveSlot] = useState(null);
 
-  // 1️⃣ Fetch delivery groups
   useEffect(() => {
     const loadGroups = async () => {
-      const { data } = await axiosClient.get("/delivery_groups");
-      setDeliveryGroups(data);
+      const { data } = await axiosClient.get("/products"); // ✅ fetch products filtered by active product_delivery_group
 
-      // 2️⃣ Automatically select "Now" if it exists
-      const nowSlot = data.find((g) => g.ph_timestamp === -1); // Now has ph_timestamp = -1
+      // Group products by their delivery group and filter out-of-stock products
+      const groupsMap = {};
+      data.forEach((group) => {
+        const products = (group.products || []).filter(
+          (p) => p.stock && p.stock > 0 // ✅ only include products in stock
+        );
+        if (products.length === 0) return; // skip empty groups
+        groupsMap[group.id] = { ...group, products };
+      });
+      const groupsArray = Object.values(groupsMap);
+      setDeliveryGroups(groupsArray);
+
+      // Auto-select "Now" if exists
+      const nowSlot = groupsArray.find((g) => g.ph_timestamp === -1);
       if (nowSlot) {
         setActiveSlot(nowSlot);
-        setFilteredProducts(nowSlot.products || []);
-      } else if (data.length > 0) {
-        // fallback: first slot
-        setActiveSlot(data[0]);
-        setFilteredProducts(data[0].products || []);
+        setFilteredProducts(nowSlot.products);
+      } else if (groupsArray.length > 0) {
+        setActiveSlot(groupsArray[0]);
+        setFilteredProducts(groupsArray[0].products);
       }
     };
-
     loadGroups();
   }, []);
 
-  // 3️⃣ When user clicks a slot in TimeFilterBar
   const handleSlotChange = (slot) => {
     setActiveSlot(slot);
     const group = deliveryGroups.find((g) => g.id === slot.id);
-    setFilteredProducts(group?.products || []);
+    setFilteredProducts(
+      (group?.products || []).filter((p) => p.stock && p.stock > 0) // ✅ filter out-of-stock again
+    );
   };
 
   return (
@@ -46,12 +55,10 @@ export default function ProductsPage() {
           <TimeFilterBar onChange={handleSlotChange} />
         </div>
       </div>
-
       <div className="products-grid">
         {filteredProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
-
         {filteredProducts.length === 0 && (
           <div className="no-products">
             No products available for this time slot.

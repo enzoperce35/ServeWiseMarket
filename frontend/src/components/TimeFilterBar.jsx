@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import axiosClient from "../api/axiosClient";
 import "../css/components/TimeFilterBar.css";
-import { getSlotDay } from "../utils/deliverySlotRotation";
 
-const BUFFER_HOURS = 1;
+import { getSlotDay } from "../utils/deliverySlotRotation";
 
 export default function TimeFilterBar({ onChange }) {
   const scrollRef = useRef(null);
@@ -20,7 +19,6 @@ export default function TimeFilterBar({ onChange }) {
 
         const now = new Date();
         const currentHour = now.getHours();
-        const minHour = currentHour + BUFFER_HOURS;
 
         const today = [];
         const tomorrow = [];
@@ -31,8 +29,9 @@ export default function TimeFilterBar({ onChange }) {
 
           const hour = group.ph_timestamp;
 
-          // NOW slot
+          // --- SPECIAL CASE: "Now" slot ---
           if (hour === -1) {
+            // hide Now after 7pm as you wanted
             if (currentHour >= 6 && currentHour <= 18) {
               today.unshift({
                 ...group,
@@ -45,23 +44,26 @@ export default function TimeFilterBar({ onChange }) {
             return;
           }
 
-          const slot = { ...group, label: group.name, hour24: hour };
+          // -------- USE 15-MIN ROTATION HELPER HERE ----------
+          const computedDay = getSlotDay(hour);
 
-          const day = getSlotDay(hour);
+          const slot = {
+            ...group,
+            label: group.name,
+            hour24: hour,
+            day: computedDay,
+          };
 
-          if (day === "today" && hour >= minHour) {
-            today.push({ ...slot, day: "today" });
-          } else if (day === "today" && hour < minHour) {
-            // too early → send tomorrow anyway
-            tomorrow.push({ ...slot, day: "tomorrow" });
+          if (computedDay === "today") {
+            today.push(slot);
           } else {
-            tomorrow.push({ ...slot, day: "tomorrow" });
+            tomorrow.push(slot);
           }
         });
 
         setSlots({ today, tomorrow });
 
-        // auto-select first slot
+        // auto-select first slot only once
         if (!initialized) {
           const firstSlot = today[0] || tomorrow[0];
           if (firstSlot) {
@@ -88,7 +90,9 @@ export default function TimeFilterBar({ onChange }) {
   const jumpToDay = (day) => {
     const el = scrollRef.current;
     const target = el?.querySelector(`[data-day="${day}"]`);
-    if (target) el.scrollTo({ left: target.offsetLeft - 16, behavior: "smooth" });
+    if (target) {
+      el.scrollTo({ left: target.offsetLeft - 16, behavior: "smooth" });
+    }
     setActiveDay(day);
   };
 
@@ -115,7 +119,6 @@ export default function TimeFilterBar({ onChange }) {
               <div className="day-label">
                 {day.charAt(0).toUpperCase() + day.slice(1)}
               </div>
-
               <div className="slots-row">
                 {slots[day].map((slot) => (
                   <TimeChip

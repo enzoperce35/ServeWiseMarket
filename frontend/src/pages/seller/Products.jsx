@@ -9,6 +9,8 @@ import { fetchDeliveryGroups } from "../../api/delivery_groups";
 
 import "../../css/seller/products.css";
 
+import { getSlotDay } from "../../utils/deliverySlotRotation";
+
 const formatHourLabel = (hour) => {
   if (hour === -1) return "Now";
   const h12 = hour % 12 === 0 ? 12 : hour % 12;
@@ -39,21 +41,32 @@ export default function Products() {
       const today = [];
       const tomorrow = [];
 
-      groups.forEach(group => {
+      groups.forEach((group) => {
         if (!group.active) return;
 
         const hour = group.ph_timestamp;
+
+        // ignore hours outside operating window (same as before)
         if (hour !== -1 && (hour < 6 || hour > 20)) return;
 
-        const slot = { ...group, hour24: hour };
-
+        // "Now" stays today and pinned on top
         if (hour === -1) {
-          today.unshift({ ...slot, isNow: true });
+          // optional: hide after 7pm — uncomment if you want same rule
+          // if (currentHour < 19)
+          today.unshift({
+            ...group,
+            hour24: hour,
+            isNow: true,
+          });
           return;
         }
 
-        const minHourToday = currentHour + 2;
-        if (hour >= minHourToday) today.push(slot);
+        // ----------- NEW: 15-minute rotation ----------
+        const computedDay = getSlotDay(hour);
+
+        const slot = { ...group, hour24: hour };
+
+        if (computedDay === "today") today.push(slot);
         else tomorrow.push(slot);
       });
 
@@ -72,49 +85,63 @@ export default function Products() {
     try {
       const token = localStorage.getItem("token");
 
-      const pdg = product.product_delivery_groups?.find(dg => dg.delivery_group_id === groupId);
+      const pdg = product.product_delivery_groups?.find(
+        (dg) => dg.delivery_group_id === groupId
+      );
 
       let updatedPdg;
 
       if (pdg) {
         // Toggle active
-        const url = `/api/v1/product_delivery_groups/${pdg.id}/${pdg.active ? "deactivate" : "activate"}`;
+        const url = `/api/v1/product_delivery_groups/${pdg.id}/${
+          pdg.active ? "deactivate" : "activate"
+        }`;
+
         const res = await fetch(url, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
+
         if (!res.ok) throw new Error(`Status toggle failed: ${res.status}`);
+
         const data = await res.json();
         updatedPdg = data?.product_delivery_group;
         if (!updatedPdg) throw new Error("No product_delivery_group returned");
-
       } else {
         // Create and activate
         const res = await fetch("/api/v1/product_delivery_groups", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ product_id: product.id, delivery_group_id: groupId }),
+          body: JSON.stringify({
+            product_id: product.id,
+            delivery_group_id: groupId,
+          }),
         });
-        if (!res.ok) throw new Error(`Failed to add product to group: ${res.status}`);
+
+        if (!res.ok)
+          throw new Error(`Failed to add product to group: ${res.status}`);
+
         const data = await res.json();
         updatedPdg = data?.product_delivery_group;
         if (!updatedPdg) throw new Error("No product_delivery_group returned");
       }
 
       // Update React state immutably
-      setProducts(prev =>
-        prev.map(p =>
+      setProducts((prev) =>
+        prev.map((p) =>
           p.id === product.id
             ? {
                 ...p,
                 product_delivery_groups: [
-                  ...(p.product_delivery_groups?.filter(dg => dg.id !== updatedPdg.id) || []),
+                  ...(p.product_delivery_groups?.filter(
+                    (dg) => dg.id !== updatedPdg.id
+                  ) || []),
                   updatedPdg,
                 ],
               }
@@ -123,20 +150,25 @@ export default function Products() {
       );
     } catch (err) {
       console.error(err);
-      alert(`An error occurred while updating the product status: ${err.message}`);
+      alert(
+        `An error occurred while updating the product status: ${err.message}`
+      );
     }
   };
 
   /* ===========================
      NAVIGATION
   =========================== */
-  const handleEdit = (product) => navigate(`/seller/products/${product.id}/edit`);
+  const handleEdit = (product) =>
+    navigate(`/seller/products/${product.id}/edit`);
   const handleCreate = () => navigate("/seller/products/new");
 
   /* ===========================
      PRODUCTS WITH NO GROUP
   =========================== */
-  const productsWithNoGroup = products.filter(p => !p.delivery_groups || p.delivery_groups.length === 0);
+  const productsWithNoGroup = products.filter(
+    (p) => !p.delivery_groups || p.delivery_groups.length === 0
+  );
 
   /* ===========================
      RENDER
@@ -148,7 +180,7 @@ export default function Products() {
       <div className="seller-content">
         {/* DAY TOGGLE */}
         <div className="day-toggle">
-          {["today", "tomorrow"].map(day => (
+          {["today", "tomorrow"].map((day) => (
             <button
               key={day}
               className={`day-btn ${selectedDay === day ? "active" : ""}`}
@@ -164,23 +196,25 @@ export default function Products() {
           <button
             className={`no-group-btn ${showNoGroup ? "active" : ""}`}
             title="Products with no delivery group"
-            onClick={() => setShowNoGroup(prev => !prev)}
+            onClick={() => setShowNoGroup((prev) => !prev)}
           >
             📦
           </button>
+
           <button className="add-product-circle" onClick={handleCreate}>
             +
           </button>
         </div>
 
-        {/* NO GROUP */}
+        {/* NO GROUP SECTION */}
         {showNoGroup && productsWithNoGroup.length > 0 && (
           <div className="delivery-group">
             <div className="delivery-group-header">
               <h3 className="delivery-group-title">No Group</h3>
             </div>
+
             <div className="seller-product-grid">
-              {productsWithNoGroup.map(product => (
+              {productsWithNoGroup.map((product) => (
                 <SellerCard
                   key={product.id}
                   product={product}
@@ -193,24 +227,29 @@ export default function Products() {
           </div>
         )}
 
-        {/* DELIVERY GROUPS */}
-        {deliveryGroups[selectedDay].map(group => {
-          const groupProducts = products.filter(p =>
-            p.delivery_groups?.some(dg => dg.id === group.id)
+        {/* GROUPS BY DAY */}
+        {deliveryGroups[selectedDay].map((group) => {
+          const groupProducts = products.filter((p) =>
+            p.delivery_groups?.some((dg) => dg.id === group.id)
           );
 
           if (groupProducts.length === 0) return null;
 
           return (
-            <div key={group.id} className={`delivery-group ${group.isNow ? "now" : ""}`}>
+            <div
+              key={group.id}
+              className={`delivery-group ${group.isNow ? "now" : ""}`}
+            >
               <div className="delivery-group-header">
                 <h3 className="delivery-group-title">
-                  {group.hour24 === -1 ? "Now" : formatHourLabel(group.hour24)}
+                  {group.hour24 === -1
+                    ? "Now"
+                    : formatHourLabel(group.hour24)}
                 </h3>
               </div>
 
               <div className="seller-product-grid">
-                {groupProducts.map(product => (
+                {groupProducts.map((product) => (
                   <SellerCard
                     key={product.id}
                     product={product}
