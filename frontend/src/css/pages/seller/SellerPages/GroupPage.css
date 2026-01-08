@@ -1,0 +1,184 @@
+/* ================================
+   Day Toggle Styles (Today/Tomorrow)
+================================= */
+.day-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-bottom: 0.5rem;
+  padding-top: 1.5rem;
+}
+
+.day-btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid #3b82f6;
+  background-color: #fff;
+  color: #3b82f6;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.day-btn:hover {
+  background-color: #eff6ff;
+}
+
+.day-btn.active {
+  background-color: #3b82f6;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* ================================
+   Delivery Groups
+================================= */
+.delivery-group {
+  margin-bottom: 2rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background-color: #f9fafb;
+  transition: background-color 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.delivery-group:nth-child(even) {
+  background-color: #f3f4f6;
+}
+
+.delivery-group:hover {
+  background-color: #eef2f7;
+}
+
+.delivery-group-header {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding-bottom: 0.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.delivery-group-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* ================================
+   Product Grid
+================================= */
+.seller-product-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 480px) {
+  .seller-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .seller-product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .seller-product-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ================================
+   Group Toggle Arrow
+================================= */
+.group-toggle-arrow {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.group-toggle-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.group-toggle-arrow.collapsed {
+  transform: rotate(0deg);
+}
+
+.group-toggle-arrow:hover {
+  color: #333;
+}
+
+/* ================================
+   Container below day toggle
+================================= */
+.add-product-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Simple green + button */
+.add-product-circle {
+  background: none;
+  color: #16a34a;
+  font-size: 1.8rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.add-product-circle:hover {
+  transform: scale(1.2);
+}
+
+/* No Group 📦 button */
+.no-group-btn {
+  background: none;
+  color: #3b82f6;
+  font-size: 1.2rem;
+  border: none;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  line-height: 1;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.no-group-btn:hover {
+  transform: scale(1.2);
+  color: #2563eb;
+}
+
+.no-group-btn.active {
+  color: #1e40af;
+  transform: scale(1.2);
+}
+
+/* ================================
+   Responsive Adjustments
+================================= */
+@media (max-width: 768px) {
+  .day-toggle {
+    gap: 0.5rem;
+  }
+  .add-product-container {
+    justify-content: space-between;
+  }
+}

@@ -13,7 +13,8 @@ import EditSellerShopPage from "./components/seller/EditSellerShopPage";
 
 
 // Seller pages
-import Products from "./pages/seller/Products";
+//import Products from "./pages/seller/SellerPages/Products";
+import SellerPages from "./pages/seller/SellerPages/SellerPages";
 import ShopPage from "./pages/seller/ShopPage";
 import OrdersPage from "./pages/OrdersPage";
 import SellerOrdersPage from "./pages/seller/SellerOrdersPage";
@@ -29,7 +30,8 @@ export default function App() {
 
         {/* Seller pages */}
         <Route path="/seller/create-shop" element={<CreateShop />} />
-        <Route path="/seller/products" element={<Products />} />
+        {/* <Route path="/seller/products" element={<Products />} />*/}
+        <Route path="/seller/products" element={<SellerPages />} />
         <Route path="/shop/:shopId" element={<ShopPage />} />
         <Route path="/shops/:shopId" element={<ShopPage />} />
         <Route path="/orders" element={<OrdersPage />} />

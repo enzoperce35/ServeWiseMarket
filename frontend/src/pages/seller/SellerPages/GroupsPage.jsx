@@ -1,15 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-import SellerNavbar from "../../components/seller/SellerNavbar";
-import SellerCard from "../../components/seller/SellerCard";
-
-import { fetchSellerProducts } from "../../api/seller/products";
-import { fetchDeliveryGroups } from "../../api/delivery_groups";
-
-import "../../css/seller/products.css";
-
-import { getSlotDay } from "../../utils/deliverySlotRotation";
+import SellerCard from "../../../components/seller/SellerCard";
+import { fetchSellerProducts } from "../../../api/seller/products";
+import { fetchDeliveryGroups } from "../../../api/delivery_groups";
+import { getSlotDay } from "../../../utils/deliverySlotRotation";
+import "../../../css/pages/seller/SellerPages/GroupPage.css";
 
 const formatHourLabel = (hour) => {
   if (hour === -1) return "Now";
@@ -48,7 +43,7 @@ const getSortedGroupProducts = (products, groupId) => {
   });
 };
 
-export default function Products() {
+export default function GroupsPage() {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
@@ -208,116 +203,114 @@ export default function Products() {
      RENDER
   =========================== */
   return (
-    <div className="seller-page">
-      <SellerNavbar />
-
-      <div className="seller-content">
-        {/* DAY TOGGLE */}
-        <div className="day-toggle">
-          {["today", "tomorrow"].map((day) => (
-            <button
-              key={day}
-              className={`day-btn ${selectedDay === day ? "active" : ""}`}
-              onClick={() => setSelectedDay(day)}
-            >
-              {day.charAt(0).toUpperCase() + day.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* ADD + NO GROUP */}
-        <div className="add-product-container">
+    <div className="seller-content">
+      {/* DAY TOGGLE */}
+      <div className="day-toggle">
+        {["today", "tomorrow"].map((day) => (
           <button
-            className={`no-group-btn ${showNoGroup ? "active" : ""}`}
-            title="Products with no delivery group"
-            onClick={() => setShowNoGroup((prev) => !prev)}
+            key={day}
+            className={`day-btn ${selectedDay === day ? "active" : ""}`}
+            onClick={() => setSelectedDay(day)}
           >
-            📦
+            {day.charAt(0).toUpperCase() + day.slice(1)}
           </button>
+        ))}
+      </div>
 
-          <button className="add-product-circle" onClick={handleCreate}>
-            +
-          </button>
+      {/* ADD + NO GROUP */}
+      <div className="add-product-container">
+        <button
+          className={`no-group-btn ${showNoGroup ? "active" : ""}`}
+          title="Products with no delivery group"
+          onClick={() => setShowNoGroup((prev) => !prev)}
+        >
+          📦
+        </button>
+
+        <button className="add-product-circle" onClick={handleCreate}>
+          +
+        </button>
+      </div>
+
+      {/* NO GROUP SECTION */}
+      {showNoGroup && productsWithNoGroup.length > 0 && (
+        <div className="delivery-group">
+          <div className="delivery-group-header">
+            <h3 className="delivery-group-title">No Group</h3>
+          </div>
+
+          <div className="seller-product-grid">
+            {productsWithNoGroup.map((product) => (
+              <SellerCard
+                key={product.id}
+                product={product}
+                groupId={null}
+                onStatusClick={handleStatusClick}
+                onClick={() => handleEdit(product)}
+              />
+            ))}
+          </div>
         </div>
+      )}
 
-        {/* NO GROUP SECTION */}
-        {showNoGroup && productsWithNoGroup.length > 0 && (
-          <div className="delivery-group">
+      {/* GROUPS BY DAY */}
+      {deliveryGroups[selectedDay].map((group) => {
+        const groupProducts = getSortedGroupProducts(products, group.id);
+
+        // Skip groups with no products at all
+        if (groupProducts.length === 0) return null;
+
+        // Default hidden (collapsed)
+        const isExpanded = expandedGroups[group.id] ?? false;
+
+        // Filter visible products if collapsed
+        const visibleProducts = isExpanded
+          ? groupProducts
+          : groupProducts.filter((p) => {
+              const pdg = p.product_delivery_groups?.find(
+                (dg) => dg.delivery_group_id === group.id
+              );
+              const outOfStock = !p.stock || p.stock === 0;
+              return pdg?.active && !outOfStock;
+            });
+
+        return (
+          <div
+            key={group.id}
+            className={`delivery-group ${group.isNow ? "now" : ""}`}
+          >
             <div className="delivery-group-header">
-              <h3 className="delivery-group-title">No Group</h3>
+              <h3 className="delivery-group-title">
+                {group.hour24 === -1
+                  ? "Now"
+                  : formatHourLabel(group.hour24)}
+              </h3>
+
+              {/* Toggle arrow on all groups, including "Now" */}
+              <button
+                className={`group-toggle-arrow ${
+                  isExpanded ? "expanded" : "collapsed"
+                }`}
+                onClick={() => toggleGroupExpansion(group.id)}
+              >
+                {isExpanded ? "▲" : "▼"}
+              </button>
             </div>
 
             <div className="seller-product-grid">
-              {productsWithNoGroup.map((product) => (
+              {visibleProducts.map((product) => (
                 <SellerCard
                   key={product.id}
                   product={product}
-                  groupId={null}
+                  groupId={group.id}
                   onStatusClick={handleStatusClick}
                   onClick={() => handleEdit(product)}
                 />
               ))}
             </div>
           </div>
-        )}
-
-        {/* GROUPS BY DAY */}
-        {deliveryGroups[selectedDay].map((group) => {
-          const groupProducts = getSortedGroupProducts(products, group.id);
-
-          // Skip groups with no products at all
-          if (groupProducts.length === 0) return null;
-
-          // Default hidden (collapsed)
-          const isExpanded = expandedGroups[group.id] ?? false;
-
-          // Filter visible products if collapsed
-          const visibleProducts = isExpanded
-            ? groupProducts
-            : groupProducts.filter((p) => {
-                const pdg = p.product_delivery_groups?.find(
-                  (dg) => dg.delivery_group_id === group.id
-                );
-                const outOfStock = !p.stock || p.stock === 0;
-                return pdg?.active && !outOfStock;
-              });
-
-          return (
-            <div
-              key={group.id}
-              className={`delivery-group ${group.isNow ? "now" : ""}`}
-            >
-              <div className="delivery-group-header">
-                <h3 className="delivery-group-title">
-                  {group.hour24 === -1
-                    ? "Now"
-                    : formatHourLabel(group.hour24)}
-                </h3>
-
-                {/* Toggle arrow on all groups, including "Now" */}
-                <button
-                  className={`group-toggle-arrow ${isExpanded ? "expanded" : "collapsed"}`}
-                  onClick={() => toggleGroupExpansion(group.id)}
-                >
-                  {isExpanded ? "▲" : "▼"}
-                </button>
-              </div>
-
-              <div className="seller-product-grid">
-                {visibleProducts.map((product) => (
-                  <SellerCard
-                    key={product.id}
-                    product={product}
-                    groupId={group.id}
-                    onStatusClick={handleStatusClick}
-                    onClick={() => handleEdit(product)}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+        );
+      })}
     </div>
   );
 }

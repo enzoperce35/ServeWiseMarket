@@ -1,0 +1,42 @@
+/* ================================
+   Wrapper for the seller pages
+================================= */
+.seller-page-wrapper {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* ================================
+   Page Tabs (Products / Groups / Times)
+================================= */
+.page-tabs {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+  justify-content: center;
+}
+
+.page-tab-btn {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: all 0.2s ease;
+}
+
+.page-tab-btn:hover {
+  background-color: #f3f4f6;
+}
+
+.page-tab-btn.active {
+  font-weight: bold;
+  border-bottom: 2px solid #3b82f6; /* accent line for active tab */
+}
+
+/* ================================
+   Page Content Container
+================================= */
+.seller-page-content {
+  padding-top: 1rem;
+}

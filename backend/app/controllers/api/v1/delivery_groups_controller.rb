@@ -4,7 +4,7 @@ module Api
     class DeliveryGroupsController < ActionController::API
       # GET /api/v1/delivery_groups
       def index
-        groups = DeliveryGroup.active.order(:ph_timestamp)
+        groups = DeliveryGroup.order(:ph_timestamp) # include inactive groups too
       
         render json: groups.as_json(
           only: [:id, :name, :ph_timestamp, :active],
@@ -12,7 +12,6 @@ module Api
             products: {
               only: [:id, :name, :price, :stock, :status, :image_url],
               methods: [:cross_comm_charge],
-              # only include products that are available
               include: :shop
             }
           }
@@ -20,7 +19,13 @@ module Api
           group["products"] = group["products"].select { |p| p["status"] && p["stock"].to_i > 0 }
           group
         end
-      end
+      end      
+
+      def update
+        dg = DeliveryGroup.find(params[:id])
+        dg.update!(active: params[:active])
+        render json: { delivery_group: dg }, status: :ok
+      end      
       
 
       # POST /api/v1/delivery_groups/find_or_create
@@ -39,6 +44,18 @@ module Api
         end
 
         render json: { delivery_group: group }, status: :ok
+      end
+
+      def activate
+        dg = DeliveryGroup.find(params[:id])
+        dg.update!(active: true)
+        render json: { delivery_group: dg }, status: :ok
+      end
+      
+      def deactivate
+        dg = DeliveryGroup.find(params[:id])
+        dg.update!(active: false)
+        render json: { delivery_group: dg }, status: :ok
       end
     end
   end

@@ -28,7 +28,10 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :delivery_groups, only: [:index] do
+      resources :delivery_groups, only: [:index, :update] do
+        member do
+          patch :update   # <-- add this
+        end
         collection do
           post :find_or_create
         end
