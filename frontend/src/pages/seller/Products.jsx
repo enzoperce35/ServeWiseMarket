@@ -22,9 +22,23 @@ export default function Products() {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
-  const [deliveryGroups, setDeliveryGroups] = useState({ today: [], tomorrow: [] });
-  const [selectedDay, setSelectedDay] = useState("today");
+
+  // ✅ PERSISTENT TODAY / TOMORROW
+  const [selectedDay, setSelectedDay] = useState(() => {
+    return localStorage.getItem("seller_selected_day") || "today";
+  });
+
+  const [deliveryGroups, setDeliveryGroups] = useState({
+    today: [],
+    tomorrow: [],
+  });
+
   const [showNoGroup, setShowNoGroup] = useState(false);
+
+  // ✅ save when changed
+  useEffect(() => {
+    localStorage.setItem("seller_selected_day", selectedDay);
+  }, [selectedDay]);
 
   /* ===========================
      LOAD DATA
@@ -46,13 +60,9 @@ export default function Products() {
 
         const hour = group.ph_timestamp;
 
-        // ignore hours outside operating window (same as before)
         if (hour !== -1 && (hour < 6 || hour > 20)) return;
 
-        // "Now" stays today and pinned on top
         if (hour === -1) {
-          // optional: hide after 7pm — uncomment if you want same rule
-          // if (currentHour < 19)
           today.unshift({
             ...group,
             hour24: hour,
@@ -61,7 +71,6 @@ export default function Products() {
           return;
         }
 
-        // ----------- NEW: 15-minute rotation ----------
         const computedDay = getSlotDay(hour);
 
         const slot = { ...group, hour24: hour };
@@ -92,7 +101,6 @@ export default function Products() {
       let updatedPdg;
 
       if (pdg) {
-        // Toggle active
         const url = `/api/v1/product_delivery_groups/${pdg.id}/${
           pdg.active ? "deactivate" : "activate"
         }`;
@@ -111,7 +119,6 @@ export default function Products() {
         updatedPdg = data?.product_delivery_group;
         if (!updatedPdg) throw new Error("No product_delivery_group returned");
       } else {
-        // Create and activate
         const res = await fetch("/api/v1/product_delivery_groups", {
           method: "POST",
           headers: {
@@ -132,7 +139,6 @@ export default function Products() {
         if (!updatedPdg) throw new Error("No product_delivery_group returned");
       }
 
-      // Update React state immutably
       setProducts((prev) =>
         prev.map((p) =>
           p.id === product.id
@@ -156,23 +162,14 @@ export default function Products() {
     }
   };
 
-  /* ===========================
-     NAVIGATION
-  =========================== */
   const handleEdit = (product) =>
     navigate(`/seller/products/${product.id}/edit`);
   const handleCreate = () => navigate("/seller/products/new");
 
-  /* ===========================
-     PRODUCTS WITH NO GROUP
-  =========================== */
   const productsWithNoGroup = products.filter(
     (p) => !p.delivery_groups || p.delivery_groups.length === 0
   );
 
-  /* ===========================
-     RENDER
-  =========================== */
   return (
     <div className="seller-page">
       <SellerNavbar />
@@ -184,7 +181,7 @@ export default function Products() {
             <button
               key={day}
               className={`day-btn ${selectedDay === day ? "active" : ""}`}
-              onClick={() => setSelectedDay(day)}
+              onClick={() => setSelectedDay(day)} // ⬅️ persists automatically
             >
               {day.charAt(0).toUpperCase() + day.slice(1)}
             </button>
