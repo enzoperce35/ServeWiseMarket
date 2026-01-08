@@ -20,8 +20,9 @@
   gap: 1rem;
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  border-top: 1px solid rgba(0,0,0,0.08);
   padding-bottom: 0.5rem;
+  padding-top: 1.5rem;
 }
 
 .day-btn {
@@ -79,6 +80,56 @@
   gap: 0.75rem;
   grid-template-columns: 1fr; /* mobile first */
 }
+
+/* ================================
+   Group Toggle Arrow
+================================= */
+.group-toggle-arrow {
+  background: none;
+  border: none;
+  font-size: 1rem;       /* adjust size as needed */
+  cursor: pointer;
+  margin-left: 0.5rem;   /* space between header and arrow */
+  transition: transform 0.2s ease; /* smooth rotation */
+}
+
+/* Rotate arrow when expanded */
+.group-toggle-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+/* Optional styling for collapsed state */
+.group-toggle-arrow.collapsed {
+  transform: rotate(0deg);
+}
+
+/* Optional: make the arrow slightly bigger or colored */
+.group-toggle-arrow:hover {
+  color: #333; /* or your accent color */
+}
+
+/* ================================
+   Delivery Group Backgrounds
+================================= */
+.delivery-group {
+  margin-bottom: 2rem;
+  padding: 0.75rem 1rem;      /* add padding around the group */
+  border-radius: 0.75rem;     /* rounded corners */
+  background-color: #f9fafb;  /* light gray default background */
+  transition: background-color 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Alternate background for better distinction */
+.delivery-group:nth-child(even) {
+  background-color: #f3f4f6; /* slightly darker gray */
+}
+
+/* Hover effect on the whole group */
+.delivery-group:hover {
+  background-color: #eef2f7; /* subtle highlight on hover */
+}
+
 
 /* Tablets */
 @media (min-width: 480px) {

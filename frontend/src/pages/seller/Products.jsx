@@ -18,12 +18,42 @@ const formatHourLabel = (hour) => {
   return `${h12}${ampm}`;
 };
 
+/* ================================
+   SORT PRODUCTS INSIDE A GROUP
+   Active → Out of Stock → Inactive
+================================ */
+const getSortedGroupProducts = (products, groupId) => {
+  const groupProducts = products.filter((p) =>
+    p.delivery_groups?.some((dg) => dg.id === groupId)
+  );
+
+  return [...groupProducts].sort((a, b) => {
+    const pdgA = a.product_delivery_groups?.find(
+      (dg) => dg.delivery_group_id === groupId
+    );
+    const pdgB = b.product_delivery_groups?.find(
+      (dg) => dg.delivery_group_id === groupId
+    );
+
+    const outA = !a.stock || a.stock === 0;
+    const outB = !b.stock || b.stock === 0;
+
+    const rank = (pdg, out) => {
+      if (pdg?.active) return 1; // active
+      if (out) return 2;         // out of stock
+      return 3;                  // inactive / not connected
+    };
+
+    return rank(pdgA, outA) - rank(pdgB, outB);
+  });
+};
+
 export default function Products() {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
 
-  // ✅ PERSISTENT TODAY / TOMORROW
+  // Persistent Today / Tomorrow
   const [selectedDay, setSelectedDay] = useState(() => {
     return localStorage.getItem("seller_selected_day") || "today";
   });
@@ -35,7 +65,10 @@ export default function Products() {
 
   const [showNoGroup, setShowNoGroup] = useState(false);
 
-  // ✅ save when changed
+  // Per-group toggle state: true = expanded, false = collapsed
+  const [expandedGroups, setExpandedGroups] = useState({});
+
+  // Save selectedDay when changed
   useEffect(() => {
     localStorage.setItem("seller_selected_day", selectedDay);
   }, [selectedDay]);
@@ -49,9 +82,6 @@ export default function Products() {
       setProducts(prods);
 
       const groups = await fetchDeliveryGroups();
-      const now = new Date();
-      const currentHour = now.getHours();
-
       const today = [];
       const tomorrow = [];
 
@@ -62,18 +92,15 @@ export default function Products() {
 
         if (hour !== -1 && (hour < 6 || hour > 20)) return;
 
+        let slot = { ...group, hour24: hour };
+
         if (hour === -1) {
-          today.unshift({
-            ...group,
-            hour24: hour,
-            isNow: true,
-          });
+          // "Now" pinned at top of today
+          today.unshift({ ...slot, isNow: true });
           return;
         }
 
         const computedDay = getSlotDay(hour);
-
-        const slot = { ...group, hour24: hour };
 
         if (computedDay === "today") today.push(slot);
         else tomorrow.push(slot);
@@ -170,6 +197,16 @@ export default function Products() {
     (p) => !p.delivery_groups || p.delivery_groups.length === 0
   );
 
+  const toggleGroupExpansion = (groupId) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupId]: !prev[groupId],
+    }));
+  };
+
+  /* ===========================
+     RENDER
+  =========================== */
   return (
     <div className="seller-page">
       <SellerNavbar />
@@ -181,7 +218,7 @@ export default function Products() {
             <button
               key={day}
               className={`day-btn ${selectedDay === day ? "active" : ""}`}
-              onClick={() => setSelectedDay(day)} // ⬅️ persists automatically
+              onClick={() => setSelectedDay(day)}
             >
               {day.charAt(0).toUpperCase() + day.slice(1)}
             </button>
@@ -226,11 +263,24 @@ export default function Products() {
 
         {/* GROUPS BY DAY */}
         {deliveryGroups[selectedDay].map((group) => {
-          const groupProducts = products.filter((p) =>
-            p.delivery_groups?.some((dg) => dg.id === group.id)
-          );
+          const groupProducts = getSortedGroupProducts(products, group.id);
 
+          // Skip groups with no products at all
           if (groupProducts.length === 0) return null;
+
+          // Default hidden (collapsed)
+          const isExpanded = expandedGroups[group.id] ?? false;
+
+          // Filter visible products if collapsed
+          const visibleProducts = isExpanded
+            ? groupProducts
+            : groupProducts.filter((p) => {
+                const pdg = p.product_delivery_groups?.find(
+                  (dg) => dg.delivery_group_id === group.id
+                );
+                const outOfStock = !p.stock || p.stock === 0;
+                return pdg?.active && !outOfStock;
+              });
 
           return (
             <div
@@ -243,10 +293,18 @@ export default function Products() {
                     ? "Now"
                     : formatHourLabel(group.hour24)}
                 </h3>
+
+                {/* Toggle arrow on all groups, including "Now" */}
+                <button
+                  className={`group-toggle-arrow ${isExpanded ? "expanded" : "collapsed"}`}
+                  onClick={() => toggleGroupExpansion(group.id)}
+                >
+                  {isExpanded ? "▲" : "▼"}
+                </button>
               </div>
 
               <div className="seller-product-grid">
-                {groupProducts.map((product) => (
+                {visibleProducts.map((product) => (
                   <SellerCard
                     key={product.id}
                     product={product}
