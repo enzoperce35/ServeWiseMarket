@@ -4,42 +4,44 @@ module Api
     class CartsController < ApplicationController
       before_action :authenticate_user
 
+      # GET /api/v1/cart
       def show
         cart = current_user.cart
-        return render json: { shops: [] } unless cart
+
+        if cart.nil?
+          render json: { shops: [] }, status: :ok
+          return
+        end
 
         # Group items by shop
-        grouped = cart.cart_items.includes(product: :shop).group_by { |item| item.product.shop }
+        shops = cart.cart_items.includes(product: :variants).group_by { |item| item.product.shop }
 
-        cart_json = {
-          cart_id: cart.id,
-          item_count: cart.cart_items.sum(:quantity),
-          grand_total: cart.cart_items.sum { |item| item.quantity * item.product.price },
-          shops: grouped.map do |shop, items|
-            {
-              shop_id: shop.id,
-              shop_name: shop.name,
-              shop_open: shop.open,
-              subtotal: items.sum { |item| item.quantity * item.product.price },
-              items: items.map do |item|
-                {
-                  cart_item_id: item.id,
-                  product_id: item.product.id,
-                  name: item.product.name,
-                  image_url: item.product.image_url,
-                  unit_price: item.product.price,
-                  quantity: item.quantity,
-                  total_price: item.quantity * item.product.price,
-                  stock: item.product.stock,
-                  active: item.product.status,
-                  preorder_delivery: item.product.preorder_delivery
-                }
-              end
-            }
-          end
-        }
+        result = shops.map do |shop, items|
+          {
+            shop_id: shop.id,
+            shop_name: shop.name,
+            items: items.map do |item|
+              variant = item.variant # assuming you store variant_id in cart_item
 
-        render json: cart_json
+              {
+                cart_item_id: item.id,
+                product_id: item.product.id,
+                variant_id: item.variant_id,
+                name: item.product.name,
+                image_url: item.product.image_url,
+                quantity: item.quantity,
+                total_price: item.unit_price * item.quantity,
+                variant: variant ? {
+                  id: variant.id,
+                  name: variant.name,
+                  price: variant.price
+                } : nil
+              }
+            end
+          }
+        end
+
+        render json: { shops: result }, status: :ok
       end
     end
   end

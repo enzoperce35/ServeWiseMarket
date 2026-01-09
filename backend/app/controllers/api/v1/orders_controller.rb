@@ -11,45 +11,11 @@ module Api
           return render json: { error: "Cart is empty" }, status: :unprocessable_entity
         end
       
-        orders = []
-      
-        # Group cart items by shop
-        cart.cart_items.includes(product: :shop).group_by { |i| i.product.shop }.each do |shop, items|
-          subtotal = items.sum { |i| i.quantity * i.unit_price }
-      
-          # Cross-community logic
-          cross_fee = 0
-          if current_user.community != shop.community
-            cross_fee = subtotal < shop.cross_comm_minimum ? shop.cross_comm_charge : 0
-          end
-      
-          order = current_user.orders.create!(
-            shop: shop,
-            status: "pending",
-            total_amount: subtotal + cross_fee,
-            delivery_date: nil,
-            delivery_time: nil,
-            cross_comm_delivery: cross_fee.positive?,
-            cross_comm_charge: cross_fee
-          )
-      
-          items.each do |item|
-            order.order_items.create!(
-              product: item.product,
-              quantity: item.quantity,
-              unit_price: item.unit_price
-            )
-          end
-      
-          orders << order
-        end
-      
         # Clear cart after checkout
         cart.cart_items.destroy_all
       
         render json: {
           message: "Checkout successful",
-          order_ids: orders.map(&:id)
         }, status: :created
       end      
 

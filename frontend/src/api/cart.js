@@ -2,14 +2,27 @@ import axios from "axios";
 
 const API_BASE = "http://localhost:3000/api/v1";
 
-// Add a product to the cart
-export const addToCartApi = (productId, quantity = 1, token) => {
+/**
+ * Add a product or variant to the cart
+ * @param {number} productId - ID of the parent product
+ * @param {number} quantity - Quantity to add (default 1)
+ * @param {string} token - User auth token
+ * @param {number|null} variantId - Optional variant ID
+ */
+export const addToCartApi = (productId, quantity = 1, token, variantId = null) => {
+  const payload = { product_id: productId, quantity };
+  if (variantId) payload.variant_id = variantId; // include variant if provided
+
   return axios.post(
     `${API_BASE}/cart_items`,
-    { product_id: productId, quantity }, // <-- send quantity correctly
+    {
+      product_id: productId,
+      quantity,
+      variant_id: variantId, // ✅ send variant_id if any
+    },
     {
       headers: {
-        Authorization: `Bearer ${token}`, // <-- token in header
+        Authorization: `Bearer ${token}`,
       },
     }
   );

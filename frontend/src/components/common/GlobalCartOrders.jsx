@@ -1,25 +1,19 @@
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCartContext } from "../../context/CartProvider";
-import { useOrdersContext } from "../../context/OrdersProvider";
-import { ShoppingCartIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
+import { ShoppingCartIcon } from "@heroicons/react/24/outline";
 import "../../css/components/common/GlobalCartOrders.css";
 
 export default function GlobalCartOrders({ className = "", style = {} }) {
   const navigate = useNavigate();
   const { cart, refreshCart } = useCartContext();
-  const { ordersCount, refreshOrders } = useOrdersContext();
 
   const [animateCart, setAnimateCart] = React.useState(false);
-  const [animateOrders, setAnimateOrders] = React.useState(false);
-
   const prevCartRef = useRef(cart?.item_count || 0);
-  const prevOrdersRef = useRef(ordersCount || 0);
-
+ 
   // Refresh counts on mount
   useEffect(() => {
     refreshCart();
-    refreshOrders();
   }, []);
 
   // Animate cart
@@ -32,15 +26,6 @@ export default function GlobalCartOrders({ className = "", style = {} }) {
     prevCartRef.current = cart?.item_count || 0;
   }, [cart?.item_count]);
 
-  // Animate orders
-  useEffect(() => {
-    if (ordersCount > prevOrdersRef.current) {
-      setAnimateOrders(true);
-      const t = setTimeout(() => setAnimateOrders(false), 350);
-      return () => clearTimeout(t);
-    }
-    prevOrdersRef.current = ordersCount;
-  }, [ordersCount]);
 
   return (
     <div className={`global-cart-orders-wrapper ${className}`} style={style}>
@@ -52,17 +37,6 @@ export default function GlobalCartOrders({ className = "", style = {} }) {
         <ShoppingCartIcon className="global-cart-orders-icon" />
         {cart?.item_count > 0 && (
           <span className="global-cart-orders-count">{cart.item_count}</span>
-        )}
-      </button>
-
-      {/* ORDERS */}
-      <button
-        className={`global-cart-orders-btn ${animateOrders ? "cart-badge-animate" : ""}`}
-        onClick={() => navigate("/orders")}
-      >
-        <ClipboardDocumentListIcon className="global-cart-orders-icon" />
-        {ordersCount > 0 && (
-          <span className="global-cart-orders-count">{ordersCount}</span>
         )}
       </button>
     </div>

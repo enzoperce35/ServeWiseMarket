@@ -22,8 +22,8 @@ export default function CartPage() {
     try {
       await checkoutApi(token);
       await fetchCart();
-      toast.success("Order placed successfully 🎉");
-      navigate("/orders");
+      toast.success("Copied order ticket successfully 🎉");
+      navigate("/");
     } catch (err) {
       toast.error(err.response?.data?.error || "Checkout failed");
     }
@@ -56,10 +56,7 @@ export default function CartPage() {
     <div className="cart-page">
       {/* ===== BACK BUTTON ===== */}
       <div className="cart-header">
-        <BackButton
-          className="cart-back-btn"
-          fallback="/"
-        />
+        <BackButton className="cart-back-btn" fallback="/" />
       </div>
 
       {(!cart || cart.shops.length === 0) && (
@@ -77,12 +74,15 @@ export default function CartPage() {
                 className="cart-item-img"
               />
               <div className="cart-item-info">
-                <span className="cart-item-name">{item.name}</span>
+                <span className="cart-item-name">
+                  {item.name}{item.variant ? `  ${item.variant.name}` : ""}
+                </span>
                 <span className="cart-item-qty">Qty: {item.quantity}</span>
                 <span className="cart-item-price">
                   ₱{Number(item.total_price || 0).toFixed(2)}
                 </span>
               </div>
+
               <button
                 onClick={() => handleRemoveItem(item.cart_item_id)}
                 className="cart-item-remove"
@@ -106,7 +106,7 @@ export default function CartPage() {
             Grand Total: ₱{grandTotal.toFixed(2)}
           </div>
           <button className="checkout-btn" onClick={handleCheckout}>
-            Place Order
+            Copy Ticket
           </button>
         </>
       )}

@@ -14,15 +14,22 @@ export const CartProvider = ({ children }) => {
     if (!token) return;
     try {
       const response = await fetchCartApi(token);
-      setCart(response.data);
+      const data = response.data;
+
+      // Calculate total item count for badge
+      const item_count = data?.shops?.reduce((acc, shop) => {
+        return acc + (shop.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0);
+      }, 0) || 0;
+
+      setCart({ ...data, item_count }); // <-- add item_count
     } catch (err) {
       console.error("Failed to fetch cart:", err);
     }
   };
 
-  const refreshCart = () => fetchCart(); // optional alias
+  const refreshCart = () => fetchCart();
 
-  useEffect(() => {
+  React.useEffect(() => {
     fetchCart();
   }, [token]);
 
