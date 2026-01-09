@@ -47,7 +47,10 @@ Rails.application.routes.draw do
       # Seller-specific products (dashboard)
       namespace :seller do
         resource :shop, only: [:show, :create, :update]
-        resources :products, only: [:index, :create, :update, :destroy]
+        resources :products, only: [:index, :create, :update, :destroy] do
+          # Nested variants
+          resources :product_variants, only: [:index, :create, :update, :destroy]
+        end
         resources :shop_payment_accounts, only: [:destroy]
         resources :orders, only: [:index] do
           member do

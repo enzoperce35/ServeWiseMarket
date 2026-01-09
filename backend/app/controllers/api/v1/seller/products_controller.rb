@@ -13,6 +13,7 @@ module Api
           render json: products.as_json(
             only: [:id, :name, :price, :stock, :image_url, :status],
             include: {
+              variants: { only: [:id, :name, :stock, :price, :active] },
               product_delivery_groups: {
                 only: [:id, :delivery_group_id, :active]
               },

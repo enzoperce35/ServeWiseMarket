@@ -12,6 +12,8 @@ class Product < ApplicationRecord
 
   has_many :order_items
 
+  has_many :variants, class_name: "ProductVariant", dependent: :destroy
+
   PLACEHOLDER_URL = "https://via.placeholder.com/300x200.png?text=Product+Image"
 
   # ----------------------
