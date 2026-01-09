@@ -9,30 +9,41 @@ export default function ProductsPage() {
   const [deliveryGroups, setDeliveryGroups] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [activeSlot, setActiveSlot] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // Load products with variants
   useEffect(() => {
     const loadGroups = async () => {
-      const { data } = await axiosClient.get("/products");
+      try {
+        const { data } = await axiosClient.get("/products?include=variants"); // ✅ include variants
+        const groups = [];
 
-      const groups = [];
+        data.forEach((group) => {
+          const products = (group.products || []).filter((p) => {
+            if (!p) return false;
+            return (p.stock && p.stock > 0) || (p.variants && p.variants.length > 0);
+          });
 
-      data.forEach((group) => {
-        const products = (group.products || []).filter(
-          (p) => p.stock && p.stock > 0
-        );
+          if (products.length === 0) return;
 
-        // ⛔ skip groups with NO products
-        if (products.length === 0) return;
+          const productsWithVariants = products.map((p) => ({
+            ...p,
+            variants: p.variants ?? [], // ensure variants exists
+          }));
 
-        groups.push({ ...group, products });
-      });
+          groups.push({ ...group, products: productsWithVariants });
+        });
 
-      setDeliveryGroups(groups);
+        setDeliveryGroups(groups);
 
-      // auto-select first available slot
-      if (groups.length > 0) {
-        setActiveSlot(groups[0]);
-        setFilteredProducts(groups[0].products);
+        if (groups.length > 0) {
+          setActiveSlot(groups[0]);
+          setFilteredProducts(groups[0].products);
+        }
+      } catch (err) {
+        console.error("Failed to load products:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -41,13 +52,15 @@ export default function ProductsPage() {
 
   const handleSlotChange = (slot) => {
     setActiveSlot(slot);
-
     const group = deliveryGroups.find((g) => g.id === slot.id);
-
     setFilteredProducts(
-      (group?.products || []).filter((p) => p.stock && p.stock > 0)
+      (group?.products || []).filter(
+        (p) => (p.stock && p.stock > 0) || (p.variants && p.variants.length > 0)
+      )
     );
   };
+
+  if (loading) return <p>Loading products...</p>;
 
   return (
     <div className="products-page-wrapper">
@@ -56,7 +69,7 @@ export default function ProductsPage() {
         <div className="filters-container">
           <TimeFilterBar
             onChange={handleSlotChange}
-            groups={deliveryGroups}   // ✅ send pre-filtered groups
+            groups={deliveryGroups}
           />
         </div>
       </div>

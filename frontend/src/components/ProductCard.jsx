@@ -6,12 +6,20 @@ import { addToCartApi } from "../api/cart";
 import { isOwner } from "../utils/userProducts";
 import toast from "react-hot-toast";
 import "../css/components/ProductCard.css";
+import VariantsModal from "../pages/seller/SellerPages/VariantsModal";
 
 export default function ProductCard({ product, clickable = true }) {
+  if (!product) return null;
+
+  const navigate = useNavigate();
   const { user, token } = useAuthContext();
   const { refreshCart } = useCartContext();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [showVariants, setShowVariants] = useState(false);
+
+  const status = product.status ?? true;
+  const preorder = product.preorder_delivery ?? false;
+  const variants = product.variants ?? [];
 
   const handleCardClick = () => {
     if (clickable) navigate(`/product/${product.id}`);
@@ -19,25 +27,26 @@ export default function ProductCard({ product, clickable = true }) {
 
   const addToCart = async (e, quantity = 1) => {
     e.stopPropagation();
+
+    const activeVariants = variants.filter((v) => v.active !== false);
+
+    if (activeVariants.length > 0) {
+      setShowVariants(true);
+      return;
+    }
+
     if (!user || !token) {
       toast.error("Please log in to add items to tray");
       return;
     }
+
     if (loading) return;
 
     try {
       setLoading(true);
       await addToCartApi(product.id, quantity, token);
       await refreshCart();
-
-      toast.success(
-        (t) => (
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-            <span>Added to tray</span>
-          </div>
-        ),
-        { duration: 2000 }
-      );
+      toast.success("Added to tray");
     } catch (err) {
       console.error(err);
       toast.error("Failed to add item");
@@ -52,38 +61,46 @@ export default function ProductCard({ product, clickable = true }) {
   };
 
   return (
-    <div
-      className={`product-card ${product.status ? "" : "inactive"} ${
-        product.preorder_delivery ? "preorder" : "regular"
-      }`}
-      onClick={handleCardClick}
-      style={{ cursor: clickable ? "pointer" : "default" }}
-    >
-      <img
-        src={product.image_url || "/images/default-product.png"}
-        alt={product.name}
-      />
+    <>
+      <div
+        className={`product-card ${status ? "" : "inactive"} ${
+          preorder ? "preorder" : "regular"
+        }`}
+        onClick={handleCardClick}
+        style={{ cursor: clickable ? "pointer" : "default" }}
+      >
+        <img
+          src={product.image_url || "/images/default-product.png"}
+          alt={product.name}
+        />
+        <div className="product-info">
+          <h3 className="product-name">{product.name}</h3>
+        </div>
 
-      <div className="product-info">
-        <h3 className="product-name">{product.name}</h3>
+        <p className="product-price-label">{getPriceString(product)}</p>
+
+        {!isOwner(user, product) && (
+          <button
+            className="add-to-cart"
+            onClick={addToCart}
+            disabled={loading}
+            style={{
+              opacity: loading ? 0.6 : 1,
+              pointerEvents: loading ? "none" : "auto",
+            }}
+          >
+            {loading ? "Adding..." : "Add to Tray"}
+          </button>
+        )}
       </div>
 
-      {/* Show price instead of inactive label */}
-      <p className="product-price-label">{getPriceString(product)}</p>
-
-      {!isOwner(user, product) && (
-        <button
-          className="add-to-cart"
-          onClick={(e) => addToCart(e, 1)}
-          disabled={loading}
-          style={{
-            opacity: loading ? 0.6 : 1,
-            pointerEvents: loading ? "none" : "auto",
-          }}
-        >
-          {loading ? "Adding..." : "Add to Tray"}
-        </button>
+      {showVariants && (
+        <VariantsModal
+          product={{ ...product, variants: variants.filter(v => v.active !== false) }}
+          onClose={() => setShowVariants(false)}
+          refreshCart={refreshCart}
+        />
       )}
-    </div>
+    </>
   );
 }

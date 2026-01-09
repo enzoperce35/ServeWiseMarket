@@ -6,34 +6,43 @@ module Api
 
       # GET /api/v1/products
       def index
-        # Load active delivery groups and eager load associations
         groups = DeliveryGroup
                   .where(active: true)
-                  .includes(product_delivery_groups: :product)
+                  .includes(product_delivery_groups: { product: :variants })
 
         result = groups.map do |group|
+          # include all products that exist via this delivery group
+          products = group.product_delivery_groups.map(&:product).compact
+
+          # skip group if it has no products
+          next if products.empty?
+
           {
             id: group.id,
             name: group.name,
             ph_timestamp: group.ph_timestamp,
-            # Include only products that have active ProductDeliveryGroup
-            products: group.product_delivery_groups
-                          .select(&:active)          # ✅ only active
-                          .map(&:product)            # get the associated product
-                          .map do |p|                # shape product JSON
-                            {
-                              id: p.id,
-                              name: p.name,
-                              price: p.price,
-                              stock: p.stock,
-                              image_url: p.image_url,
-                              category: p.category,
-                              status: p.status,
-                              preorder_delivery: p.preorder_delivery
-                            }
-                          end
+            products: products.map do |p|
+              {
+                id: p.id,
+                name: p.name,
+                price: p.price,
+                stock: p.stock,
+                image_url: p.image_url,
+                category: p.category,
+                status: p.status.nil? ? true : p.status,
+                preorder_delivery: p.preorder_delivery,
+                variants: p.variants.map do |v|
+                  {
+                    id: v.id,
+                    name: v.name,
+                    price: v.price,
+                    active: v.active.nil? ? true : v.active
+                  }
+                end
+              }
+            end
           }
-        end
+        end.compact
 
         render json: result, status: :ok
       end
