@@ -7,7 +7,7 @@ import "../../../css/pages/seller/SellerPages/VariantsModal.css";
 
 export default function VariantsModal({ product, onClose }) {
   const { user, token } = useAuthContext();
-  const { cart, refreshCart } = useCartContext(); 
+  const { cart, refreshCart } = useCartContext();
   const [loadingVariant, setLoadingVariant] = useState(null);
 
   // Get current quantity of this variant in the cart
@@ -29,7 +29,7 @@ export default function VariantsModal({ product, onClose }) {
     try {
       setLoadingVariant(variant.id);
       await addToCartApi(product.id, 1, token, variant.id);
-      await refreshCart(); 
+      await refreshCart();
     } catch {
       toast.error("Failed to add variant");
     } finally {
@@ -61,67 +61,66 @@ export default function VariantsModal({ product, onClose }) {
     <div className="variants-modal-backdrop" onClick={onClose}>
       <div className="variants-modal" onClick={(e) => e.stopPropagation()}>
         <h2>{product.name}</h2>
-        <button className="close-btn" onClick={onClose}>×</button>
+        <button className="close-btn" onClick={onClose}>done</button>
 
         {product.variants.map((v) => {
-  const qty = getVariantQuantity(v.id);
+          const qty = getVariantQuantity(v.id);
 
-  return (
-    <div key={v.id} className="variant-row">
-      {/* Minus button always present in DOM for alignment, hidden if qty === 0 */}
-      <button
-        className="variant-minus-btn"
-        style={{ visibility: qty > 0 ? "visible" : "hidden" }}
-        onClick={async () => {
-          if (qty === 0) return;
+          return (
+            <div key={v.id} className="variant-row">
+              {/* Minus button always present in DOM for alignment, hidden if qty === 0 */}
+              <button
+                className="variant-minus-btn"
+                style={{ visibility: qty > 0 ? "visible" : "hidden" }}
+                onClick={async () => {
+                  if (qty === 0) return;
 
-          try {
-            const cartItem = cart.shops
-              .flatMap((s) => s.items)
-              .find(
-                (i) => i.product_id === product.id && i.variant_id === v.id
-              );
-            if (!cartItem) return;
+                  try {
+                    const cartItem = cart.shops
+                      .flatMap((s) => s.items)
+                      .find(
+                        (i) => i.product_id === product.id && i.variant_id === v.id
+                      );
+                    if (!cartItem) return;
 
-            await removeFromCartApi(cartItem.cart_item_id, token);
-            await refreshCart();
-          } catch {
-            toast.error("Failed to remove item");
-          }
-        }}
-      >
-        –
-      </button>
+                    await removeFromCartApi(cartItem.cart_item_id, token);
+                    await refreshCart();
+                  } catch {
+                    toast.error("Failed to remove item");
+                  }
+                }}
+              >
+                –
+              </button>
 
-      <div className="variant-item">
-        {/* Variant name */}
-        <div className="variant-name">
-          <span>{v.name}</span>
-        </div>
+              <div className="variant-item">
+                {/* Variant name */}
+                <div className="variant-name">
+                  <span>{v.name}</span>
+                </div>
 
-        {/* Variant price */}
-        <span className="variant-price">
-          ₱{parseFloat(v.price ?? 0).toFixed(2)}
-        </span>
+                {/* Variant price */}
+                <span className="variant-price">
+                  ₱{parseFloat(v.price ?? 0).toFixed(2)}
+                </span>
 
-        {/* Multiplier / placeholder */}
-        <span className="variant-multiplier">
-          {qty > 0 ? `×${qty}` : "\u00A0"}
-        </span>
+                {/* Multiplier / placeholder */}
+                <span className="variant-multiplier">
+                  {qty > 0 ? `×${qty}` : "\u00A0"}
+                </span>
 
-        {/* Add button */}
-        <button
-          className="add-btn"
-          onClick={() => addVariantToCart(v)}
-          disabled={loadingVariant === v.id}
-        >
-          {loadingVariant === v.id ? "Adding..." : "Add"}
-        </button>
-      </div>
-    </div>
-  );
-})}
-
+                {/* Add button */}
+                <button
+                  className="add-btn"
+                  onClick={() => addVariantToCart(v)}
+                  disabled={loadingVariant === v.id}
+                >
+                  {loadingVariant === v.id ? "Adding..." : "Add"}
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { useCartContext } from "../context/CartProvider";
 import { useAuthContext } from "../context/AuthProvider";
-import { removeFromCartApi } from "../api/cart";
+import { addToCartApi, removeFromCartApi } from "../api/cart";
 import { useNavigate } from "react-router-dom";
 import BackButton from "../components/common/BackButton";
 import toast from "react-hot-toast";
@@ -12,7 +12,12 @@ export default function CartPage() {
   const { token } = useAuthContext();
   const navigate = useNavigate();
 
-  // Calculate grand total safely
+  // --- MODAL STATE ---
+  const [activeItem, setActiveItem] = useState(null);
+  const [draftQty, setDraftQty] = useState(1);
+  const [saving, setSaving] = useState(false);
+
+  // --- CALCULATIONS ---
   const grandTotal =
     cart?.shops?.reduce((acc, shop) => {
       const shopTotal = shop.items.reduce(
@@ -22,7 +27,63 @@ export default function CartPage() {
       return acc + shopTotal;
     }, 0) || 0;
 
-  // 📌 COPY TICKET
+  const getUnitPrice = (item) => {
+    if (!item) return 0;
+    if (item.unit_price) return Number(item.unit_price);
+    if (item.price) return Number(item.price);
+    if (item.total_price && item.quantity) {
+      return Number(item.total_price) / Number(item.quantity);
+    }
+    return 0;
+  };
+
+  const previewTotal = activeItem ? getUnitPrice(activeItem) * draftQty : 0;
+
+  // --- MODAL ACTIONS ---
+  const openQtyModal = (item) => {
+    setActiveItem(item);
+    setDraftQty(item.quantity || 1);
+  };
+
+  const increaseLocal = () => setDraftQty((q) => q + 1);
+  const decreaseLocal = () => setDraftQty((q) => Math.max(1, q - 1));
+
+  const saveQuantity = async () => {
+    if (!activeItem) return;
+
+    try {
+      setSaving(true);
+      const current = activeItem.quantity;
+      const target = draftQty;
+
+      if (target === current) {
+        setActiveItem(null);
+        return;
+      }
+
+      // Fix applied: Calculate difference and use addToCartApi
+      // Positive diff increases, Negative diff decreases without deleting
+      const diff = target - current;
+
+      await addToCartApi(
+        activeItem.product_id,
+        diff,
+        token,
+        activeItem.variant_id ?? null
+      );
+
+      await fetchCart();
+      toast.success("Quantity updated");
+      setActiveItem(null);
+    } catch (err) {
+      console.error("Update failed:", err);
+      toast.error("Could not update quantity.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // 📌 COPY TICKET LOGIC
   const handleCopyTicket = async () => {
     if (!token) {
       toast.error("Please log in first");
@@ -30,31 +91,21 @@ export default function CartPage() {
     }
 
     try {
-      // ===== Generate ticket number =====
       const ticketNumber = new Date()
         .toISOString()
         .replace(/[-:TZ.]/g, "")
         .slice(2, 14);
 
-      // ===== Group items by shop and delivery group =====
       const shopsData = cart.shops.map((shop) => {
         const groups = {};
-
         shop.items.forEach((item) => {
-          // Use delivery_group_name if exists, else fallback
-          const label =
-            item.delivery_group_name ||
-            item.delivery_time ||
-            "No delivery group";
-
+          const label = item.delivery_group_name || item.delivery_time || "No delivery group";
           if (!groups[label]) groups[label] = [];
           groups[label].push(item);
         });
-
         return { shop, groups };
       });
 
-      // ===== Save raw ticket to localStorage =====
       const ticketPayload = {
         ticket_number: ticketNumber,
         grand_total: grandTotal,
@@ -63,74 +114,42 @@ export default function CartPage() {
       };
       localStorage.setItem("order_ticket", JSON.stringify(ticketPayload));
 
-      // ===== Build formatted ticket text =====
       let text = "";
-
       shopsData.forEach(({ shop, groups }) => {
-        text += `🏪 ${shop.shop_name}\n`;
-        text += `🧾 ${ticketNumber}\n\n`;
-
+        text += `🏪 ${shop.shop_name}\n🧾 ${ticketNumber}\n\n`;
         Object.keys(groups).forEach((groupLabel) => {
           text += `🚚 ${groupLabel}\n`;
-
           groups[groupLabel].forEach((i) => {
-            // Format multi-line product name nicely
-            const productName = i.variant?.name
-              ? `${i.name} (${i.variant.name})`
-              : i.name;
-
-            // Align quantity and price roughly with tabs
+            const productName = i.variant?.name ? `${i.name} (${i.variant.name})` : i.name;
             const qty = `x${i.quantity}`;
             const price = `₱${Number(i.total_price || 0).toFixed(2)}`;
-
             text += `  • ${productName} ${qty}\t\t${price}\n`;
           });
-
           text += `\n`;
         });
-
         text += "-----------------------------------\n";
-
-        const totalItems = shop.items.reduce(
-          (sum, i) => sum + Number(i.quantity || 0),
-          0
-        );
-
-        text += `  Items(${totalItems})                 Total: ₱${grandTotal.toFixed(
-          2
-        )}\n\n`;
+        const totalItems = shop.items.reduce((sum, i) => sum + Number(i.quantity || 0), 0);
+        text += `  Items(${totalItems})                 Total: ₱${grandTotal.toFixed(2)}\n\n`;
       });
 
-      // ===== Copy to clipboard =====
       await navigator.clipboard.writeText(text);
       toast.success("Ticket copied to clipboard 📋");
 
-      // ===== Clear cart =====
       const allItems = cart.shops.flatMap((shop) => shop.items);
-      await Promise.all(
-        allItems.map((item) => removeFromCartApi(item.cart_item_id, token))
-      );
+      await Promise.all(allItems.map((item) => removeFromCartApi(item.cart_item_id, token)));
       await fetchCart();
-
-      // ===== Navigate to products page =====
       navigate("/");
     } catch (err) {
-      console.error(err);
       toast.error("Failed to copy ticket");
     }
   };
 
   const handleRemoveItem = async (cartItemId) => {
-    if (!token) {
-      alert("You must be logged in to remove items from the cart.");
-      return;
-    }
-
     try {
       await removeFromCartApi(cartItemId, token);
       await fetchCart();
     } catch (err) {
-      alert(`Remove failed: ${err.message}`);
+      toast.error(`Remove failed: ${err.message}`);
     }
   };
 
@@ -154,7 +173,11 @@ export default function CartPage() {
                 alt={item.name}
                 className="cart-item-img"
               />
-              <div className="cart-item-info">
+              <div 
+                className="cart-item-info" 
+                onClick={() => openQtyModal(item)}
+                style={{ cursor: "pointer" }}
+              >
                 <span className="cart-item-name">
                   {item.name}
                   {item.variant ? `  (${item.variant.name})` : ""}
@@ -166,7 +189,10 @@ export default function CartPage() {
               </div>
 
               <button
-                onClick={() => handleRemoveItem(item.cart_item_id)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveItem(item.cart_item_id);
+                }}
                 className="cart-item-remove"
               >
                 Remove
@@ -187,11 +213,45 @@ export default function CartPage() {
           <div className="cart-grand-total">
             Grand Total: ₱{grandTotal.toFixed(2)}
           </div>
-
           <button className="checkout-btn" onClick={handleCopyTicket}>
             Copy Ticket
           </button>
         </>
+      )}
+
+      {/* ========= MODAL SECTION ========= */}
+      {activeItem && (
+        <div className="qty-modal-backdrop" onClick={() => setActiveItem(null)}>
+          <div className="qty-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>
+              {activeItem.name}
+              {activeItem.variant ? ` (${activeItem.variant.name})` : ""}
+            </h3>
+            <p>Adjust quantity</p>
+
+            <div className="qty-controls">
+              <button className="qty-btn" onClick={decreaseLocal}>–</button>
+              <span className="qty-number">{draftQty}</span>
+              <button className="qty-btn" onClick={increaseLocal}>+</button>
+            </div>
+
+            <div className="qty-modal-total">
+              New total: ₱{previewTotal.toFixed(2)}
+            </div>
+
+            <button
+              className="qty-save"
+              disabled={saving || draftQty === activeItem.quantity}
+              onClick={saveQuantity}
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+
+            <button className="qty-close" onClick={() => setActiveItem(null)}>
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
