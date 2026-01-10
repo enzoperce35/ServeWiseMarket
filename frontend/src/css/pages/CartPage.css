@@ -140,3 +140,60 @@
   color: #777;
   font-size: 1rem;
 }
+
+.modal-backdrop {
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.5);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:1000;
+}
+
+.modal-content {
+  background:#fff;
+  padding:20px;
+  border-radius:8px;
+  width: 300px;
+  text-align:center;
+}
+
+.modal-qty-control {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  margin:15px 0;
+}
+
+.modal-qty-control button {
+  width:30px; height:30px;
+  font-size:18px;
+  border:none;
+  background:#eee;
+  cursor:pointer;
+  border-radius:4px;
+}
+
+.modal-actions {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.modal-actions button {
+  padding: 6px 12px;
+  cursor:pointer;
+  border-radius: 6px;
+  border:none;
+}
+
+.modal-actions .remove-btn {
+  background: #ff4d4f;
+  color:#fff;
+}
+
+.modal-actions .remove-btn:hover {
+  background:#d9363e;
+}

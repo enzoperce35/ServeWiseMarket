@@ -45,3 +45,12 @@ export const removeFromCartApi = (cartItemId, token) => {
     },
   });
 };
+
+// ✅ Update cart item quantity
+export const updateCartApi = async (cartItemId, quantity, token) => {
+  const res = await axiosClient.put(`/api/v1/cart_items/${cartItemId}`, 
+    { quantity },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data;
+};

@@ -66,7 +66,7 @@ module Api
           item.update!(quantity: params[:quantity])
           render json: { message: "Quantity updated", cart_item_id: item.id }, status: :ok
         end
-      end
+      end      
 
       # Remove item
       def destroy
