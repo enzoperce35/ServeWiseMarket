@@ -19,10 +19,10 @@ export default function ProductsPage() {
         const groups = [];
 
         data.forEach((group) => {
-          const products = (group.products || []).filter((p) => {
-            if (!p) return false;
-            return (p.stock && p.stock > 0) || (p.variants && p.variants.length > 0);
-          });
+          // Only include products with stock > 0
+          const products = (group.products || []).filter(
+            (p) => p && p.stock > 0
+          );
 
           if (products.length === 0) return;
 
@@ -52,12 +52,11 @@ export default function ProductsPage() {
 
   const handleSlotChange = (slot) => {
     setActiveSlot(slot);
+
     const group = deliveryGroups.find((g) => g.id === slot.id);
-    setFilteredProducts(
-      (group?.products || []).filter(
-        (p) => (p.stock && p.stock > 0) || (p.variants && p.variants.length > 0)
-      )
-    );
+
+    // Only include products with stock > 0
+    setFilteredProducts((group?.products || []).filter((p) => p && p.stock > 0));
   };
 
   if (loading) return <p>Loading products...</p>;
@@ -67,18 +66,15 @@ export default function ProductsPage() {
       <div className="header-filters-container">
         <Navbar />
         <div className="filters-container">
-          <TimeFilterBar
-            onChange={handleSlotChange}
-            groups={deliveryGroups}
-          />
+          <TimeFilterBar onChange={handleSlotChange} groups={deliveryGroups} />
         </div>
       </div>
 
       <div className="products-grid">
         {filteredProducts.map((product) => (
-          <ProductCard 
-            key={product.id} 
-            product={product} 
+          <ProductCard
+            key={product.id}
+            product={product}
             deliveryLabel={activeSlot?.name} // 📌 Pass the time slot name here
           />
         ))}

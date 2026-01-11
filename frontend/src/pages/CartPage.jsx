@@ -88,122 +88,164 @@ export default function CartPage() {
     return `${month}-${day} ${hours}:${minutes}${ampm}`;
   };
 
+  const wrapText = (text, maxLength) => {
+    const words = text.split(" ");
+    const lines = [];
+    let currentLine = "";
+  
+    words.forEach((word) => {
+      if ((currentLine + word).length <= maxLength) {
+        currentLine += (currentLine === "" ? "" : " ") + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    });
+  
+    if (currentLine) lines.push(currentLine);
+  
+    return lines;
+  };
+  
   const handleCopyTicket = async () => {
     if (!token) {
       toast.error("Please log in first");
       return;
     }
-
-    const wrapText = (text, maxLength) => {
-      const words = text.split(" ");
-      const lines = [];
-      let currentLine = "";
-      words.forEach((word) => {
-        if ((currentLine + word).length <= maxLength) {
-          currentLine += (currentLine === "" ? "" : " ") + word;
-        } else {
-          lines.push(currentLine);
-          currentLine = word;
-        }
-      });
-      lines.push(currentLine);
-      return lines;
-    };
-
+  
     try {
       const now = new Date();
       const displayTimestamp = formatCopyTimestamp(now);
       const MAX_NAME_WIDTH = 22;
       const PRICE_COLUMN_START = 35;
+  
       let text = "";
-
+  
       cart.shops.forEach((shop) => {
         text += `🏪 ${shop.shop_name}\n`;
         text += `🧾 ${displayTimestamp}\n\n`;
-
+  
         const groups = {};
+  
         shop.items.forEach((item) => {
           const label =
             item.delivery_group_name ||
             item.delivery_time ||
             "No delivery group";
+  
           if (!groups[label]) groups[label] = [];
           groups[label].push(item);
         });
-
+  
         Object.keys(groups).forEach((groupLabel) => {
           text += `🚚 ${groupLabel}\n`;
+  
           groups[groupLabel].forEach((i) => {
             const productName = i.variant?.name
               ? `${i.name} (${i.variant.name})`
               : i.name;
-
+  
             const qtyLabel = `x${i.quantity}`;
             const fullLabel = `${productName} ${qtyLabel}`;
             const price = `₱${Number(i.total_price || 0).toFixed(2)}`;
+  
             const lines = wrapText(fullLabel, MAX_NAME_WIDTH);
-
+  
             lines.forEach((line, index) => {
-              const prefix = index === 0 ? "  • " : "    ";
+              const prefix = index === 0 ? " • " : " ";
               if (index === lines.length - 1) {
-                text +=
-                  (prefix + line).padEnd(PRICE_COLUMN_START) + price + "\n";
+                text += (prefix + line).padEnd(PRICE_COLUMN_START) + price + "\n";
               } else {
                 text += prefix + line + "\n";
               }
             });
           });
+  
           text += `\n`;
         });
-
+  
         const totalItems = shop.items.reduce(
           (sum, i) => sum + Number(i.quantity || 0),
           0
         );
+  
         text += "------------------------------------------\n";
         text +=
-          `  Items(${totalItems})`.padEnd(PRICE_COLUMN_START) +
+          ` Items(${totalItems})`.padEnd(PRICE_COLUMN_START) +
           `Total: ₱${grandTotal.toFixed(2)}\n\n`;
       });
-
-      // Copy ticket
-      await navigator.clipboard.writeText(text);
-      toast.success("Ticket copied to clipboard 📋");
-
-      // ⭐ Deduct stock for all items
+  
+      //
+      // 🔴 STOCK VALIDATION (parent product stock)
+      //
+  
       const allItems = cart.shops.flatMap((shop) => shop.items);
-
-      for (let item of allItems) {
-        try {
-          await deductStockApi(
-            item.product_id,
-            item.quantity,
-            token,
-            item.variant_id ?? null
-          );
-        } catch (err) {
-          const remaining = item.stock ?? 0;
+  
+      // group by parent product id
+      const productTotals = {};
+  
+      allItems.forEach((item) => {
+        if (!productTotals[item.product_id]) {
+          productTotals[item.product_id] = {
+            name: item.name,
+            stock: item.stock, // parent stock
+            qty: 0
+          };
+        }
+  
+        productTotals[item.product_id].qty += Number(item.quantity || 0);
+      });
+  
+      // validate
+      for (let pid in productTotals) {
+        const { name, stock, qty } = productTotals[pid];
+  
+        const remaining = Number(stock || 0);
+  
+        if (remaining < qty) {
           setStockError(
-            `Not enough stock for "${item.name}". Only ${remaining} left.`
+            `Not enough stock for "${name}". Ordered ${qty}, only ${remaining} left.`
           );
-          return; // Abort checkout
+          return; // ❌ STOP — no clipboard and no deduction
         }
       }
-
-      // Clear cart
+  
+      //
+      // ✅ All stock OK — copy ticket
+      //
+      await navigator.clipboard.writeText(text);
+      toast.success("Ticket copied to clipboard 📋");
+  
+      //
+      // 🟢 Deduct parent stock ONCE per product
+      //
+      for (let pid in productTotals) {
+        const { qty } = productTotals[pid];
+  
+        await deductStockApi(
+          pid,          // parent product id
+          qty,          // total ordered of all variants
+          token,
+          null          // ALWAYS null because parent stock is used
+        );
+      }
+  
+      //
+      // 🧹 Clear cart items
+      //
       await Promise.all(
-        allItems.map((item) =>
-          removeFromCartApi(item.cart_item_id, token)
-        )
+        allItems.map((item) => removeFromCartApi(item.cart_item_id, token))
       );
-
+  
       await fetchCart();
       navigate("/");
+  
     } catch (err) {
       console.error(err);
       toast.error("Failed to checkout");
     }
   };
+    
 
   const handleRemoveItem = async (cartItemId) => {
     try {
