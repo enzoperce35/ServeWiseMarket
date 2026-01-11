@@ -28,6 +28,19 @@ export const addToCartApi = (productId, quantity = 1, token, variantId = null) =
   );
 };
 
+// ⭐ NEW — deduct stock from product (variant → mother product)
+export const deductStockApi = (productId, quantity, token) => {
+  return axios.post(
+    `${API_BASE}/products/${productId}/deduct_stock`,
+    { quantity },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+};
+
 // Fetch cart
 export const fetchCartApi = (token) => {
   return axios.get(`${API_BASE}/cart`, {

@@ -258,3 +258,41 @@
 .qty-close:hover {
   background: #eee;
 }
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal {
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 400px;
+}
+
+.modal h3 {
+  margin-bottom: 1rem;
+}
+
+.modal p {
+  margin-bottom: 1.5rem;
+}
+
+.modal-ok-btn {
+  background: #007bff;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}

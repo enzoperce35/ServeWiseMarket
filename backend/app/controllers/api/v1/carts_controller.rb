@@ -27,6 +27,7 @@ module Api
                 name: item.product.name,
                 image_url: item.product.image_url,
                 quantity: item.quantity,
+                stock: item.product.stock,
                 total_price: item.unit_price * item.quantity,
                 variant: variant ? { id: variant.id, name: variant.name, price: variant.price } : nil,
                 delivery_group_name: delivery_group&.name,

@@ -98,6 +98,40 @@ module Api
       rescue ActiveRecord::RecordNotFound
         render json: { error: "Product not found" }, status: :not_found
       end
+
+      def deduct_stock
+        product = Product.find(params[:id])
+        qty = params[:quantity].to_i
+        variant_id = params[:variant_id]
+      
+        return render json: { error: "Invalid quantity" }, status: :unprocessable_entity if qty <= 0
+      
+        if variant_id.present?
+          variant = product.variants.find(variant_id)
+          return render json: { error: "Insufficient variant stock" }, status: :unprocessable_entity if variant.stock < qty
+      
+          variant.with_lock do
+            variant.stock -= qty
+            variant.save!
+          end
+      
+          # Optional: also decrement mother product stock if you track total stock
+          product.with_lock do
+            product.stock -= qty
+            product.save!
+          end
+        else
+          return render json: { error: "Insufficient stock" }, status: :unprocessable_entity if product.stock < qty
+      
+          product.with_lock do
+            product.stock -= qty
+            product.save!
+          end
+        end
+      
+        render json: { message: "Stock deducted", product_stock: product.stock, variant_stock: variant&.stock }
+      end
+          
     end
   end
 end

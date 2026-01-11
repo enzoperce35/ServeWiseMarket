@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useCartContext } from "../context/CartProvider";
 import { useAuthContext } from "../context/AuthProvider";
-import { addToCartApi, removeFromCartApi } from "../api/cart";
+import { addToCartApi, removeFromCartApi, deductStockApi } from "../api/cart";
 import { useNavigate } from "react-router-dom";
 import BackButton from "../components/common/BackButton";
 import toast from "react-hot-toast";
@@ -15,6 +15,7 @@ export default function CartPage() {
   const [activeItem, setActiveItem] = useState(null);
   const [draftQty, setDraftQty] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [stockError, setStockError] = useState(null);
 
   const grandTotal =
     cart?.shops?.reduce((acc, shop) => {
@@ -51,17 +52,21 @@ export default function CartPage() {
       setSaving(true);
       const current = activeItem.quantity;
       const target = draftQty;
+
       if (target === current) {
         setActiveItem(null);
         return;
       }
+
       const diff = target - current;
+
       await addToCartApi(
         activeItem.product_id,
         diff,
         token,
         activeItem.variant_id ?? null
       );
+
       await fetchCart();
       toast.success("Quantity updated");
       setActiveItem(null);
@@ -118,7 +123,10 @@ export default function CartPage() {
 
         const groups = {};
         shop.items.forEach((item) => {
-          const label = item.delivery_group_name || item.delivery_time || "No delivery group";
+          const label =
+            item.delivery_group_name ||
+            item.delivery_time ||
+            "No delivery group";
           if (!groups[label]) groups[label] = [];
           groups[label].push(item);
         });
@@ -126,7 +134,10 @@ export default function CartPage() {
         Object.keys(groups).forEach((groupLabel) => {
           text += `🚚 ${groupLabel}\n`;
           groups[groupLabel].forEach((i) => {
-            const productName = i.variant?.name ? `${i.name} (${i.variant.name})` : i.name;
+            const productName = i.variant?.name
+              ? `${i.name} (${i.variant.name})`
+              : i.name;
+
             const qtyLabel = `x${i.quantity}`;
             const fullLabel = `${productName} ${qtyLabel}`;
             const price = `₱${Number(i.total_price || 0).toFixed(2)}`;
@@ -135,7 +146,8 @@ export default function CartPage() {
             lines.forEach((line, index) => {
               const prefix = index === 0 ? "  • " : "    ";
               if (index === lines.length - 1) {
-                text += (prefix + line).padEnd(PRICE_COLUMN_START) + price + "\n";
+                text +=
+                  (prefix + line).padEnd(PRICE_COLUMN_START) + price + "\n";
               } else {
                 text += prefix + line + "\n";
               }
@@ -144,20 +156,52 @@ export default function CartPage() {
           text += `\n`;
         });
 
-        const totalItems = shop.items.reduce((sum, i) => sum + Number(i.quantity || 0), 0);
+        const totalItems = shop.items.reduce(
+          (sum, i) => sum + Number(i.quantity || 0),
+          0
+        );
         text += "------------------------------------------\n";
-        text += `  Items(${totalItems})`.padEnd(PRICE_COLUMN_START) + `Total: ₱${grandTotal.toFixed(2)}\n\n`;
+        text +=
+          `  Items(${totalItems})`.padEnd(PRICE_COLUMN_START) +
+          `Total: ₱${grandTotal.toFixed(2)}\n\n`;
       });
 
+      // Copy ticket
       await navigator.clipboard.writeText(text);
       toast.success("Ticket copied to clipboard 📋");
 
+      // ⭐ Deduct stock for all items
       const allItems = cart.shops.flatMap((shop) => shop.items);
-      await Promise.all(allItems.map((item) => removeFromCartApi(item.cart_item_id, token)));
+
+      for (let item of allItems) {
+        try {
+          await deductStockApi(
+            item.product_id,
+            item.quantity,
+            token,
+            item.variant_id ?? null
+          );
+        } catch (err) {
+          const remaining = item.stock ?? 0;
+          setStockError(
+            `Not enough stock for "${item.name}". Only ${remaining} left.`
+          );
+          return; // Abort checkout
+        }
+      }
+
+      // Clear cart
+      await Promise.all(
+        allItems.map((item) =>
+          removeFromCartApi(item.cart_item_id, token)
+        )
+      );
+
       await fetchCart();
       navigate("/");
     } catch (err) {
-      toast.error("Failed to copy ticket");
+      console.error(err);
+      toast.error("Failed to checkout");
     }
   };
 
@@ -183,6 +227,7 @@ export default function CartPage() {
       {cart?.shops?.map((shop) => (
         <div key={shop.shop_id} className="cart-shop">
           <h3>{shop.shop_name}</h3>
+
           {shop.items.map((item) => (
             <div key={item.cart_item_id} className="cart-item">
               <img
@@ -190,19 +235,26 @@ export default function CartPage() {
                 alt={item.name}
                 className="cart-item-img"
               />
+
               <div
                 className="cart-item-info"
                 onClick={() => openQtyModal(item)}
                 style={{ cursor: "pointer" }}
               >
                 <span className="cart-item-name">
-                  {item.name}{item.variant ? ` (${item.variant.name})` : ""}
+                  {item.name}
+                  {item.variant ? ` (${item.variant.name})` : ""}
                 </span>
-                <span className="cart-item-qty">Qty: {item.quantity}</span>
+
+                <span className="cart-item-qty">
+                  Qty: {item.quantity}
+                </span>
+
                 <span className="cart-item-price">
                   ₱{Number(item.total_price || 0).toFixed(2)}
                 </span>
               </div>
+
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -214,8 +266,15 @@ export default function CartPage() {
               </button>
             </div>
           ))}
+
           <div className="cart-shop-subtotal">
-            Subtotal: ₱{shop.items.reduce((sum, item) => sum + Number(item.total_price || 0), 0).toFixed(2)}
+            Subtotal: ₱
+            {shop.items
+              .reduce(
+                (sum, item) => sum + Number(item.total_price || 0),
+                0
+              )
+              .toFixed(2)}
           </div>
         </div>
       ))}
@@ -225,6 +284,7 @@ export default function CartPage() {
           <div className="cart-grand-total">
             Grand Total: ₱{grandTotal.toFixed(2)}
           </div>
+
           <button className="checkout-btn" onClick={handleCopyTicket}>
             Copy Ticket
           </button>
@@ -232,20 +292,67 @@ export default function CartPage() {
       )}
 
       {activeItem && (
-        <div className="qty-modal-backdrop" onClick={() => setActiveItem(null)}>
-          <div className="qty-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{activeItem.name}{activeItem.variant ? ` (${activeItem.variant.name})` : ""}</h3>
+        <div
+          className="qty-modal-backdrop"
+          onClick={() => setActiveItem(null)}
+        >
+          <div
+            className="qty-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>
+              {activeItem.name}
+              {activeItem.variant
+                ? ` (${activeItem.variant.name})`
+                : ""}
+            </h3>
+
             <p>Adjust quantity</p>
+
             <div className="qty-controls">
-              <button className="qty-btn" onClick={decreaseLocal}>–</button>
+              <button className="qty-btn" onClick={decreaseLocal}>
+                –
+              </button>
               <span className="qty-number">{draftQty}</span>
-              <button className="qty-btn" onClick={increaseLocal}>+</button>
+              <button className="qty-btn" onClick={increaseLocal}>
+                +
+              </button>
             </div>
-            <div className="qty-modal-total">New total: ₱{previewTotal.toFixed(2)}</div>
-            <button className="qty-save" disabled={saving || draftQty === activeItem.quantity} onClick={saveQuantity}>
+
+            <div className="qty-modal-total">
+              New total: ₱{previewTotal.toFixed(2)}
+            </div>
+
+            <button
+              className="qty-save"
+              disabled={saving || draftQty === activeItem.quantity}
+              onClick={saveQuantity}
+            >
               {saving ? "Saving..." : "Save Changes"}
             </button>
-            <button className="qty-close" onClick={() => setActiveItem(null)}>Cancel</button>
+
+            <button
+              className="qty-close"
+              onClick={() => setActiveItem(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Stock Error Modal */}
+      {stockError && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <h3>Stock Error</h3>
+            <p>{stockError}</p>
+            <button
+              className="modal-ok-btn"
+              onClick={() => setStockError(null)}
+            >
+              OK
+            </button>
           </div>
         </div>
       )}

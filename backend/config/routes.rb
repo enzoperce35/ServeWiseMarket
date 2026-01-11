@@ -12,6 +12,10 @@ Rails.application.routes.draw do
       resources :products, only: [:index, :show] do
         # Nested Ratings
         resources :ratings, only: [:index, :create], controller: 'product_ratings'
+
+        member do
+          post :deduct_stock
+        end
       end
 
       # Public shops for buyers
