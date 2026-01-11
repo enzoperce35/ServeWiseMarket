@@ -15,7 +15,7 @@ export default function ProductsPage() {
   useEffect(() => {
     const loadGroups = async () => {
       try {
-        const { data } = await axiosClient.get("/products?include=variants"); // ✅ include variants
+        const { data } = await axiosClient.get("/products?include=variants");
         const groups = [];
 
         data.forEach((group) => {
@@ -28,7 +28,7 @@ export default function ProductsPage() {
 
           const productsWithVariants = products.map((p) => ({
             ...p,
-            variants: p.variants ?? [], // ensure variants exists
+            variants: p.variants ?? [],
           }));
 
           groups.push({ ...group, products: productsWithVariants });
@@ -76,7 +76,11 @@ export default function ProductsPage() {
 
       <div className="products-grid">
         {filteredProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard 
+            key={product.id} 
+            product={product} 
+            deliveryLabel={activeSlot?.name} // 📌 Pass the time slot name here
+          />
         ))}
 
         {filteredProducts.length === 0 && (

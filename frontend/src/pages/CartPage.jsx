@@ -12,12 +12,10 @@ export default function CartPage() {
   const { token } = useAuthContext();
   const navigate = useNavigate();
 
-  // --- MODAL STATE ---
   const [activeItem, setActiveItem] = useState(null);
   const [draftQty, setDraftQty] = useState(1);
   const [saving, setSaving] = useState(false);
 
-  // --- CALCULATIONS ---
   const grandTotal =
     cart?.shops?.reduce((acc, shop) => {
       const shopTotal = shop.items.reduce(
@@ -39,7 +37,6 @@ export default function CartPage() {
 
   const previewTotal = activeItem ? getUnitPrice(activeItem) * draftQty : 0;
 
-  // --- MODAL ACTIONS ---
   const openQtyModal = (item) => {
     setActiveItem(item);
     setDraftQty(item.quantity || 1);
@@ -50,28 +47,21 @@ export default function CartPage() {
 
   const saveQuantity = async () => {
     if (!activeItem) return;
-
     try {
       setSaving(true);
       const current = activeItem.quantity;
       const target = draftQty;
-
       if (target === current) {
         setActiveItem(null);
         return;
       }
-
-      // Fix applied: Calculate difference and use addToCartApi
-      // Positive diff increases, Negative diff decreases without deleting
       const diff = target - current;
-
       await addToCartApi(
         activeItem.product_id,
         diff,
         token,
         activeItem.variant_id ?? null
       );
-
       await fetchCart();
       toast.success("Quantity updated");
       setActiveItem(null);
@@ -83,53 +73,80 @@ export default function CartPage() {
     }
   };
 
-  // 📌 COPY TICKET LOGIC
+  const formatCopyTimestamp = (date) => {
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "pm" : "am";
+    hours = hours % 12 || 12;
+    return `${month}-${day} ${hours}:${minutes}${ampm}`;
+  };
+
   const handleCopyTicket = async () => {
     if (!token) {
       toast.error("Please log in first");
       return;
     }
 
-    try {
-      const ticketNumber = new Date()
-        .toISOString()
-        .replace(/[-:TZ.]/g, "")
-        .slice(2, 14);
+    const wrapText = (text, maxLength) => {
+      const words = text.split(" ");
+      const lines = [];
+      let currentLine = "";
+      words.forEach((word) => {
+        if ((currentLine + word).length <= maxLength) {
+          currentLine += (currentLine === "" ? "" : " ") + word;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      });
+      lines.push(currentLine);
+      return lines;
+    };
 
-      const shopsData = cart.shops.map((shop) => {
+    try {
+      const now = new Date();
+      const displayTimestamp = formatCopyTimestamp(now);
+      const MAX_NAME_WIDTH = 22;
+      const PRICE_COLUMN_START = 35;
+      let text = "";
+
+      cart.shops.forEach((shop) => {
+        text += `🏪 ${shop.shop_name}\n`;
+        text += `🧾 ${displayTimestamp}\n\n`;
+
         const groups = {};
         shop.items.forEach((item) => {
           const label = item.delivery_group_name || item.delivery_time || "No delivery group";
           if (!groups[label]) groups[label] = [];
           groups[label].push(item);
         });
-        return { shop, groups };
-      });
 
-      const ticketPayload = {
-        ticket_number: ticketNumber,
-        grand_total: grandTotal,
-        shops: shopsData,
-        created_at: new Date().toISOString(),
-      };
-      localStorage.setItem("order_ticket", JSON.stringify(ticketPayload));
-
-      let text = "";
-      shopsData.forEach(({ shop, groups }) => {
-        text += `🏪 ${shop.shop_name}\n🧾 ${ticketNumber}\n\n`;
         Object.keys(groups).forEach((groupLabel) => {
           text += `🚚 ${groupLabel}\n`;
           groups[groupLabel].forEach((i) => {
             const productName = i.variant?.name ? `${i.name} (${i.variant.name})` : i.name;
-            const qty = `x${i.quantity}`;
+            const qtyLabel = `x${i.quantity}`;
+            const fullLabel = `${productName} ${qtyLabel}`;
             const price = `₱${Number(i.total_price || 0).toFixed(2)}`;
-            text += `  • ${productName} ${qty}\t\t${price}\n`;
+            const lines = wrapText(fullLabel, MAX_NAME_WIDTH);
+
+            lines.forEach((line, index) => {
+              const prefix = index === 0 ? "  • " : "    ";
+              if (index === lines.length - 1) {
+                text += (prefix + line).padEnd(PRICE_COLUMN_START) + price + "\n";
+              } else {
+                text += prefix + line + "\n";
+              }
+            });
           });
           text += `\n`;
         });
-        text += "-----------------------------------\n";
+
         const totalItems = shop.items.reduce((sum, i) => sum + Number(i.quantity || 0), 0);
-        text += `  Items(${totalItems})                 Total: ₱${grandTotal.toFixed(2)}\n\n`;
+        text += "------------------------------------------\n";
+        text += `  Items(${totalItems})`.padEnd(PRICE_COLUMN_START) + `Total: ₱${grandTotal.toFixed(2)}\n\n`;
       });
 
       await navigator.clipboard.writeText(text);
@@ -173,25 +190,23 @@ export default function CartPage() {
                 alt={item.name}
                 className="cart-item-img"
               />
-              <div 
-                className="cart-item-info" 
+              <div
+                className="cart-item-info"
                 onClick={() => openQtyModal(item)}
                 style={{ cursor: "pointer" }}
               >
                 <span className="cart-item-name">
-                  {item.name}
-                  {item.variant ? `  (${item.variant.name})` : ""}
+                  {item.name}{item.variant ? ` (${item.variant.name})` : ""}
                 </span>
                 <span className="cart-item-qty">Qty: {item.quantity}</span>
                 <span className="cart-item-price">
                   ₱{Number(item.total_price || 0).toFixed(2)}
                 </span>
               </div>
-
               <button
                 onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveItem(item.cart_item_id);
+                  e.stopPropagation();
+                  handleRemoveItem(item.cart_item_id);
                 }}
                 className="cart-item-remove"
               >
@@ -200,10 +215,7 @@ export default function CartPage() {
             </div>
           ))}
           <div className="cart-shop-subtotal">
-            Subtotal: ₱
-            {shop.items
-              .reduce((sum, item) => sum + Number(item.total_price || 0), 0)
-              .toFixed(2)}
+            Subtotal: ₱{shop.items.reduce((sum, item) => sum + Number(item.total_price || 0), 0).toFixed(2)}
           </div>
         </div>
       ))}
@@ -219,37 +231,21 @@ export default function CartPage() {
         </>
       )}
 
-      {/* ========= MODAL SECTION ========= */}
       {activeItem && (
         <div className="qty-modal-backdrop" onClick={() => setActiveItem(null)}>
           <div className="qty-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>
-              {activeItem.name}
-              {activeItem.variant ? ` (${activeItem.variant.name})` : ""}
-            </h3>
+            <h3>{activeItem.name}{activeItem.variant ? ` (${activeItem.variant.name})` : ""}</h3>
             <p>Adjust quantity</p>
-
             <div className="qty-controls">
               <button className="qty-btn" onClick={decreaseLocal}>–</button>
               <span className="qty-number">{draftQty}</span>
               <button className="qty-btn" onClick={increaseLocal}>+</button>
             </div>
-
-            <div className="qty-modal-total">
-              New total: ₱{previewTotal.toFixed(2)}
-            </div>
-
-            <button
-              className="qty-save"
-              disabled={saving || draftQty === activeItem.quantity}
-              onClick={saveQuantity}
-            >
+            <div className="qty-modal-total">New total: ₱{previewTotal.toFixed(2)}</div>
+            <button className="qty-save" disabled={saving || draftQty === activeItem.quantity} onClick={saveQuantity}>
               {saving ? "Saving..." : "Save Changes"}
             </button>
-
-            <button className="qty-close" onClick={() => setActiveItem(null)}>
-              Cancel
-            </button>
+            <button className="qty-close" onClick={() => setActiveItem(null)}>Cancel</button>
           </div>
         </div>
       )}

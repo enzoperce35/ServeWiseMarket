@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuthContext } from "../../../context/AuthProvider";
 import { useCartContext } from "../../../context/CartProvider";
 import { addToCartApi, removeFromCartApi } from "../../../api/cart";
@@ -8,52 +8,78 @@ import "../../../css/pages/seller/SellerPages/VariantsModal.css";
 export default function VariantsModal({ product, onClose }) {
   const { user, token } = useAuthContext();
   const { cart, refreshCart } = useCartContext();
-  const [loadingVariant, setLoadingVariant] = useState(null);
 
-  // Get current quantity of this variant in the cart
-  const getVariantQuantity = (variantId) => {
-    if (!cart) return 0;
-    const allItems = cart.shops?.flatMap((shop) => shop.items) || [];
-    const item = allItems.find(
-      (i) => i.product_id === product.id && i.variant_id === variantId
-    );
-    return item?.quantity || 0;
+  // Local staged quantities
+  const [localQty, setLocalQty] = useState({});
+  const [saving, setSaving] = useState(false);
+
+  // Initialize local quantities from cart when opened
+  useEffect(() => {
+    const map = {};
+    const items = cart?.shops?.flatMap(s => s.items) || [];
+
+    product.variants.forEach(v => {
+      const found = items.find(
+        i => i.product_id === product.id && i.variant_id === v.id
+      );
+      map[v.id] = found?.quantity || 0;
+    });
+
+    setLocalQty(map);
+  }, [product, cart]);
+
+  const changeQty = (variantId, delta) => {
+    setLocalQty(q => ({
+      ...q,
+      [variantId]: Math.max(0, (q[variantId] || 0) + delta)
+    }));
   };
 
-  const addVariantToCart = async (variant) => {
+  // Save staged quantities to API
+  const handleDone = async () => {
     if (!user || !token) {
-      toast.error("Please log in to add items to tray");
+      toast.error("Please log in first");
       return;
     }
 
     try {
-      setLoadingVariant(variant.id);
-      await addToCartApi(product.id, 1, token, variant.id);
-      await refreshCart();
-    } catch {
-      toast.error("Failed to add variant");
-    } finally {
-      setLoadingVariant(null);
-    }
-  };
+      setSaving(true);
 
-  const decreaseVariant = async (variant) => {
-    if (!user || !token) return;
+      const cartItems = cart?.shops?.flatMap(s => s.items) || [];
 
-    const allItems = cart?.shops?.flatMap(s => s.items) || [];
-    const item = allItems.find(i => i.product_id === product.id && i.variant_id === variant.id);
+      // For each variant compute diff
+      for (const v of product.variants) {
+        const currentItem = cartItems.find(
+          i => i.product_id === product.id && i.variant_id === v.id
+        );
 
-    if (!item) return;
+        const currentQty = currentItem?.quantity || 0;
+        const targetQty = localQty[v.id] || 0;
 
-    try {
-      if (item.quantity <= 1) {
-        await removeFromCartApi(item.cart_item_id, token);
-      } else {
-        await addToCartApi(product.id, -1, token, variant.id); // negative qty to decrease
+        // nothing changed
+        if (currentQty === targetQty) continue;
+
+        // becomes zero -> remove whole cart item
+        if (targetQty === 0 && currentItem) {
+          await removeFromCartApi(currentItem.cart_item_id, token);
+          continue;
+        }
+
+        // compute diff and send addToCart with positive or negative qty
+        const diff = targetQty - currentQty;
+        if (diff !== 0) {
+          await addToCartApi(product.id, diff, token, v.id);
+        }
       }
+
       await refreshCart();
-    } catch {
-      toast.error("Failed to update quantity");
+      toast.success("Added to tray");
+      onClose();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save changes");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -61,61 +87,47 @@ export default function VariantsModal({ product, onClose }) {
     <div className="variants-modal-backdrop" onClick={onClose}>
       <div className="variants-modal" onClick={(e) => e.stopPropagation()}>
         <h2>{product.name}</h2>
-        <button className="close-btn" onClick={onClose}>done</button>
+
+        <button
+          className="close-btn"
+          onClick={handleDone}
+          disabled={saving}
+        >
+          {saving ? "Saving..." : "Done"}
+        </button>
 
         {product.variants.map((v) => {
-          const qty = getVariantQuantity(v.id);
+          const qty = localQty[v.id] || 0;
 
           return (
             <div key={v.id} className="variant-row">
-              {/* Minus button always present in DOM for alignment, hidden if qty === 0 */}
+              {/* minus button shown only when qty > 0 */}
               <button
                 className="variant-minus-btn"
                 style={{ visibility: qty > 0 ? "visible" : "hidden" }}
-                onClick={async () => {
-                  if (qty === 0) return;
-
-                  try {
-                    const cartItem = cart.shops
-                      .flatMap((s) => s.items)
-                      .find(
-                        (i) => i.product_id === product.id && i.variant_id === v.id
-                      );
-                    if (!cartItem) return;
-
-                    await removeFromCartApi(cartItem.cart_item_id, token);
-                    await refreshCart();
-                  } catch {
-                    toast.error("Failed to remove item");
-                  }
-                }}
+                onClick={() => changeQty(v.id, -1)}
               >
                 –
               </button>
 
               <div className="variant-item">
-                {/* Variant name */}
                 <div className="variant-name">
                   <span>{v.name}</span>
                 </div>
 
-                {/* Variant price */}
                 <span className="variant-price">
                   ₱{parseFloat(v.price ?? 0).toFixed(2)}
                 </span>
 
-                {/* Multiplier / placeholder */}
                 <span className="variant-multiplier">
                   {qty > 0 ? `×${qty}` : "\u00A0"}
                 </span>
 
-                {/* Add button */}
                 <button
                   className="add-btn"
-                  onClick={() => addVariantToCart(v)}
-                  disabled={loadingVariant === v.id}
+                  onClick={() => changeQty(v.id, 1)}
                 >
-                  {loadingVariant === v.id ? "Adding..." : "Add"}
+                  Add
                 </button>
               </div>
             </div>

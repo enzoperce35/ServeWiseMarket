@@ -1,25 +1,34 @@
 // Reusable time rotation helper
 
 export const CUTOFF_MINUTES = 15;
+export const REAPPEAR_HOURS = 2;
 
 /**
- * Decide whether a slot belongs to today or tomorrow
- * - hour is 0–23 or -1 for "Now"
- * - returns "today" or "tomorrow"
+ * Returns:
+ *  "today"
+ *  "tomorrow"
+ *  "hidden"  ⛔ disappears during cutoff→+2h window
  */
 export function getSlotDay(hour24) {
   const now = new Date();
 
-  // "Now" stays today if active
   if (hour24 === -1) return "today";
 
-  // Build today's slot datetime
-  const slotToday = new Date();
-  slotToday.setHours(hour24, 0, 0, 0);
+  // today's slot occurrence
+  const slotTime = new Date();
+  slotTime.setHours(hour24, 0, 0, 0);
 
-  // cutoff = slotTime - 15 min
-  const cutoff = new Date(slotToday.getTime() - CUTOFF_MINUTES * 60000);
+  const cutoffTime = new Date(slotTime.getTime() - CUTOFF_MINUTES * 60000);
+  const reappearTomorrow = new Date(
+    slotTime.getTime() + REAPPEAR_HOURS * 60 * 60000
+  );
 
-  // If we passed cutoff, push to tomorrow
-  return now >= cutoff ? "tomorrow" : "today";
+  // before cutoff → TODAY
+  if (now < cutoffTime) return "today";
+
+  // between cutoff and +2h → HIDDEN
+  if (now >= cutoffTime && now <= reappearTomorrow) return "hidden";
+
+  // after +2h → TOMORROW
+  return "tomorrow";
 }

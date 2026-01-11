@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import "../css/components/ProductCard.css";
 import VariantsModal from "../pages/seller/SellerPages/VariantsModal";
 
-export default function ProductCard({ product, clickable = true }) {
+export default function ProductCard({ product, clickable = true, deliveryLabel }) {
   if (!product) return null;
 
   const navigate = useNavigate();
@@ -23,6 +23,17 @@ export default function ProductCard({ product, clickable = true }) {
 
   const handleCardClick = () => {
     if (clickable) navigate(`/product/${product.id}`);
+  };
+
+  // 📌 Helper to format the delivery text
+  const getDeliveryDetail = (label) => {
+    if (!label) return "";
+    const lowerLabel = label.toLowerCase();
+    
+    if (lowerLabel === "now") {
+      return "Delivery: in 30 minutes";
+    }
+    return `Delivery: around ${label}`;
   };
 
   const addToCart = async (e, quantity = 1) => {
@@ -63,9 +74,7 @@ export default function ProductCard({ product, clickable = true }) {
   return (
     <>
       <div
-        className={`product-card ${status ? "" : "inactive"} ${
-          preorder ? "preorder" : "regular"
-        }`}
+        className={`product-card ${status ? "" : "inactive"} ${preorder ? "preorder" : "regular"}`}
         onClick={handleCardClick}
         style={{ cursor: clickable ? "pointer" : "default" }}
       >
@@ -75,6 +84,13 @@ export default function ProductCard({ product, clickable = true }) {
         />
         <div className="product-info">
           <h3 className="product-name">{product.name}</h3>
+          
+          {/* 📌 Display Delivery Detail */}
+          {deliveryLabel && (
+            <p className="delivery-detail-text">
+              {getDeliveryDetail(deliveryLabel)}
+            </p>
+          )}
         </div>
 
         <p className="product-price-label">{getPriceString(product)}</p>
