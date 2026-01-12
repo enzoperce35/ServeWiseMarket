@@ -26,6 +26,7 @@ export default function TimeFilterBar({ onChange, groups = [] }) {
         if (currentHour >= 6 && currentHour <= 18) {
           today.unshift({
             ...group,
+            id: 'now-slot', // Explicit ID for the Now slot
             label: "Now",
             hour24: currentHour,
             isNow: true,
