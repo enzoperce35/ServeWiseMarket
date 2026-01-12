@@ -26,6 +26,7 @@ module Api
                 cart_item_id: item.id,
                 product_id: item.product.id,
                 variant_id: item.variant_id,
+                delivery_group_id: item.delivery_group_id,
                 name: item.product.name,
                 image_url: item.product.image_url,
                 quantity: item.quantity,

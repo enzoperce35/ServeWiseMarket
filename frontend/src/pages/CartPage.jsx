@@ -52,21 +52,24 @@ export default function CartPage() {
       setSaving(true);
       const current = activeItem.quantity;
       const target = draftQty;
-
+  
       if (target === current) {
         setActiveItem(null);
         return;
       }
-
+  
       const diff = target - current;
-
+  
+      // ✅ FIX: We must pass the delivery_group_id from the activeItem 
+      // so the backend knows which specific slot we are updating.
       await addToCartApi(
         activeItem.product_id,
         diff,
         token,
-        activeItem.variant_id ?? null
+        activeItem.variant_id ?? null,
+        activeItem.delivery_group_id // <--- THIS WAS MISSING
       );
-
+  
       await fetchCart();
       toast.success("Quantity updated");
       setActiveItem(null);
@@ -338,18 +341,18 @@ export default function CartPage() {
           className="qty-modal-backdrop"
           onClick={() => setActiveItem(null)}
         >
-          <div
-            className="qty-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3>
-              {activeItem.name}
-              {activeItem.variant
-                ? ` (${activeItem.variant.name})`
-                : ""}
-            </h3>
+          <div className="qty-modal" onClick={(e) => e.stopPropagation()}>
+  <h3>
+    {activeItem.name}
+    {activeItem.variant ? ` (${activeItem.variant.name})` : ""}
+  </h3>
+  
+  {/* ✅ ADD THIS: Show the slot being edited */}
+  <p className="modal-delivery-slot">
+    Slot: {activeItem.delivery_group_name || "Standard Delivery"}
+  </p>
 
-            <p>Adjust quantity</p>
+  <p>Adjust quantity</p>
 
             <div className="qty-controls">
               <button className="qty-btn" onClick={decreaseLocal}>
