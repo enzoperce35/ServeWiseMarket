@@ -76,6 +76,7 @@ export default function ProductsPage() {
             key={product.id}
             product={product}
             deliveryLabel={activeSlot?.name} // 📌 Pass the time slot name here
+            deliveryGroupId={activeSlot?.id} // NEW — send actual group ID
           />
         ))}
 

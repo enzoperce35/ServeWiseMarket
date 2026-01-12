@@ -9,23 +9,23 @@ const API_BASE = "http://localhost:3000/api/v1";
  * @param {string} token - User auth token
  * @param {number|null} variantId - Optional variant ID
  */
-export const addToCartApi = (productId, quantity = 1, token, variantId = null) => {
+export const addToCartApi = (
+  productId,
+  quantity = 1,
+  token,
+  variantId = null,
+  deliveryGroupId = null
+) => {
   const payload = { product_id: productId, quantity };
-  if (variantId) payload.variant_id = variantId; // include variant if provided
 
-  return axios.post(
-    `${API_BASE}/cart_items`,
-    {
-      product_id: productId,
-      quantity,
-      variant_id: variantId, // ✅ send variant_id if any
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  if (variantId) payload.variant_id = variantId;
+
+  // ✅ Only pass deliveryGroupId for regular product OR variant
+  if (deliveryGroupId) payload.delivery_group_id = deliveryGroupId;
+
+  return axios.post(`${API_BASE}/cart_items`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 };
 
 // ⭐ NEW — deduct stock from product (variant → mother product)

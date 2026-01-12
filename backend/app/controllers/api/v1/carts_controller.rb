@@ -1,4 +1,3 @@
-# app/controllers/api/v1/carts_controller.rb
 module Api
   module V1
     class CartsController < ApplicationController
@@ -8,7 +7,10 @@ module Api
         cart = current_user.cart
         return render json: { shops: [] }, status: :ok if cart.nil?
 
-        shops = cart.cart_items.includes(product: [:variants, :delivery_groups]).group_by { |item| item.product.shop }
+        # Efficiently load data including the specific delivery group per item
+        shops = cart.cart_items
+                    .includes(:delivery_group, :variant, product: [:shop])
+                    .group_by { |item| item.product.shop }
 
         result = shops.map do |shop, items|
           {
@@ -16,9 +18,9 @@ module Api
             shop_name: shop.name,
             items: items.map do |item|
               variant = item.variant
-
-              # Grab the first active delivery group for the product (or nil)
-              delivery_group = item.product.delivery_groups.active.first
+              
+              # Use the delivery group actually associated with this specific cart item
+              delivery_group = item.delivery_group
 
               {
                 cart_item_id: item.id,
@@ -28,10 +30,12 @@ module Api
                 image_url: item.product.image_url,
                 quantity: item.quantity,
                 stock: item.product.stock,
+                unit_price: item.unit_price,
                 total_price: item.unit_price * item.quantity,
                 variant: variant ? { id: variant.id, name: variant.name, price: variant.price } : nil,
                 delivery_group_name: delivery_group&.name,
-                delivery_time: delivery_group&.ph_timestamp ? Time.at(delivery_group.ph_timestamp).strftime("%-I:%M %p") : nil
+                delivery_time: delivery_group&.ph_timestamp ? 
+                  Time.at(delivery_group.ph_timestamp).in_time_zone("Asia/Manila").strftime("%-I:%M %p") : nil
               }
             end
           }

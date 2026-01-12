@@ -127,7 +127,7 @@ export default function CartPage() {
   
         const groups = {};
   
-        shop.items.forEach((item) => {
+        shop.items.forEach((item) => { console.log(item)
           const label =
             item.delivery_group_name ||
             item.delivery_time ||

@@ -8,12 +8,18 @@ import toast from "react-hot-toast";
 import "../css/components/ProductCard.css";
 import VariantsModal from "../pages/seller/SellerPages/VariantsModal";
 
-export default function ProductCard({ product, clickable = true, deliveryLabel }) {
+export default function ProductCard({
+  product,
+  clickable = true,
+  deliveryLabel,
+  deliveryGroupId   // ✅ received from ProductsPage active slot
+}) {
   if (!product) return null;
 
   const navigate = useNavigate();
   const { user, token } = useAuthContext();
   const { refreshCart } = useCartContext();
+
   const [loading, setLoading] = useState(false);
   const [showVariants, setShowVariants] = useState(false);
 
@@ -25,29 +31,25 @@ export default function ProductCard({ product, clickable = true, deliveryLabel }
     if (clickable) navigate(`/product/${product.id}`);
   };
 
-  // 📌 Helper to format the delivery text
   const getDeliveryDetail = (label) => {
     if (!label) return "";
-    const lowerLabel = label.toLowerCase();
-    
-    if (lowerLabel === "now") {
-      return "Delivery: in 30 minutes";
-    }
+    if (label.toLowerCase() === "now") return "Delivery: in 30 minutes";
     return `Delivery: around ${label}`;
   };
 
+  // 🔹 MAIN add-to-cart button
   const addToCart = async (e, quantity = 1) => {
     e.stopPropagation();
 
-    const activeVariants = variants.filter((v) => v.active !== false);
-
-    if (activeVariants.length > 0) {
-      setShowVariants(true);
+    if (!user || !token) {
+      toast.error("Please log in to add items");
       return;
     }
 
-    if (!user || !token) {
-      toast.error("Please log in to add items to tray");
+    // if product has variants → open modal
+    const activeVariants = variants.filter(v => v.active !== false);
+    if (activeVariants.length > 0) {
+      setShowVariants(true);
       return;
     }
 
@@ -55,12 +57,50 @@ export default function ProductCard({ product, clickable = true, deliveryLabel }
 
     try {
       setLoading(true);
-      await addToCartApi(product.id, quantity, token);
+
+      // ✅ ALWAYS pass deliveryGroupId
+      await addToCartApi(
+        product.id,
+        quantity,
+        token,
+        null,                // variantId null (regular product)
+        deliveryGroupId      // 👈 THIS is the key fix
+      );
+
       await refreshCart();
       toast.success("Added to tray");
     } catch (err) {
       console.error(err);
       toast.error("Failed to add item");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔹 Called when variant is chosen in modal
+  const addVariantToCart = async (variantId, quantity = 1) => {
+    if (!user || !token) {
+      toast.error("Please log in to add items");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      await addToCartApi(
+        product.id,
+        quantity,
+        token,
+        variantId,          // 👈 variant selected
+        deliveryGroupId     // 👈 STILL PASS GROUP — FIXES YOUR ISSUE
+      );
+
+      await refreshCart();
+      toast.success("Added to tray");
+      setShowVariants(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to add variant");
     } finally {
       setLoading(false);
     }
@@ -82,10 +122,10 @@ export default function ProductCard({ product, clickable = true, deliveryLabel }
           src={product.image_url || "/images/default-product.png"}
           alt={product.name}
         />
+
         <div className="product-info">
           <h3 className="product-name">{product.name}</h3>
-          
-          {/* 📌 Display Delivery Detail */}
+
           {deliveryLabel && (
             <p className="delivery-detail-text">
               {getDeliveryDetail(deliveryLabel)}
@@ -114,7 +154,9 @@ export default function ProductCard({ product, clickable = true, deliveryLabel }
         <VariantsModal
           product={{ ...product, variants: variants.filter(v => v.active !== false) }}
           onClose={() => setShowVariants(false)}
-          refreshCart={refreshCart}
+          // Ensure we pass BOTH the handler and the Group ID if needed
+          onVariantAdd={(variantId, qty) => addVariantToCart(variantId, qty)}
+          deliveryGroupId={deliveryGroupId} // Pass this down!
         />
       )}
     </>

@@ -5,7 +5,7 @@ import { addToCartApi, removeFromCartApi } from "../../../api/cart";
 import toast from "react-hot-toast";
 import "../../../css/pages/seller/SellerPages/VariantsModal.css";
 
-export default function VariantsModal({ product, onClose }) {
+export default function VariantsModal({ product, onClose, deliveryGroupId }) {
   const { user, token } = useAuthContext();
   const { cart, refreshCart } = useCartContext();
 
@@ -68,16 +68,25 @@ export default function VariantsModal({ product, onClose }) {
         // compute diff and send addToCart with positive or negative qty
         const diff = targetQty - currentQty;
         if (diff !== 0) {
-          await addToCartApi(product.id, diff, token, v.id);
+          // ✅ FIX: Pass deliveryGroupId here to prevent 422 error
+          await addToCartApi(
+            product.id, 
+            diff, 
+            token, 
+            v.id, 
+            deliveryGroupId
+          );
         }
       }
 
       await refreshCart();
-      toast.success("Added to tray");
+      toast.success("Updated tray");
       onClose();
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to save changes");
+      console.error("Save Error:", err);
+      // If the backend returns error messages, show them in toast
+      const errorMsg = err.response?.data?.errors?.join(", ") || "Failed to save changes";
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -96,43 +105,45 @@ export default function VariantsModal({ product, onClose }) {
           {saving ? "Saving..." : "Done"}
         </button>
 
-        {product.variants.map((v) => {
-          const qty = localQty[v.id] || 0;
+        <div className="variants-list">
+          {product.variants.map((v) => {
+            const qty = localQty[v.id] || 0;
 
-          return (
-            <div key={v.id} className="variant-row">
-              {/* minus button shown only when qty > 0 */}
-              <button
-                className="variant-minus-btn"
-                style={{ visibility: qty > 0 ? "visible" : "hidden" }}
-                onClick={() => changeQty(v.id, -1)}
-              >
-                –
-              </button>
-
-              <div className="variant-item">
-                <div className="variant-name">
-                  <span>{v.name}</span>
-                </div>
-
-                <span className="variant-price">
-                  ₱{parseFloat(v.price ?? 0).toFixed(2)}
-                </span>
-
-                <span className="variant-multiplier">
-                  {qty > 0 ? `×${qty}` : "\u00A0"}
-                </span>
-
+            return (
+              <div key={v.id} className="variant-row">
+                {/* minus button shown only when qty > 0 */}
                 <button
-                  className="add-btn"
-                  onClick={() => changeQty(v.id, 1)}
+                  className="variant-minus-btn"
+                  style={{ visibility: qty > 0 ? "visible" : "hidden" }}
+                  onClick={() => changeQty(v.id, -1)}
                 >
-                  Add
+                  –
                 </button>
+
+                <div className="variant-item">
+                  <div className="variant-name">
+                    <span>{v.name}</span>
+                  </div>
+
+                  <span className="variant-price">
+                    ₱{parseFloat(v.price ?? 0).toFixed(2)}
+                  </span>
+
+                  <span className="variant-multiplier">
+                    {qty > 0 ? `×${qty}` : "\u00A0"}
+                  </span>
+
+                  <button
+                    className="add-btn"
+                    onClick={() => changeQty(v.id, 1)}
+                  >
+                    Add
+                  </button>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
