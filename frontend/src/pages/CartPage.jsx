@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useCartContext } from "../context/CartProvider";
 import { useAuthContext } from "../context/AuthProvider";
 import { addToCartApi, removeFromCartApi, deductStockApi } from "../api/cart";
+import { formatDeliveryLabel, getDeliverySortScore } from "../utils/deliverySlotRotation";
+import { mergeSameProductsInGroup } from "../utils/cartsHelper";
 import { useNavigate } from "react-router-dom";
 import BackButton from "../components/common/BackButton";
 import toast from "react-hot-toast";
@@ -42,33 +44,44 @@ export default function CartPage() {
     setActiveItem(item);
     setDraftQty(item.quantity || 1);
   };
-
+  //.sort(([a], [b])
   const increaseLocal = () => setDraftQty((q) => q + 1);
   const decreaseLocal = () => setDraftQty((q) => Math.max(1, q - 1));
 
   const saveQuantity = async () => {
     if (!activeItem) return;
+  
     try {
       setSaving(true);
-      const current = activeItem.quantity;
-      const target = draftQty;
   
+      const current = Number(activeItem.quantity);
+      const target = Number(draftQty);
+  
+      // nothing changed
       if (target === current) {
         setActiveItem(null);
         return;
       }
   
-      const diff = target - current;
+      // 🧹 if target becomes 0 → delete item completely
+      if (target === 0) {
+        await removeFromCartApi(activeItem.cart_item_id, token);
+      } else {
+        // 🔥 easiest + always correct:
+        // remove the line item then re-add the correct quantity
   
-      // ✅ FIX: We must pass the delivery_group_id from the activeItem 
-      // so the backend knows which specific slot we are updating.
-      await addToCartApi(
-        activeItem.product_id,
-        diff,
-        token,
-        activeItem.variant_id ?? null,
-        activeItem.delivery_group_id // <--- THIS WAS MISSING
-      );
+        // 1) remove item
+        await removeFromCartApi(activeItem.cart_item_id, token);
+  
+        // 2) re-add with target quantity
+        await addToCartApi(
+          activeItem.product_id,
+          target,
+          token,
+          activeItem.variant_id ?? null,
+          activeItem.delivery_group_id
+        );
+      }
   
       await fetchCart();
       toast.success("Quantity updated");
@@ -80,7 +93,7 @@ export default function CartPage() {
       setSaving(false);
     }
   };
-
+  
   const formatCopyTimestamp = (date) => {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -95,7 +108,7 @@ export default function CartPage() {
     const words = text.split(" ");
     const lines = [];
     let currentLine = "";
-  
+
     words.forEach((word) => {
       if ((currentLine + word).length <= maxLength) {
         currentLine += (currentLine === "" ? "" : " ") + word;
@@ -104,89 +117,97 @@ export default function CartPage() {
         currentLine = word;
       }
     });
-  
+
     if (currentLine) lines.push(currentLine);
-  
+
     return lines;
   };
-  
+
   const handleCopyTicket = async () => {
     if (!token) {
       toast.error("Please log in first");
       return;
     }
-  
+
     try {
       const now = new Date();
       const displayTimestamp = formatCopyTimestamp(now);
       const MAX_NAME_WIDTH = 22;
       const PRICE_COLUMN_START = 35;
-  
+
       let text = "";
-  
+
       cart.shops.forEach((shop) => {
         text += `🏪 ${shop.shop_name}\n`;
         text += `🧾 ${displayTimestamp}\n\n`;
-  
+
         const groups = {};
-  
-        shop.items.forEach((item) => { console.log(item)
+
+        shop.items.forEach((item) => {
+          console.log(item)
           const label =
             item.delivery_group_name ||
             item.delivery_time ||
             "No delivery group";
-  
+
           if (!groups[label]) groups[label] = [];
           groups[label].push(item);
         });
-  
-        Object.keys(groups).forEach((groupLabel) => {
-          text += `🚚 ${groupLabel}\n`;
-  
-          groups[groupLabel].forEach((i) => {
-            const productName = i.variant?.name
-              ? `${i.name} (${i.variant.name})`
-              : i.name;
-  
-            const qtyLabel = `x${i.quantity}`;
-            const fullLabel = `${productName} ${qtyLabel}`;
-            const price = `₱${Number(i.total_price || 0).toFixed(2)}`;
-  
-            const lines = wrapText(fullLabel, MAX_NAME_WIDTH);
-  
-            lines.forEach((line, index) => {
-              const prefix = index === 0 ? " • " : " ";
-              if (index === lines.length - 1) {
-                text += (prefix + line).padEnd(PRICE_COLUMN_START) + price + "\n";
-              } else {
-                text += prefix + line + "\n";
-              }
+
+        // 🔥 sort delivery groups for ticket
+        Object.keys(groups)
+          .sort((a, b) => getDeliverySortScore(a) - getDeliverySortScore(b))
+          .forEach((groupLabel) => {
+
+            // 💯 SAME LABEL AS CART PAGE
+            const displayLabel = formatDeliveryLabel(groupLabel);
+
+            text += `🚚 ${displayLabel}\n`;
+
+            mergeSameProductsInGroup(groups[groupLabel]).forEach((i) => {
+              const productName = i.variant?.name
+                ? `${i.name} (${i.variant.name})`
+                : i.name;
+
+              const qtyLabel = `x${i.quantity}`;
+              const fullLabel = `${productName} ${qtyLabel}`;
+              const price = `₱${Number(i.total_price || 0).toFixed(2)}`;
+
+              const lines = wrapText(fullLabel, MAX_NAME_WIDTH);
+
+              lines.forEach((line, index) => {
+                const prefix = index === 0 ? " • " : " ";
+                if (index === lines.length - 1) {
+                  text += (prefix + line).padEnd(PRICE_COLUMN_START) + price + "\n";
+                } else {
+                  text += prefix + line + "\n";
+                }
+              });
             });
+
+            text += `\n`;
           });
-  
-          text += `\n`;
-        });
-  
+
         const totalItems = shop.items.reduce(
           (sum, i) => sum + Number(i.quantity || 0),
           0
         );
-  
+
         text += "------------------------------------------\n";
         text +=
           ` Items(${totalItems})`.padEnd(PRICE_COLUMN_START) +
           `Total: ₱${grandTotal.toFixed(2)}\n\n`;
       });
-  
+
       //
       // 🔴 STOCK VALIDATION (parent product stock)
       //
-  
+
       const allItems = cart.shops.flatMap((shop) => shop.items);
-  
+
       // group by parent product id
       const productTotals = {};
-  
+
       allItems.forEach((item) => {
         if (!productTotals[item.product_id]) {
           productTotals[item.product_id] = {
@@ -195,16 +216,16 @@ export default function CartPage() {
             qty: 0
           };
         }
-  
+
         productTotals[item.product_id].qty += Number(item.quantity || 0);
       });
-  
+
       // validate
       for (let pid in productTotals) {
         const { name, stock, qty } = productTotals[pid];
-  
+
         const remaining = Number(stock || 0);
-  
+
         if (remaining < qty) {
           setStockError(
             `Not enough stock for "${name}". Ordered ${qty}, only ${remaining} left.`
@@ -212,19 +233,19 @@ export default function CartPage() {
           return; // ❌ STOP — no clipboard and no deduction
         }
       }
-  
+
       //
       // ✅ All stock OK — copy ticket
       //
       await navigator.clipboard.writeText(text);
       toast.success("Ticket copied to clipboard 📋");
-  
+
       //
       // 🟢 Deduct parent stock ONCE per product
       //
       for (let pid in productTotals) {
         const { qty } = productTotals[pid];
-  
+
         await deductStockApi(
           pid,          // parent product id
           qty,          // total ordered of all variants
@@ -232,23 +253,22 @@ export default function CartPage() {
           null          // ALWAYS null because parent stock is used
         );
       }
-  
+
       //
       // 🧹 Clear cart items
       //
       await Promise.all(
         allItems.map((item) => removeFromCartApi(item.cart_item_id, token))
       );
-  
+
       await fetchCart();
       navigate("/");
-  
+
     } catch (err) {
       console.error(err);
       toast.error("Failed to checkout");
     }
   };
-    
 
   const handleRemoveItem = async (cartItemId) => {
     try {
@@ -257,6 +277,22 @@ export default function CartPage() {
     } catch (err) {
       toast.error(`Remove failed: ${err.message}`);
     }
+  };
+
+  const groupItemsByDeliveryGroup = (items) => {
+    const groups = {};
+
+    items.forEach((item) => {
+      const key =
+        item.delivery_group_name ||
+        item.delivery_time ||
+        "No delivery group";
+
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(item);
+    });
+
+    return groups;
   };
 
   return (
@@ -273,44 +309,53 @@ export default function CartPage() {
         <div key={shop.shop_id} className="cart-shop">
           <h3>{shop.shop_name}</h3>
 
-          {shop.items.map((item) => (
-            <div key={item.cart_item_id} className="cart-item">
-              <img
-                src={item.image_url || "/images/default-product.png"}
-                alt={item.name}
-                className="cart-item-img"
-              />
+          {Object.entries(groupItemsByDeliveryGroup(shop.items))
+            .sort(([a], [b]) => getDeliverySortScore(a) - getDeliverySortScore(b))
+            .map(([groupLabel, groupedItems]) => (
+              <div key={groupLabel} className="delivery-group-block">
 
-              <div
-                className="cart-item-info"
-                onClick={() => openQtyModal(item)}
-                style={{ cursor: "pointer" }}
-              >
-                <span className="cart-item-name">
-                  {item.name}
-                  {item.variant ? ` (${item.variant.name})` : ""}
-                </span>
+                <h4 className="delivery-group-title">🚚 {formatDeliveryLabel(groupLabel)}</h4>
 
-                <span className="cart-item-qty">
-                  Qty: {item.quantity}
-                </span>
+                {mergeSameProductsInGroup(groupedItems).map((item) => (
+                  <div key={item.cart_item_id} className="cart-item">
+                    <img
+                      src={item.image_url || "/images/default-product.png"}
+                      alt={item.name}
+                      className="cart-item-img"
+                    />
 
-                <span className="cart-item-price">
-                  ₱{Number(item.total_price || 0).toFixed(2)}
-                </span>
+                    <div
+                      className="cart-item-info"
+                      onClick={() => openQtyModal(item)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <span className="cart-item-name">
+                        {item.name}
+                        {item.variant ? ` (${item.variant.name})` : ""}
+                      </span>
+
+                      <span className="cart-item-qty">
+                        Qty: {item.quantity}
+                      </span>
+
+                      <span className="cart-item-price">
+                        ₱{Number(item.total_price || 0).toFixed(2)}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveItem(item.cart_item_id);
+                      }}
+                      className="cart-item-remove"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
               </div>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemoveItem(item.cart_item_id);
-                }}
-                className="cart-item-remove"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
+            ))}
 
           <div className="cart-shop-subtotal">
             Subtotal: ₱
@@ -342,17 +387,18 @@ export default function CartPage() {
           onClick={() => setActiveItem(null)}
         >
           <div className="qty-modal" onClick={(e) => e.stopPropagation()}>
-  <h3>
-    {activeItem.name}
-    {activeItem.variant ? ` (${activeItem.variant.name})` : ""}
-  </h3>
-  
-  {/* ✅ ADD THIS: Show the slot being edited */}
-  <p className="modal-delivery-slot">
-    Slot: {activeItem.delivery_group_name || "Standard Delivery"}
-  </p>
+            <h3>
+              {activeItem.name}
+              {activeItem.variant ? ` (${activeItem.variant.name})` : ""}
+            </h3>
 
-  <p>Adjust quantity</p>
+            <p className="modal-delivery-slot" style={{ color: '#666', fontSize: '0.9rem' }}>
+              {/* ✅ Use the name from the API, which now fallbacks to "Now" */}
+              {formatDeliveryLabel(activeItem.delivery_group_name)}
+
+            </p>
+
+            <p>Adjust quantity</p>
 
             <div className="qty-controls">
               <button className="qty-btn" onClick={decreaseLocal}>

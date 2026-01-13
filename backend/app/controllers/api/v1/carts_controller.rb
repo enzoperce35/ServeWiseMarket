@@ -34,7 +34,7 @@ module Api
                 unit_price: item.unit_price,
                 total_price: item.unit_price * item.quantity,
                 variant: variant ? { id: variant.id, name: variant.name, price: variant.price } : nil,
-                delivery_group_name: delivery_group&.name,
+                delivery_group_name: delivery_group&.name || "Now",
                 delivery_time: delivery_group&.ph_timestamp ? 
                   Time.at(delivery_group.ph_timestamp).in_time_zone("Asia/Manila").strftime("%-I:%M %p") : nil
               }
