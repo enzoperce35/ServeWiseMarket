@@ -41,11 +41,6 @@ export default function ProductCard({
   const addToCart = async (e, quantity = 1) => {
     e.stopPropagation();
 
-    if (!user || !token) {
-      toast.error("Please log in to add items");
-      return;
-    }
-
     // if product has variants → open modal
     const activeVariants = variants.filter(v => v.active !== false);
     if (activeVariants.length > 0) {
@@ -62,8 +57,8 @@ export default function ProductCard({
       await addToCartApi(
         product.id,
         quantity,
-        token,
-        null,                // variantId null (regular product)
+        token || null,         // token optional for guests
+        null,     
         deliveryGroupId      // 👈 THIS is the key fix
       );
 
@@ -79,10 +74,6 @@ export default function ProductCard({
 
   // 🔹 Called when variant is chosen in modal
   const addVariantToCart = async (variantId, quantity = 1) => {
-    if (!user || !token) {
-      toast.error("Please log in to add items");
-      return;
-    }
 
     try {
       setLoading(true);
@@ -90,7 +81,8 @@ export default function ProductCard({
       await addToCartApi(
         product.id,
         quantity,
-        token,
+        token || null,         // token optional for guests
+        null,     
         variantId,          // 👈 variant selected
         deliveryGroupId     // 👈 STILL PASS GROUP — FIXES YOUR ISSUE
       );

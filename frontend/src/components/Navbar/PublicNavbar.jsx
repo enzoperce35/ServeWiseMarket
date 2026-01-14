@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import InitialsLogo from "../../utils/InitialsLogo";
 import GlobalCartOrders from "../common/GlobalCartOrders";
-import "../../css/components/Navbar/BuyerNavbar.css";
+import "../../css/components/Navbar/PublicNavbar.css";
 
 export default function PublicNavbar() {
   const navigate = useNavigate();

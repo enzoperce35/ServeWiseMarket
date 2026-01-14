@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_10_011825) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_14_105955) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,6 +23,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_10_011825) do
     t.decimal "unit_price", precision: 10, scale: 2, default: "0.0", null: false
     t.integer "variant_id"
     t.bigint "delivery_group_id"
+    t.string "delivery_group_hour"
     t.index ["cart_id"], name: "index_cart_items_on_cart_id"
     t.index ["delivery_group_id"], name: "index_cart_items_on_delivery_group_id"
     t.index ["product_id"], name: "index_cart_items_on_product_id"
@@ -59,7 +60,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_10_011825) do
   end
 
   create_table "orders", force: :cascade do |t|
-    t.bigint "user_id", null: false
+    t.bigint "user_id"
     t.bigint "shop_id", null: false
     t.string "status", default: "pending", null: false
     t.decimal "total_amount", precision: 10, scale: 2, null: false
