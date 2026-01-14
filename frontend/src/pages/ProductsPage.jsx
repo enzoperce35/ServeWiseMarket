@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
+import Navbar from "../components/Navbar/Navbar";
 import ProductCard from "../components/ProductCard";
 import TimeFilterBar from "../components/TimeFilterBar";
 import axiosClient from "../api/axiosClient";

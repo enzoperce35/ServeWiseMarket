@@ -1,0 +1,66 @@
+/* css/components/Navbar/BuyerNavbar.css */
+
+/* ====================================
+   BUYER NAVBAR
+==================================== */
+
+.buyer-navbar {
+  display: flex;
+  flex-direction: column;
+  padding: 0 1.5rem 1rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  font-family: Arial, sans-serif;
+  gap: 10px;
+}
+
+/* Top row: logo + cart */
+.buyer-navbar-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* Logo */
+.buyer-navbar-logo {
+  display: flex;
+  align-items: center;
+}
+
+.buyer-navbar-logo img,
+.buyer-navbar-logo .initials-logo {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* Cart wrapper */
+.buyer-navbar-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .buyer-navbar-logo img,
+  .buyer-navbar-logo .initials-logo {
+    height: 60px;
+  }
+
+  .buyer-navbar {
+    padding: 0 0.7rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .buyer-navbar-logo img,
+  .buyer-navbar-logo .initials-logo {
+    height: 40px;
+  }
+}

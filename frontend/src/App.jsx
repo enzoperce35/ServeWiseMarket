@@ -24,6 +24,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Buyer pages */}
+        <Route path="/products" element={<ProductsPage />} />
         <Route path="/" element={<ProductsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />

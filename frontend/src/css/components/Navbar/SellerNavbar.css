@@ -1,0 +1,171 @@
+/* ====================================
+   SELLER NAVBAR
+==================================== */
+
+.seller-navbar {
+  display: flex;
+  flex-direction: column;
+  padding: 0 1.5rem 1rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  font-family: Arial, sans-serif;
+  gap: 10px;
+}
+
+/* ---------- LAYOUT ---------- */
+
+.seller-navbar-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* left group: logo + greeting */
+.seller-navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* right group: buttons */
+.seller-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ---------- LOGO ---------- */
+
+.seller-navbar-logo img,
+.seller-navbar-logo-img {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* keep spacing when logo missing */
+.seller-navbar-logo-hidden {
+  visibility: hidden;
+}
+
+/* ---------- USER GREETING ---------- */
+
+.seller-navbar-user {
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #333;
+  opacity: 0.9;
+}
+
+/* ---------- BUTTONS ---------- */
+
+.seller-nav-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ff5722;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #ff5722;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.seller-nav-btn:hover {
+  background-color: #ff5722;
+  color: #ffffff;
+}
+
+/* primary action */
+.seller-nav-btn-primary {
+  background-color: #ff5722;
+  color: #ffffff;
+  border: 1px solid #ff5722;
+}
+
+.seller-nav-btn-primary:hover {
+  background-color: #e64a19;
+  border-color: #e64a19;
+}
+
+/* outline button */
+.seller-nav-btn-outline {
+  background-color: #ffffff;
+  color: #ff5722;
+  border: 1px solid #ff5722;
+}
+
+.seller-nav-btn-outline:hover {
+  background-color: #ff5722;
+  color: #ffffff;
+}
+
+/* closed shop state */
+.seller-shop-closed {
+  border-color: #666;
+  background-color: #faf8f8;
+  color: #646363;
+}
+
+/* Add at the bottom of SellerNavbar.css */
+/* Add at the bottom of SellerNavbar.css */
+.copy-feedback {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ff5722;
+  color: #fff;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  z-index: 1001;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  animation: fadein 0.2s, fadeout 0.5s 1.5s forwards;
+}
+
+@keyframes fadein { from {opacity:0} to {opacity:1} }
+@keyframes fadeout { from {opacity:1} to {opacity:0} }
+
+  
+/* ====================================
+   RESPONSIVE
+==================================== */
+
+@media (max-width: 768px) {
+  .seller-navbar-logo img,
+  .seller-navbar-logo-img {
+    height: 60px;
+  }
+
+  .seller-navbar {
+    padding: 0 0.7rem 1rem;
+  }
+
+  .seller-nav-btn,
+  .seller-nav-btn-primary,
+  .seller-nav-btn-outline {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .seller-navbar-logo img,
+  .seller-navbar-logo-img {
+    height: 40px;
+  }
+
+  .seller-nav-btn,
+  .seller-nav-btn-primary,
+  .seller-nav-btn-outline {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    width: 100%;
+  }
+}

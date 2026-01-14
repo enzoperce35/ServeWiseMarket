@@ -96,6 +96,10 @@
   color: #333;
 }
 
+.navbar-logo-hidden {
+  visibility: hidden;   /* invisible but keeps space */
+}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
   .navbar-logo img,
