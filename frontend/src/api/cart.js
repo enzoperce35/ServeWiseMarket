@@ -94,3 +94,13 @@ export const updateCartApi = async (cartItemId, quantity, token = null) => {
   );
   return res.data;
 };
+
+export const checkoutCartApi = (token = null) => {
+  const headers = {};
+  const apiToken = getToken(token);
+  if (apiToken) headers["X-Guest-Token"] = apiToken;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  return axios.post(`${API_BASE}/cart/checkout`, {}, { headers });
+};
+

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useCartContext } from "../context/CartProvider";
 import { useAuthContext } from "../context/AuthProvider";
-import { addToCartApi, removeFromCartApi, deductStockApi } from "../api/cart";
+import { addToCartApi, removeFromCartApi, deductStockApi, checkoutCartApi } from "../api/cart";
 import { formatDeliveryLabel, getDeliverySortScore } from "../utils/deliverySlotRotation";
 import { mergeSameProductsInGroup } from "../utils/cartsHelper";
 import { useNavigate } from "react-router-dom";
@@ -50,29 +50,29 @@ export default function CartPage() {
 
   const saveQuantity = async () => {
     if (!activeItem) return;
-  
+
     try {
       setSaving(true);
-  
+
       const current = Number(activeItem.quantity);
       const target = Number(draftQty);
-  
+
       // nothing changed
       if (target === current) {
         setActiveItem(null);
         return;
       }
-  
+
       // 🧹 if target becomes 0 → delete item completely
       if (target === 0) {
         await removeFromCartApi(activeItem.cart_item_id, token);
       } else {
         // 🔥 easiest + always correct:
         // remove the line item then re-add the correct quantity
-  
+
         // 1) remove item
         await removeFromCartApi(activeItem.cart_item_id, token);
-  
+
         // 2) re-add with target quantity
         await addToCartApi(
           activeItem.product_id,
@@ -82,7 +82,7 @@ export default function CartPage() {
           activeItem.delivery_group_id
         );
       }
-  
+
       await fetchCart();
       toast.success("Quantity updated");
       setActiveItem(null);
@@ -93,7 +93,7 @@ export default function CartPage() {
       setSaving(false);
     }
   };
-  
+
   const formatCopyTimestamp = (date) => {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -129,34 +129,34 @@ export default function CartPage() {
       const displayTimestamp = formatCopyTimestamp(now);
       const MAX_NAME_WIDTH = 22;
       const PRICE_COLUMN_START = 35;
-  
+
       let text = "";
-  
+
       cart.shops.forEach((shop) => {
         text += `🏪 ${shop.shop_name}\n`;
         text += `🧾 ${displayTimestamp}\n\n`;
-  
+
         const groups = {};
-  
+
         shop.items.forEach((item) => {
           const label = item.delivery_group_name || item.delivery_time || "No delivery group";
-  
+
           if (!groups[label]) groups[label] = [];
           groups[label].push(item);
         });
-  
+
         Object.keys(groups)
           .sort((a, b) => getDeliverySortScore(a) - getDeliverySortScore(b))
           .forEach((groupLabel) => {
             const displayLabel = formatDeliveryLabel(groupLabel);
             text += `🚚 ${displayLabel}\n`;
-  
+
             mergeSameProductsInGroup(groups[groupLabel]).forEach((i) => {
               const productName = i.variant?.name ? `${i.name} (${i.variant.name})` : i.name;
               const qtyLabel = `x${i.quantity}`;
               const fullLabel = `${productName} ${qtyLabel}`;
               const price = `₱${Number(i.total_price || 0).toFixed(2)}`;
-  
+
               const lines = wrapText(fullLabel, MAX_NAME_WIDTH);
               lines.forEach((line, index) => {
                 const prefix = index === 0 ? " • " : " ";
@@ -167,26 +167,26 @@ export default function CartPage() {
                 }
               });
             });
-  
+
             text += "\n";
           });
-  
+
         const totalItems = shop.items.reduce((sum, i) => sum + Number(i.quantity || 0), 0);
         text += "------------------------------------------\n";
         text += ` Items(${totalItems})`.padEnd(PRICE_COLUMN_START) + `Total: ₱${grandTotal.toFixed(2)}\n\n`;
       });
-  
+
       // 🔴 STOCK VALIDATION (parent product stock)
       const allItems = cart.shops.flatMap((shop) => shop.items);
       const productTotals = {};
-  
+
       allItems.forEach((item) => {
         if (!productTotals[item.product_id]) {
           productTotals[item.product_id] = { name: item.name, stock: item.stock, qty: 0 };
         }
         productTotals[item.product_id].qty += Number(item.quantity || 0);
       });
-  
+
       for (let pid in productTotals) {
         const { name, stock, qty } = productTotals[pid];
         const remaining = Number(stock || 0);
@@ -195,18 +195,24 @@ export default function CartPage() {
           return; // ❌ stop execution
         }
       }
-  
-      // ✅ copy ticket to clipboard
+
+      // ✅ copy ticket first
       await navigator.clipboard.writeText(text);
       toast.success("Ticket copied to clipboard 📋");
-  
+
+      // ✅ checkout (backend handles stock + cart)
+      await checkoutCartApi(token);
+
+      // ✅ refresh UI
+      await fetchCart();
+      
       if (token) {
         // 🟢 logged-in: deduct stock and clear API cart
         for (let pid in productTotals) {
           const { qty } = productTotals[pid];
           await deductStockApi(pid, qty, token, null);
         }
-  
+
         await Promise.all(allItems.map((item) => removeFromCartApi(item.cart_item_id, token)));
         await fetchCart();
       } else {
@@ -214,15 +220,15 @@ export default function CartPage() {
         localStorage.removeItem("guest_token");
         setCart({ shops: [], item_count: 0 });
       }
-  
+
       navigate("/");
-  
+
     } catch (err) {
       console.error(err);
       toast.error("Failed to checkout");
     }
   };
-  
+
   const handleRemoveItem = async (cartItemId) => {
     try {
       await removeFromCartApi(cartItemId, token);

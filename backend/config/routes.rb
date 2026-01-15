@@ -8,6 +8,8 @@ Rails.application.routes.draw do
       get '/me', to: 'users#me'
       get '/cart', to: 'carts#show'
 
+      post "cart/checkout", to: "carts#checkout"
+
       # Public Products (for buyers)
       resources :products, only: [:index, :show] do
         # Nested Ratings

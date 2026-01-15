@@ -44,6 +44,41 @@ module Api
         render json: { shops: result }, status: :ok
       end
 
+      def checkout
+        ActiveRecord::Base.transaction do
+          cart = @cart
+          raise ActiveRecord::Rollback if cart.nil?
+      
+          # 1️⃣ Aggregate quantities per product
+          product_totals = cart.cart_items
+            .group(:product_id)
+            .sum(:quantity)
+      
+          # 2️⃣ Validate stock
+          product_totals.each do |product_id, qty|
+            product = Product.lock.find(product_id)
+            if product.stock < qty
+              render json: {
+                error: "Not enough stock for #{product.name}"
+              }, status: :unprocessable_entity
+              raise ActiveRecord::Rollback
+            end
+          end
+      
+          # 3️⃣ Deduct stock
+          product_totals.each do |product_id, qty|
+            product = Product.lock.find(product_id)
+            product.update!(stock: product.stock - qty)
+          end
+      
+          # 4️⃣ Clear cart
+          cart.cart_items.destroy_all
+          cart.destroy if cart.cart_items.empty?
+        end
+      
+        render json: { success: true }, status: :ok
+      end      
+
       private
 
       def set_cart
