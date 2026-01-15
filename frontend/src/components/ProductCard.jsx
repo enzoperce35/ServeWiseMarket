@@ -12,12 +12,12 @@ export default function ProductCard({
   product,
   clickable = true,
   deliveryLabel,
-  deliveryGroupId   // ✅ received from ProductsPage active slot
+  deliveryGroupId
 }) {
   if (!product) return null;
 
   const navigate = useNavigate();
-  const { user, token } = useAuthContext();
+  const { user, token: userToken } = useAuthContext();
   const { refreshCart } = useCartContext();
 
   const [loading, setLoading] = useState(false);
@@ -37,11 +37,21 @@ export default function ProductCard({
     return `Delivery: around ${label}`;
   };
 
+  // 🔹 Get token: user or guest
+  const getToken = () => {
+    if (userToken) return userToken;
+    let token = localStorage.getItem("guest_token");
+    if (!token) {
+      token = crypto.randomUUID();
+      localStorage.setItem("guest_token", token);
+    }
+    return token;
+  };
+
   // 🔹 MAIN add-to-cart button
   const addToCart = async (e, quantity = 1) => {
     e.stopPropagation();
 
-    // if product has variants → open modal
     const activeVariants = variants.filter(v => v.active !== false);
     if (activeVariants.length > 0) {
       setShowVariants(true);
@@ -53,13 +63,14 @@ export default function ProductCard({
     try {
       setLoading(true);
 
-      // ✅ ALWAYS pass deliveryGroupId
+      const token = getToken();
+
       await addToCartApi(
         product.id,
         quantity,
-        token || null,         // token optional for guests
-        null,     
-        deliveryGroupId      // 👈 THIS is the key fix
+        token,
+        null,               // variantId null for main product
+        deliveryGroupId     // pass delivery group
       );
 
       await refreshCart();
@@ -72,19 +83,21 @@ export default function ProductCard({
     }
   };
 
-  // 🔹 Called when variant is chosen in modal
+  // 🔹 Add variant to cart
   const addVariantToCart = async (variantId, quantity = 1) => {
+    if (loading) return;
 
     try {
       setLoading(true);
 
+      const token = getToken();
+
       await addToCartApi(
         product.id,
         quantity,
-        token || null,         // token optional for guests
-        null,     
-        variantId,          // 👈 variant selected
-        deliveryGroupId     // 👈 STILL PASS GROUP — FIXES YOUR ISSUE
+        token,
+        variantId,          // pass selected variant
+        deliveryGroupId     // pass delivery group
       );
 
       await refreshCart();
@@ -146,9 +159,8 @@ export default function ProductCard({
         <VariantsModal
           product={{ ...product, variants: variants.filter(v => v.active !== false) }}
           onClose={() => setShowVariants(false)}
-          // Ensure we pass BOTH the handler and the Group ID if needed
-          onVariantAdd={(variantId, qty) => addVariantToCart(variantId, qty)}
-          deliveryGroupId={deliveryGroupId} // Pass this down!
+          onVariantAdd={addVariantToCart}
+          deliveryGroupId={deliveryGroupId}
         />
       )}
     </>

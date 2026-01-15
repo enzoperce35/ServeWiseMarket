@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import "../css/pages/CartPage.css";
 
 export default function CartPage() {
-  const { cart, fetchCart } = useCartContext();
+  const { cart, fetchCart, setCart } = useCartContext();
   const { token } = useAuthContext();
   const navigate = useNavigate();
 
@@ -124,57 +124,40 @@ export default function CartPage() {
   };
 
   const handleCopyTicket = async () => {
-    if (!token) {
-      toast.error("Please log in first");
-      return;
-    }
-
     try {
       const now = new Date();
       const displayTimestamp = formatCopyTimestamp(now);
       const MAX_NAME_WIDTH = 22;
       const PRICE_COLUMN_START = 35;
-
+  
       let text = "";
-
+  
       cart.shops.forEach((shop) => {
         text += `🏪 ${shop.shop_name}\n`;
         text += `🧾 ${displayTimestamp}\n\n`;
-
+  
         const groups = {};
-
+  
         shop.items.forEach((item) => {
-          console.log(item)
-          const label =
-            item.delivery_group_name ||
-            item.delivery_time ||
-            "No delivery group";
-
+          const label = item.delivery_group_name || item.delivery_time || "No delivery group";
+  
           if (!groups[label]) groups[label] = [];
           groups[label].push(item);
         });
-
-        // 🔥 sort delivery groups for ticket
+  
         Object.keys(groups)
           .sort((a, b) => getDeliverySortScore(a) - getDeliverySortScore(b))
           .forEach((groupLabel) => {
-
-            // 💯 SAME LABEL AS CART PAGE
             const displayLabel = formatDeliveryLabel(groupLabel);
-
             text += `🚚 ${displayLabel}\n`;
-
+  
             mergeSameProductsInGroup(groups[groupLabel]).forEach((i) => {
-              const productName = i.variant?.name
-                ? `${i.name} (${i.variant.name})`
-                : i.name;
-
+              const productName = i.variant?.name ? `${i.name} (${i.variant.name})` : i.name;
               const qtyLabel = `x${i.quantity}`;
               const fullLabel = `${productName} ${qtyLabel}`;
               const price = `₱${Number(i.total_price || 0).toFixed(2)}`;
-
+  
               const lines = wrapText(fullLabel, MAX_NAME_WIDTH);
-
               lines.forEach((line, index) => {
                 const prefix = index === 0 ? " • " : " ";
                 if (index === lines.length - 1) {
@@ -184,92 +167,62 @@ export default function CartPage() {
                 }
               });
             });
-
-            text += `\n`;
+  
+            text += "\n";
           });
-
-        const totalItems = shop.items.reduce(
-          (sum, i) => sum + Number(i.quantity || 0),
-          0
-        );
-
+  
+        const totalItems = shop.items.reduce((sum, i) => sum + Number(i.quantity || 0), 0);
         text += "------------------------------------------\n";
-        text +=
-          ` Items(${totalItems})`.padEnd(PRICE_COLUMN_START) +
-          `Total: ₱${grandTotal.toFixed(2)}\n\n`;
+        text += ` Items(${totalItems})`.padEnd(PRICE_COLUMN_START) + `Total: ₱${grandTotal.toFixed(2)}\n\n`;
       });
-
-      //
+  
       // 🔴 STOCK VALIDATION (parent product stock)
-      //
-
       const allItems = cart.shops.flatMap((shop) => shop.items);
-
-      // group by parent product id
       const productTotals = {};
-
+  
       allItems.forEach((item) => {
         if (!productTotals[item.product_id]) {
-          productTotals[item.product_id] = {
-            name: item.name,
-            stock: item.stock, // parent stock
-            qty: 0
-          };
+          productTotals[item.product_id] = { name: item.name, stock: item.stock, qty: 0 };
         }
-
         productTotals[item.product_id].qty += Number(item.quantity || 0);
       });
-
-      // validate
+  
       for (let pid in productTotals) {
         const { name, stock, qty } = productTotals[pid];
-
         const remaining = Number(stock || 0);
-
         if (remaining < qty) {
-          setStockError(
-            `Not enough stock for "${name}". Ordered ${qty}, only ${remaining} left.`
-          );
-          return; // ❌ STOP — no clipboard and no deduction
+          setStockError(`Not enough stock for "${name}". Ordered ${qty}, only ${remaining} left.`);
+          return; // ❌ stop execution
         }
       }
-
-      //
-      // ✅ All stock OK — copy ticket
-      //
+  
+      // ✅ copy ticket to clipboard
       await navigator.clipboard.writeText(text);
       toast.success("Ticket copied to clipboard 📋");
-
-      //
-      // 🟢 Deduct parent stock ONCE per product
-      //
-      for (let pid in productTotals) {
-        const { qty } = productTotals[pid];
-
-        await deductStockApi(
-          pid,          // parent product id
-          qty,          // total ordered of all variants
-          token,
-          null          // ALWAYS null because parent stock is used
-        );
+  
+      if (token) {
+        // 🟢 logged-in: deduct stock and clear API cart
+        for (let pid in productTotals) {
+          const { qty } = productTotals[pid];
+          await deductStockApi(pid, qty, token, null);
+        }
+  
+        await Promise.all(allItems.map((item) => removeFromCartApi(item.cart_item_id, token)));
+        await fetchCart();
+      } else {
+        // 🟢 guest: just clear local cart
+        setCart({ shops: [] });
       }
-
-      //
-      // 🧹 Clear cart items
-      //
-      await Promise.all(
-        allItems.map((item) => removeFromCartApi(item.cart_item_id, token))
-      );
-
-      await fetchCart();
+  
       navigate("/");
-
+  
     } catch (err) {
       console.error(err);
       toast.error("Failed to checkout");
     }
   };
-
+  
+  
   const handleRemoveItem = async (cartItemId) => {
     try {
       await removeFromCartApi(cartItemId, token);

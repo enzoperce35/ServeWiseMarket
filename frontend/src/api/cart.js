@@ -3,67 +3,94 @@ import axios from "axios";
 const API_BASE = "http://localhost:3000/api/v1";
 
 /**
+ * Get the token to use for API requests:
+ * - Use logged-in user's token if available
+ * - Otherwise, generate/use a persistent guest token
+ */
+const getToken = (token) => {
+  if (token) return token; // logged-in user
+
+  let guestToken = localStorage.getItem("guest_token");
+  if (!guestToken) {
+    guestToken = crypto.randomUUID(); // modern unique ID
+    localStorage.setItem("guest_token", guestToken);
+  }
+  return guestToken;
+};
+
+/**
  * Add a product or variant to the cart
- * @param {number} productId - ID of the parent product
- * @param {number} quantity - Quantity to add (default 1)
- * @param {string} token - User auth token
- * @param {number|null} variantId - Optional variant ID
+ * @param {number} productId
+ * @param {number} quantity
+ * @param {string|null} token - user token or null for guest
+ * @param {number|null} variantId
+ * @param {number|null} deliveryGroupId
  */
 export const addToCartApi = (
   productId,
   quantity = 1,
-  token,
+  token = null,
   variantId = null,
   deliveryGroupId = null
 ) => {
   const payload = { product_id: productId, quantity };
 
   if (variantId) payload.variant_id = variantId;
-
-  // ✅ Only pass deliveryGroupId for regular product OR variant
   if (deliveryGroupId) payload.delivery_group_id = deliveryGroupId;
 
-  return axios.post(`${API_BASE}/cart_items`, payload, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const headers = {};
+  const apiToken = getToken(token);
+  if (apiToken) headers["X-Guest-Token"] = apiToken;
+  if (token) headers["Authorization"] = `Bearer ${token}`; // include if logged in
+
+  return axios.post(`${API_BASE}/cart_items`, payload, { headers });
 };
 
-// ⭐ NEW — deduct stock from product (variant → mother product)
-export const deductStockApi = (productId, quantity, token) => {
+// Deduct stock
+export const deductStockApi = (productId, quantity, token = null) => {
+  const headers = {};
+  const apiToken = getToken(token);
+  if (apiToken) headers["X-Guest-Token"] = apiToken;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   return axios.post(
     `${API_BASE}/products/${productId}/deduct_stock`,
     { quantity },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+    { headers }
   );
 };
 
 // Fetch cart
-export const fetchCartApi = (token) => {
-  return axios.get(`${API_BASE}/cart`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const fetchCartApi = (token = null) => {
+  const headers = {};
+  const apiToken = getToken(token);
+  if (apiToken) headers["X-Guest-Token"] = apiToken;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  return axios.get(`${API_BASE}/cart`, { headers });
 };
 
 // Remove from cart
-export const removeFromCartApi = (cartItemId, token) => {
-  return axios.delete(`${API_BASE}/cart_items/${cartItemId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const removeFromCartApi = (cartItemId, token = null) => {
+  const headers = {};
+  const apiToken = getToken(token);
+  if (apiToken) headers["X-Guest-Token"] = apiToken;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  return axios.delete(`${API_BASE}/cart_items/${cartItemId}`, { headers });
 };
 
-// ✅ Update cart item quantity
-export const updateCartApi = async (cartItemId, quantity, token) => {
-  const res = await axiosClient.put(`/api/v1/cart_items/${cartItemId}`, 
+// Update cart item quantity
+export const updateCartApi = async (cartItemId, quantity, token = null) => {
+  const headers = {};
+  const apiToken = getToken(token);
+  if (apiToken) headers["X-Guest-Token"] = apiToken;
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const res = await axios.put(
+    `${API_BASE}/cart_items/${cartItemId}`,
     { quantity },
-    { headers: { Authorization: `Bearer ${token}` } }
+    { headers }
   );
   return res.data;
 };

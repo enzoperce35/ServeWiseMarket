@@ -1,52 +1,44 @@
+# app/controllers/api/v1/orders_controller.rb
 module Api
   module V1
     class OrdersController < ApplicationController
-      before_action :authenticate_user
-      before_action :set_order, only: [:cancel]
+      skip_before_action :authenticate_user, only: [:create]
 
+      before_action :set_order, only: [:cancel, :show]
+
+      # POST /orders
       def create
-        cart = current_user.cart
-      
-        if cart.nil? || cart.cart_items.empty?
-          return render json: { error: "Cart is empty" }, status: :unprocessable_entity
+        if current_user
+          cart = current_user.cart
+        else
+          guest_token = request.headers["X-Guest-Token"] || params[:guest_token]
+          cart = Cart.find_by(guest_token: guest_token)
         end
-      
-        # Clear cart after checkout
+
+        return render json: { error: "Cart is empty" }, status: :unprocessable_entity if cart.nil? || cart.cart_items.empty?
+
+        # Create a simple order for guest or user
+        order = Order.create!(
+          user_id: current_user&.id, # nil for guest
+          shop_id: cart.cart_items.first.product.shop_id,
+          status: "pending",
+          total_amount: cart.cart_items.sum { |i| i.unit_price * i.quantity }
+        )
+
+        # Copy cart items to order items
+        cart.cart_items.each do |ci|
+          OrderItem.create!(
+            order_id: order.id,
+            product_id: ci.product_id,
+            quantity: ci.quantity,
+            unit_price: ci.unit_price
+          )
+        end
+
+        # Clear cart
         cart.cart_items.destroy_all
-      
-        render json: {
-          message: "Checkout successful",
-        }, status: :created
-      end      
 
-      # GET /api/v1/orders
-      def index
-        orders = current_user.orders.includes(:shop).order(created_at: :desc)
-      
-        render json: {
-          orders: orders.as_json(include: { shop: { only: [:id, :name, :image_url] } }),
-          has_ongoing: orders.ongoing.exists?
-        }
-      end
-
-      def cancel
-        unless @order.user_id == current_user.id
-          return render json: { error: "Not authorized" }, status: :forbidden
-        end
-    
-        unless @order.status == "pending"
-          return render json: { error: "Order can no longer be cancelled" }, status: :unprocessable_entity
-        end
-    
-        @order.update!(status: "cancelled")
-    
-        render json: { message: "Order cancelled", status: @order.status }
-      end
-      
-      # GET /api/v1/orders/:id
-      def show
-        order = current_user.orders.find(params[:id])
-        render json: order
+        render json: { message: "Checkout successful", order_id: order.id }, status: :created
       end
 
       private

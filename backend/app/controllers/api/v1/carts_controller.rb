@@ -1,16 +1,17 @@
+# app/controllers/api/v1/carts_controller.rb
 module Api
   module V1
     class CartsController < ApplicationController
-      before_action :authenticate_user
+      skip_before_action :authenticate_user
+      before_action :set_cart
 
+      # GET /cart
       def show
-        cart = current_user.cart
-        return render json: { shops: [] }, status: :ok if cart.nil?
+        return render json: { shops: [] }, status: :ok if @cart.nil?
 
-        # Efficiently load data including the specific delivery group per item
-        shops = cart.cart_items
-                    .includes(:delivery_group, :variant, product: [:shop])
-                    .group_by { |item| item.product.shop }
+        shops = @cart.cart_items
+                     .includes(:delivery_group, :variant, product: [:shop])
+                     .group_by { |item| item.product.shop }
 
         result = shops.map do |shop, items|
           {
@@ -18,8 +19,6 @@ module Api
             shop_name: shop.name,
             items: items.map do |item|
               variant = item.variant
-              
-              # Use the delivery group actually associated with this specific cart item
               delivery_group = item.delivery_group
 
               {
@@ -43,6 +42,17 @@ module Api
         end
 
         render json: { shops: result }, status: :ok
+      end
+
+      private
+
+      def set_cart
+        if current_user
+          @cart = current_user.cart || current_user.create_cart!
+        else
+          guest_token = request.headers["X-Guest-Token"] || params[:guest_token]
+          @cart = Cart.find_or_create_by!(guest_token: guest_token)
+        end
       end
     end
   end

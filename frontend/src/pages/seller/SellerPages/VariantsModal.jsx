@@ -6,12 +6,22 @@ import toast from "react-hot-toast";
 import "../../../css/pages/seller/SellerPages/VariantsModal.css";
 
 export default function VariantsModal({ product, onClose, deliveryGroupId }) {
-  const { user, token } = useAuthContext();
+  const { user, token: userToken } = useAuthContext();
   const { cart, refreshCart } = useCartContext();
 
-  // Local staged quantities
   const [localQty, setLocalQty] = useState({});
   const [saving, setSaving] = useState(false);
+
+  // Helper for guest or logged-in token
+  const getToken = () => {
+    if (userToken) return userToken;
+    let token = localStorage.getItem("guest_token");
+    if (!token) {
+      token = crypto.randomUUID();
+      localStorage.setItem("guest_token", token);
+    }
+    return token;
+  };
 
   // Initialize local quantities from cart when opened
   useEffect(() => {
@@ -35,19 +45,13 @@ export default function VariantsModal({ product, onClose, deliveryGroupId }) {
     }));
   };
 
-  // Save staged quantities to API
   const handleDone = async () => {
-    if (!user || !token) {
-      toast.error("Please log in first");
-      return;
-    }
-
     try {
       setSaving(true);
 
+      const token = getToken();
       const cartItems = cart?.shops?.flatMap(s => s.items) || [];
 
-      // For each variant compute diff
       for (const v of product.variants) {
         const currentItem = cartItems.find(
           i => i.product_id === product.id && i.variant_id === v.id
@@ -56,24 +60,22 @@ export default function VariantsModal({ product, onClose, deliveryGroupId }) {
         const currentQty = currentItem?.quantity || 0;
         const targetQty = localQty[v.id] || 0;
 
-        // nothing changed
         if (currentQty === targetQty) continue;
 
-        // becomes zero -> remove whole cart item
+        // Remove if quantity is zero
         if (targetQty === 0 && currentItem) {
           await removeFromCartApi(currentItem.cart_item_id, token);
           continue;
         }
 
-        // compute diff and send addToCart with positive or negative qty
+        // Compute diff and call addToCartApi
         const diff = targetQty - currentQty;
         if (diff !== 0) {
-          // ✅ FIX: Pass deliveryGroupId here to prevent 422 error
           await addToCartApi(
-            product.id, 
-            diff, 
-            token, 
-            v.id, 
+            product.id,
+            diff,
+            token,
+            v.id,
             deliveryGroupId
           );
         }
@@ -84,8 +86,8 @@ export default function VariantsModal({ product, onClose, deliveryGroupId }) {
       onClose();
     } catch (err) {
       console.error("Save Error:", err);
-      // If the backend returns error messages, show them in toast
-      const errorMsg = err.response?.data?.errors?.join(", ") || "Failed to save changes";
+      const errorMsg =
+        err.response?.data?.errors?.join(", ") || "Failed to save changes";
       toast.error(errorMsg);
     } finally {
       setSaving(false);
@@ -111,7 +113,6 @@ export default function VariantsModal({ product, onClose, deliveryGroupId }) {
 
             return (
               <div key={v.id} className="variant-row">
-                {/* minus button shown only when qty > 0 */}
                 <button
                   className="variant-minus-btn"
                   style={{ visibility: qty > 0 ? "visible" : "hidden" }}
