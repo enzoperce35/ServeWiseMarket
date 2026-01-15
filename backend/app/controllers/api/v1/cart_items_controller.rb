@@ -61,13 +61,16 @@ module Api
 
       # DELETE /cart_items/:id
       def destroy
-        item = @cart.cart_items.find(params[:id])
-        cart_item_id = item.id
-        item.destroy
-        render json: { message: "Item removed", cart_item_id: cart_item_id }, status: :ok
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: "Item not found" }, status: :not_found
-      end
+        cart_item = @cart.cart_items.find(params[:id])
+        cart_item.destroy
+      
+        # 🔥 DESTROY CART IF EMPTY
+        if @cart.cart_items.count == 0
+          @cart.destroy
+        end
+      
+        head :no_content
+      end      
 
       private
 

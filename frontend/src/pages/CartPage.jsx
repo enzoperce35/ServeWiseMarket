@@ -211,7 +211,8 @@ export default function CartPage() {
         await fetchCart();
       } else {
         // 🟢 guest: just clear local cart
-        setCart({ shops: [] });
+        localStorage.removeItem("guest_token");
+        setCart({ shops: [], item_count: 0 });
       }
   
       navigate("/");
@@ -221,7 +222,6 @@ export default function CartPage() {
       toast.error("Failed to checkout");
     }
   };
-  
   
   const handleRemoveItem = async (cartItemId) => {
     try {

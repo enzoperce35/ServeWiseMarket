@@ -7,7 +7,7 @@ module Api
 
       # GET /cart
       def show
-        return render json: { shops: [] }, status: :ok if @cart.nil?
+        return render json: { shops: [] }, status: :ok if @cart.nil? || @cart.cart_items.empty?
 
         shops = @cart.cart_items
                      .includes(:delivery_group, :variant, product: [:shop])
