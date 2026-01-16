@@ -83,29 +83,21 @@ export default function LandingPage() {
     setFilteredProducts(slot.products || []);
   };
 
-  // ----------- Logged-in but NO shop -----------
-  if (user && !shopId) {
-    return (
-      <div style={{ padding: "2rem", textAlign: "center" }}>
-        <h2>You don’t have a shop yet</h2>
-        <p>Create a shop to start adding products.</p>
-      </div>
-    );
-  }
+  // ----------- Render -----------
 
-  // ----------- Guest users -----------
-  if (!shopId) {
+  // Guest users → show list of shops
+  if (!shopId && !user) {
     return <ShopListPage shops={shops} loading={loading} />;
   }
 
-  // ----------- Shop products -----------
+  // Logged-in user with no shop or any shopId → render ShopProductsPage
   return (
     <ShopProductsPage
       deliveryGroups={deliveryGroups}
       filteredProducts={filteredProducts}
       activeSlot={activeSlot}
       loading={loading}
-      shopId={shopId}
+      shopId={shopId} // can be null
       onSlotChange={handleSlotChange}
     />
   );

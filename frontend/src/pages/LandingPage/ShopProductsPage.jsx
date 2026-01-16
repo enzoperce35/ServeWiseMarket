@@ -2,16 +2,30 @@ import React from "react";
 import Navbar from "../../components/Navbar/Navbar";
 import ProductCard from "../../components/ProductCard";
 import TimeFilterBar from "../../components/TimeFilterBar";
+import { useAuthContext } from "../../context/AuthProvider";
 import "../../css/pages/LandingPage/ShopProductsPage.css";
 
 export default function ShopProductsPage({
-  deliveryGroups,
-  filteredProducts,
+  deliveryGroups = [],
+  filteredProducts = [],
   activeSlot,
   loading,
   shopId,
   onSlotChange
 }) {
+  const { user } = useAuthContext();
+
+  // ----------- Special case: logged-in user with no shop -----------
+  if (user && !shopId) {
+    return (
+      <div className="products-page-wrapper" style={{ textAlign: "center", padding: "2rem" }}>
+        <Navbar />
+        <h2>You don’t have a shop yet</h2>
+        <p>Create a shop to start adding products.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="products-page-wrapper">
       <div className="header-filters-container">
