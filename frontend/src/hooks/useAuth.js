@@ -62,7 +62,7 @@ export default function useAuth() {
   
   const handleSignup = async (data) => {
     try {
-      const payload = { ...data, role: "buyer" };
+      const payload = { ...data };
       const res = await axios.post(`${BASE_URL}/signup`, { user: payload });
   
       localStorage.setItem("token", res.data.token);

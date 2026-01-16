@@ -9,23 +9,25 @@ module Api
       # ------------------------
       # GET /api/v1/me
       # ------------------------
-      # app/controllers/api/v1/users_controller.rb
       def me
-        return render json: { status: "error", error: "Unauthorized" }, status: :unauthorized unless current_user
-      
+        unless current_user
+          return render json: { status: "error", error: "Unauthorized" }, status: :unauthorized
+        end
+
         # Auto-close shop if needed, safely
         current_user.shop&.auto_close_if_needed
-      
+
         ongoing_count = current_user.orders.ongoing.count
-      
+
         render json: {
           status: "success",
           user: current_user.as_json(
+            only: [:id, :name, :contact_number, :community, :address, :messenger_url, :role],
             include: { shop: { only: [:id, :name, :image_url, :open, :user_opened_at] } }
           ).merge(ongoing_orders_count: ongoing_count)
         }
       end
-      
+
       # ------------------------
       # POST /api/v1/signup
       # ------------------------
@@ -34,7 +36,7 @@ module Api
 
         if user.save
           token = encode_jwt(user.id)
-          render json: { status: "ok", user: user, token: token }, status: :created
+          render json: { status: "ok", user: user.as_json(only: [:id, :name, :contact_number, :community, :address, :messenger_url, :role]), token: token }, status: :created
         else
           render json: { status: "error", errors: user.errors.full_messages }, status: :unprocessable_entity
         end
@@ -48,7 +50,7 @@ module Api
 
         if user&.authenticate(params[:password])
           token = encode_jwt(user.id)
-          render json: { status: "ok", user: user, token: token }, status: :ok
+          render json: { status: "ok", user: user.as_json(only: [:id, :name, :contact_number, :community, :address, :messenger_url, :role]), token: token }, status: :ok
         else
           render json: { status: "error", errors: ["Invalid login credentials"] }, status: :unauthorized
         end
@@ -56,13 +58,19 @@ module Api
 
       private
 
+      # ------------------------
+      # Strong params
+      # ------------------------
       def user_params
         params.require(:user).permit(
           :name, :contact_number, :password, :password_confirmation,
-          :community, :phase, :street, :block, :lot, :role
+          :community, :address, :messenger_url, :role
         )
       end
 
+      # ------------------------
+      # JWT helpers
+      # ------------------------
       def encode_jwt(user_id)
         payload = { user_id: user_id, exp: 7.days.from_now.to_i }
         JWT.encode(payload, Rails.application.secret_key_base)
@@ -75,6 +83,9 @@ module Api
         nil
       end
 
+      # ------------------------
+      # Current user
+      # ------------------------
       def current_user
         return @current_user if defined?(@current_user)
 

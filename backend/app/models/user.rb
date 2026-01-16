@@ -5,10 +5,12 @@ class User < ApplicationRecord
 
   # Associations
   has_one :shop, dependent: :destroy
-
   has_one :cart, dependent: :destroy
-
   has_many :orders
+
+  # ------------------------
+  # Validations
+  # ------------------------
 
   # Name: required
   validates :name, presence: true
@@ -20,25 +22,8 @@ class User < ApplicationRecord
   # Password: minimum 6 chars
   validates :password, length: { minimum: 6 }, if: -> { new_record? || !password.nil? }
 
-  # Block: required, numbers only, max 2 chars
-  validates :block, presence: true,
-            numericality: { only_integer: true },
-            length: { maximum: 2 }
+  # Address: required
+  validates :address, presence: true, length: { maximum: 255 }
 
-  # Lot: required, numbers only, max 2 chars
-  validates :lot, presence: true,
-            numericality: { only_integer: true },
-            length: { maximum: 2 }
-
-  # Street: required, letters/numbers/symbols, max 30 chars
-  validates :street, presence: true,
-            length: { maximum: 30 },
-            format: { with: /\A[\w\s\-.]+\z/, message: "only allows letters, numbers, and symbols like '-', '.', 'Ave'" }
-
-  # Community & Phase: required (strings, not integers)
-  validates :community, presence: true, length: { maximum: 50 }
-  validates :phase, presence: true, length: { maximum: 50 }
-
-  # Role: must be buyer or seller
-  validates :role, inclusion: { in: %w[buyer seller] }
+  # Community, role, messenger_url: optional, no validation
 end

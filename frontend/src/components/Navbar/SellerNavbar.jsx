@@ -51,7 +51,6 @@ export default function SellerNavbar() {
 
         {/* ---------- RIGHT: ACTION BUTTONS ---------- */}
         <div className="seller-navbar-right">
-
           {!user ? (
             <>
               <Link to="/login" className="seller-nav-btn">
@@ -67,22 +66,24 @@ export default function SellerNavbar() {
             </>
           ) : (
             <>
-              {shop ? (
-                <Link
-                  to="/seller/products"
-                  className={`seller-nav-btn seller-nav-btn-primary ${
-                    shop.open ? "" : "seller-shop-closed"
-                  }`}
-                >
-                  Shop
-                </Link>
-              ) : (
-                <Link
-                  to="/seller/create-shop"
-                  className="seller-nav-btn seller-nav-btn-primary"
-                >
-                  Sell?
-                </Link>
+              {/* ---------- ONLY SHOW SHOP BUTTONS FOR SELLERS ---------- */}
+              {user.role === "seller" && (
+                shop ? (
+                  <Link
+                    to="/seller/products"
+                    className={`seller-nav-btn seller-nav-btn-primary ${shop.open ? "" : "seller-shop-closed"
+                      }`}
+                  >
+                    Shop
+                  </Link>
+                ) : (
+                  <Link
+                    to="/seller/create-shop"
+                    className="seller-nav-btn seller-nav-btn-primary"
+                  >
+                    Sell?
+                  </Link>
+                )
               )}
 
               <button

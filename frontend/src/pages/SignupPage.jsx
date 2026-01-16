@@ -12,12 +12,8 @@ export default function SignupPage() {
     contact_number: "",
     password: "",
     password_confirmation: "",
-    community: "",
-    phase: "",
-    street: "",
-    block: "",
-    lot: "",
-    role: "buyer"
+    address: "",
+    messenger_url: ""
   });
 
   const [errors, setErrors] = useState({});
@@ -29,20 +25,7 @@ export default function SignupPage() {
     // Frontend validation
     if (!form.name.trim()) fieldErrors.name = "Name is required";
     if (!form.contact_number.trim()) fieldErrors.contact_number = "Contact number is required";
-
-    if (!form.community) fieldErrors.community = "Community must be selected";
-    if (!form.phase) fieldErrors.phase = "Phase must be selected";
-
-    if (!form.street.trim()) fieldErrors.street = "Street is required";
-    else if (form.street.length > 30) fieldErrors.street = "Street must be less than 30 characters";
-
-    if (!form.block.trim()) fieldErrors.block = "Block is required";
-    else if (!/^\d+$/.test(form.block)) fieldErrors.block = "Block must be numbers only";
-    else if (form.block.length > 2) fieldErrors.block = "Block can be max 2 digits";
-
-    if (!form.lot.trim()) fieldErrors.lot = "Lot is required";
-    else if (!/^\d+$/.test(form.lot)) fieldErrors.lot = "Lot must be numbers only";
-    else if (form.lot.length > 2) fieldErrors.lot = "Lot can be max 2 digits";
+    if (!form.address.trim()) fieldErrors.address = "Address is required";
 
     if (!form.password) fieldErrors.password = "Password is required";
     else if (form.password.length < 6) fieldErrors.password = "Password must be at least 6 characters";
@@ -68,7 +51,6 @@ export default function SignupPage() {
     }
   };
 
-  // Helper for displaying inline error messages
   const renderError = (field) => errors[field] ? <div className="error-message">{errors[field]}</div> : null;
 
   return (
@@ -97,60 +79,23 @@ export default function SignupPage() {
         </label>
 
         <label>
-          Community
-          <select
-            value={form.community}
-            onChange={(e) => setForm({ ...form, community: e.target.value })}
-          >
-            <option value="">--Select Community--</option>
-            <option value="Sampaguita West">Sampaguita West</option>
-            <option value="Sampaguita Homes">Sampaguita Homes</option>
-          </select>
-          {renderError("community")}
-        </label>
-
-        <label>
-          Phase
-          <select
-            value={form.phase}
-            onChange={(e) => setForm({ ...form, phase: e.target.value })}
-          >
-            <option value="">--Select Phase--</option>
-            <option value="Phase 1">Phase 1</option>
-            <option value="Phase 2">Phase 2</option>
-            <option value="Phase 3">Phase 3</option>
-          </select>
-          {renderError("phase")}
-        </label>
-
-        <label>
-          Street
+          Address
           <input
             type="text"
-            value={form.street}
-            onChange={(e) => setForm({ ...form, street: e.target.value })}
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
           />
-          {renderError("street")}
+          {renderError("address")}
         </label>
 
         <label>
-          Block
+          Messenger URL (optional)
           <input
             type="text"
-            value={form.block}
-            onChange={(e) => setForm({ ...form, block: e.target.value })}
+            placeholder="e.g., https://m.me/username"
+            value={form.messenger_url}
+            onChange={(e) => setForm({ ...form, messenger_url: e.target.value })}
           />
-          {renderError("block")}
-        </label>
-
-        <label>
-          Lot
-          <input
-            type="text"
-            value={form.lot}
-            onChange={(e) => setForm({ ...form, lot: e.target.value })}
-          />
-          {renderError("lot")}
         </label>
 
         <label>

@@ -18,8 +18,21 @@ export default function LoginPage() {
 
     try {
       const res = await handleLogin(form);
-      if (res.status === "ok") navigate("/"); // ✅ user is already reactive
-      else setError(res.errors?.[0] || "Login failed");
+
+      if (res.status === "ok") {
+        // ✅ Check if the user has a shop
+        const shopId = res.user?.shop?.id;
+
+        if (shopId) {
+          // Redirect to the user's shop products page
+          navigate(`/products?shop_id=${shopId}`);
+        } else {
+          // Fallback: go to general landing page
+          navigate("/products");
+        }
+      } else {
+        setError(res.errors?.[0] || "Login failed");
+      }
     } catch (err) {
       setError("Unexpected error during login");
       console.error(err);
@@ -45,9 +58,13 @@ export default function LoginPage() {
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
         />
-        <button type="submit" disabled={loading}>{loading ? "Logging in..." : "Login"}</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
+        </button>
       </form>
-      <p>Don’t have an account? <Link to="/signup">Signup</Link></p>
+      <p>
+        Don’t have an account? <Link to="/signup">Signup</Link>
+      </p>
     </div>
   );
 }

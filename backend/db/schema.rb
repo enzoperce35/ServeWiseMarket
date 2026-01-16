@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_14_120726) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_16_083322) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -168,15 +168,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_14_120726) do
     t.string "contact_number"
     t.string "password_digest"
     t.string "role"
-    t.string "block"
-    t.string "lot"
-    t.string "street"
-    t.boolean "verified"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "community", default: "", null: false
-    t.string "phase", default: "", null: false
     t.datetime "deleted_at"
+    t.string "address"
+    t.string "messenger_url"
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
   end
 

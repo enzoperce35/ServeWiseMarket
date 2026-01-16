@@ -15,13 +15,24 @@ export default function ShopProductsPage({
 }) {
   const { user } = useAuthContext();
 
-  // ----------- Special case: logged-in user with no shop -----------
-  if (user && !shopId) {
+  // ----------- Special case: seller with no shop -----------
+  if (user && user.role === "seller" && !shopId) {
     return (
       <div className="products-page-wrapper" style={{ textAlign: "center", padding: "2rem" }}>
         <Navbar />
         <h2>You don’t have a shop yet</h2>
         <p>Create a shop to start adding products.</p>
+      </div>
+    );
+  }
+
+  // ----------- Special case: user with no role -----------
+  if (user && (!user.role || user.role === "none")) {
+    return (
+      <div className="products-page-wrapper" style={{ textAlign: "center", padding: "2rem" }}>
+        <Navbar />
+        <h2>Your account has no role assigned</h2>
+        <p>Please contact support or complete your profile to access shop products.</p>
       </div>
     );
   }
