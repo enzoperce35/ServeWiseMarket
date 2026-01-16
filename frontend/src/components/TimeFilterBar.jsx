@@ -21,9 +21,9 @@ export default function TimeFilterBar({ onChange, groups = [] }) {
 
       const hour = group.ph_timestamp;
 
-      // NOW slot
+      // NOW slot only appears from 9am - 7pm
       if (hour === -1) {
-        if (currentHour >= 6 && currentHour <= 18) {
+        if (currentHour >= 9 && currentHour <= 19) {
           today.unshift({
             ...group,
             id: 'now-slot', // Explicit ID for the Now slot

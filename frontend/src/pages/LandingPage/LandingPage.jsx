@@ -10,6 +10,8 @@ export default function LandingPage() {
   const { user } = useAuthContext();
   const [searchParams] = useSearchParams();
 
+  const view = searchParams.get("view"); // ?view=shops
+
   const rawShopId = searchParams.get("shop_id");
   const urlShopId =
     rawShopId && rawShopId !== "null" && rawShopId !== "undefined"
@@ -19,16 +21,15 @@ export default function LandingPage() {
   const userShopId = user?.shop?.id || null;
   const shopId = urlShopId || userShopId;
 
-  // States
   const [shops, setShops] = useState([]);
   const [deliveryGroups, setDeliveryGroups] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [activeSlot, setActiveSlot] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // ----------- Load shops (guest users only) -----------
+  // ----------- Load shops (ONLY when view=shops) -----------
   useEffect(() => {
-    if (shopId || user) return;
+    if (view !== "shops") return;
 
     const loadShops = async () => {
       setLoading(true);
@@ -43,11 +44,11 @@ export default function LandingPage() {
     };
 
     loadShops();
-  }, [shopId, user]);
+  }, [view]);
 
   // ----------- Load products for shop -----------
   useEffect(() => {
-    if (!shopId) return;
+    if (!shopId || view === "shops") return;
 
     const loadProducts = async () => {
       setLoading(true);
@@ -64,7 +65,7 @@ export default function LandingPage() {
 
         if (data.length > 0) {
           setActiveSlot(data[0]);
-          setFilteredProducts(data[0].products);
+          setFilteredProducts(data[0].products || []);
         }
       } catch (err) {
         console.error("Failed to load products:", err);
@@ -74,9 +75,8 @@ export default function LandingPage() {
     };
 
     loadProducts();
-  }, [shopId]);
+  }, [shopId, view]);
 
-  // ----------- Handle time slot changes -----------
   const handleSlotChange = slot => {
     if (!slot) return;
     setActiveSlot(slot);
@@ -85,19 +85,19 @@ export default function LandingPage() {
 
   // ----------- Render -----------
 
-  // Guest users → show list of shops
-  if (!shopId && !user) {
+  // Explicit shops view
+  if (view === "shops") {
     return <ShopListPage shops={shops} loading={loading} />;
   }
 
-  // Logged-in user with no shop or any shopId → render ShopProductsPage
+  // Default → shop products
   return (
     <ShopProductsPage
       deliveryGroups={deliveryGroups}
       filteredProducts={filteredProducts}
       activeSlot={activeSlot}
       loading={loading}
-      shopId={shopId} // can be null
+      shopId={shopId}
       onSlotChange={handleSlotChange}
     />
   );
