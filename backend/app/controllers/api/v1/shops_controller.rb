@@ -54,6 +54,11 @@ module Api
           }
         }, status: :ok
       end
+
+      def index
+        shops = Shop.select(:id, :name)  # only columns that exist
+        render json: shops
+      end
     end
   end
 end

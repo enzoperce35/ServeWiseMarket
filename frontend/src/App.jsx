@@ -1,7 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthProvider";
 
-import ProductsPage from "./pages/ProductsPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import CreateShop from "./pages/seller/CreateShop";
@@ -10,6 +8,7 @@ import ProductSettingsPage from "./pages/seller/ProductSettingsPage";
 import ProductPage from "./pages/ProductPage";
 import CartPage from "./pages/CartPage";
 import EditSellerShopPage from "./components/seller/EditSellerShopPage";
+import LandingPage from "./pages/LandingPage/LandingPage";
 
 
 // Seller pages
@@ -24,8 +23,9 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Buyer pages */}
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/" element={<ProductsPage />} />
+     
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/products" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
 

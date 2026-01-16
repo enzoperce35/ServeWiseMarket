@@ -6,46 +6,56 @@ module Api
 
       # GET /api/v1/products
       def index
+        shop_id = params[:shop_id]  # ✅ get shop_id from query
+  
         groups = DeliveryGroup
                    .where(active: true)
                    .includes(product_delivery_groups: { product: :variants })
-
+  
         ordered_labels = [
           "Now", "6am", "7am", "8am", "9am", "10am", "11am", "12pm",
           "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm"
         ]
-
+  
         result = groups.map do |group|
+          # Select products from this delivery group
+          products = group.product_delivery_groups
+                          .select(&:active)
+                          .map(&:product)
+                          .compact
+  
+          # -----------------------------
+          # FILTER BY shop_id if provided
+          # -----------------------------
+          if shop_id.present?
+            products = products.select { |p| p.shop_id.to_s == shop_id.to_s }
+          end
+  
           {
             id: group.id,
             name: group.name,
             ph_timestamp: group.ph_timestamp,
-            products: group.product_delivery_groups
-                           .select(&:active)
-                           .map(&:product)
-                           .map do |p|
-                             next unless p
-
-                             {
-                               id: p.id,
-                               name: p.name,
-                               price: p.price,
-                               stock: p.stock,
-                               image_url: p.image_url,
-                               category: p.category,
-                               status: p.status,
-                               preorder_delivery: p.preorder_delivery,
-                               # ✅ include active variants
-                               variants: p.variants.select(&:active).map do |v|
-                                 {
-                                   id: v.id,
-                                   name: v.name,
-                                   price: v.price,
-                                   active: v.active
-                                 }
-                               end
-                             }
-                           end.compact
+            products: products.map do |p|
+              {
+                id: p.id,
+                name: p.name,
+                price: p.price,
+                stock: p.stock,
+                image_url: p.image_url,
+                category: p.category,
+                status: p.status,
+                preorder_delivery: p.preorder_delivery,
+                # include active variants
+                variants: p.variants.select(&:active).map do |v|
+                  {
+                    id: v.id,
+                    name: v.name,
+                    price: v.price,
+                    active: v.active
+                  }
+                end
+              }
+            end
           }
         end
 

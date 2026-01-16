@@ -1,9 +1,9 @@
 /* ====================================
-   PRODUCTS PAGE
+   SHOP PRODUCTS PAGE
 ==================================== */
 
 /* --- Page Container --- */
-.products-page {
+.shop-products-page {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
@@ -15,23 +15,39 @@
 /* --- Sticky Filters Container --- */
 .header-filters-container {
   position: sticky;
-  top: 0; /* sticky at the top of the page */
+  top: 0; /* sticky at the top */
   z-index: 20;
   background-color: #ffffff;
   padding: 0px 0;
   border-bottom: 1px solid #eee;
-  margin-top: 20px; /* space between navbar and filters */
+  margin-bottom: 20px; /* spacing between navbar and filters */
 }
 
 /* --- Products Grid --- */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* default: 4 per row on desktop */
+  grid-template-columns: repeat(4, 1fr); /* 4 per row on desktop */
   gap: 20px;
   margin-top: 20px;
 }
 
-/* --- No Products Message --- */
+/* --- Product Card --- */
+/* Reuse ProductCard component styles. */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* --- Empty State --- */
 .no-products {
   text-align: center;
   font-size: 1.2rem;
@@ -50,7 +66,7 @@
 }
 
 @media (max-width: 768px) {
-  .products-page {
+  .shop-products-page {
     padding: 15px;
   }
 
@@ -61,16 +77,8 @@
 }
 
 @media (max-width: 480px) {
-  .filters {
-    gap: 0.6rem;
-  }
-
-  .filters input[type="text"] {
-    width: 100%;
-  }
-
   .products-grid {
-    grid-template-columns: repeat(2, 1fr);;
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 }

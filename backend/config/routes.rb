@@ -21,7 +21,7 @@ Rails.application.routes.draw do
       end
 
       # Public shops for buyers
-      resources :shops, only: [:show]
+      resources :shops, only: [:index, :show]
 
       
       resource :cart, only: [:show]

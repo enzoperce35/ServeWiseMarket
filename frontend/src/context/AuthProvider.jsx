@@ -23,4 +23,19 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+export const handleLogin = async (form) => {
+  const res = await axios.post("/api/v1/login", form);
+
+  const { user, token } = res.data;
+
+  setUser(user);
+  setToken(token);
+
+  localStorage.setItem("token", token);
+  localStorage.setItem("user", JSON.stringify(user));
+
+  return res.data; // ✅ THIS IS THE KEY
+};
+
+
 export const useAuthContext = () => useContext(AuthContext);
