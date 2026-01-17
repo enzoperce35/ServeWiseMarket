@@ -45,35 +45,37 @@ module Api
       end
 
       def checkout
+        shop_id = params[:shop_id]
+        
         ActiveRecord::Base.transaction do
-          cart = @cart
-          raise ActiveRecord::Rollback if cart.nil?
+          return render json: { error: "Cart is empty" }, status: :unprocessable_entity if @cart.nil?
       
-          # 1️⃣ Aggregate quantities per product
-          product_totals = cart.cart_items
-            .group(:product_id)
-            .sum(:quantity)
+          # 1️⃣ Scope items only to the specific shop
+          target_items = @cart.cart_items.joins(:product).where(products: { shop_id: shop_id })
       
-          # 2️⃣ Validate stock
+          if target_items.empty?
+            return render json: { error: "No items found for this shop" }, status: :not_found
+          end
+      
+          # 2️⃣ Aggregate quantities only for these items
+          product_totals = target_items.group(:product_id).sum(:quantity)
+      
+          # 3️⃣ Validate and Deduct Stock
           product_totals.each do |product_id, qty|
             product = Product.lock.find(product_id)
             if product.stock < qty
-              render json: {
-                error: "Not enough stock for #{product.name}"
-              }, status: :unprocessable_entity
+              render json: { error: "Not enough stock for #{product.name}" }, status: :unprocessable_entity
               raise ActiveRecord::Rollback
+              return
             end
-          end
-      
-          # 3️⃣ Deduct stock
-          product_totals.each do |product_id, qty|
-            product = Product.lock.find(product_id)
             product.update!(stock: product.stock - qty)
           end
       
-          # 4️⃣ Clear cart
-          cart.cart_items.destroy_all
-          cart.destroy if cart.cart_items.empty?
+          # 4️⃣ Clear ONLY the items belonging to that shop
+          target_items.destroy_all
+      
+          # Optional: Destroy cart only if it's completely empty now
+          @cart.destroy if @cart.cart_items.reload.empty?
         end
       
         render json: { success: true }, status: :ok

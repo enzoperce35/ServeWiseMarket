@@ -6,10 +6,13 @@ Rails.application.routes.draw do
       post '/login', to: 'sessions#create'
       delete '/logout', to: 'sessions#destroy'
       get '/me', to: 'users#me'
+      
+      # Cart
       get '/cart', to: 'carts#show'
+      post '/cart/checkout', to: 'carts#checkout'
 
-      post "cart/checkout", to: "carts#checkout"
-
+      resources :cart_items, only: [:create, :update, :destroy]
+      
       # Public Products (for buyers)
       resources :products, only: [:index, :show] do
         # Nested Ratings
@@ -23,9 +26,6 @@ Rails.application.routes.draw do
       # Public shops for buyers
       resources :shops, only: [:index, :show]
 
-      
-      resource :cart, only: [:show]
-      resources :cart_items, only: [:create, :update, :destroy]
       
       # ✅ Buyer Orders (ADD cancel here)
       resources :orders, only: [:create, :index, :show] do

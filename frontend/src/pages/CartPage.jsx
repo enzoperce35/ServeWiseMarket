@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { useCartContext } from "../context/CartProvider";
 import { useAuthContext } from "../context/AuthProvider";
-import { addToCartApi, removeFromCartApi, deductStockApi, checkoutCartApi } from "../api/cart";
+import {
+  addToCartApi,
+  removeFromCartApi,
+  checkoutCartApi,
+} from "../api/cart";
 import { formatDeliveryLabel, getDeliverySortScore } from "../utils/deliverySlotRotation";
 import { mergeSameProductsInGroup } from "../utils/cartsHelper";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +14,7 @@ import toast from "react-hot-toast";
 import "../css/pages/CartPage.css";
 
 export default function CartPage() {
-  const { cart, fetchCart, setCart } = useCartContext();
+  const { cart, fetchCart, activeShopId, setActiveShopId } = useCartContext();
   const { token } = useAuthContext();
   const navigate = useNavigate();
 
@@ -19,14 +23,14 @@ export default function CartPage() {
   const [saving, setSaving] = useState(false);
   const [stockError, setStockError] = useState(null);
 
-  const grandTotal =
-    cart?.shops?.reduce((acc, shop) => {
-      const shopTotal = shop.items.reduce(
-        (sum, item) => sum + Number(item.total_price || 0),
-        0
-      );
-      return acc + shopTotal;
-    }, 0) || 0;
+  // ✅ ONLY active shop, no fallback
+  const activeShop = activeShopId
+    ? cart?.shops?.find(shop => shop.shop_id === activeShopId)
+    : null;
+
+  const grandTotal = activeShop
+    ? activeShop.items.reduce((sum, item) => sum + Number(item.total_price || 0), 0)
+    : 0;
 
   const getUnitPrice = (item) => {
     if (!item) return 0;
@@ -44,36 +48,23 @@ export default function CartPage() {
     setActiveItem(item);
     setDraftQty(item.quantity || 1);
   };
-  //.sort(([a], [b])
-  const increaseLocal = () => setDraftQty((q) => q + 1);
-  const decreaseLocal = () => setDraftQty((q) => Math.max(1, q - 1));
+  const increaseLocal = () => setDraftQty(q => q + 1);
+  const decreaseLocal = () => setDraftQty(q => Math.max(1, q - 1));
 
   const saveQuantity = async () => {
     if (!activeItem) return;
-
     try {
       setSaving(true);
-
       const current = Number(activeItem.quantity);
       const target = Number(draftQty);
-
-      // nothing changed
       if (target === current) {
         setActiveItem(null);
         return;
       }
-
-      // 🧹 if target becomes 0 → delete item completely
       if (target === 0) {
         await removeFromCartApi(activeItem.cart_item_id, token);
       } else {
-        // 🔥 easiest + always correct:
-        // remove the line item then re-add the correct quantity
-
-        // 1) remove item
         await removeFromCartApi(activeItem.cart_item_id, token);
-
-        // 2) re-add with target quantity
         await addToCartApi(
           activeItem.product_id,
           target,
@@ -82,16 +73,31 @@ export default function CartPage() {
           activeItem.delivery_group_id
         );
       }
-
       await fetchCart();
       toast.success("Quantity updated");
       setActiveItem(null);
     } catch (err) {
-      console.error("Update failed:", err);
+      console.error(err);
       toast.error("Could not update quantity.");
     } finally {
       setSaving(false);
     }
+  };
+
+  const wrapText = (text, maxLength) => {
+    const words = text.split(" ");
+    const lines = [];
+    let currentLine = "";
+    words.forEach((word) => {
+      if ((currentLine + word).length <= maxLength) {
+        currentLine += (currentLine === "" ? "" : " ") + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word;
+      }
+    });
+    if (currentLine) lines.push(currentLine);
+    return lines;
   };
 
   const formatCopyTimestamp = (date) => {
@@ -104,95 +110,75 @@ export default function CartPage() {
     return `${month}-${day} ${hours}:${minutes}${ampm}`;
   };
 
-  const wrapText = (text, maxLength) => {
-    const words = text.split(" ");
-    const lines = [];
-    let currentLine = "";
-
-    words.forEach((word) => {
-      if ((currentLine + word).length <= maxLength) {
-        currentLine += (currentLine === "" ? "" : " ") + word;
-      } else {
-        lines.push(currentLine);
-        currentLine = word;
-      }
-    });
-
-    if (currentLine) lines.push(currentLine);
-
-    return lines;
-  };
-
   const handleCopyTicket = async () => {
+    if (!activeShop || !activeShop.items.length) {
+      toast.error("No active shop selected or cart is empty.");
+      return;
+    }
+
     try {
       const now = new Date();
       const displayTimestamp = formatCopyTimestamp(now);
       const MAX_NAME_WIDTH = 22;
       const PRICE_COLUMN_START = 35;
 
-      let text = "";
+      let text = `🏪 ${activeShop.shop_name}\n🧾 ${displayTimestamp}\n\n`;
 
-      cart.shops.forEach((shop) => {
-        text += `🏪 ${shop.shop_name}\n`;
-        text += `🧾 ${displayTimestamp}\n\n`;
-
-        const groups = {};
-
-        shop.items.forEach((item) => {
-          const label = item.delivery_group_name || item.delivery_time || "No delivery group";
-
-          if (!groups[label]) groups[label] = [];
-          groups[label].push(item);
-        });
-
-        Object.keys(groups)
-          .sort((a, b) => getDeliverySortScore(a) - getDeliverySortScore(b))
-          .forEach((groupLabel) => {
-            const displayLabel = formatDeliveryLabel(groupLabel);
-            text += `🚚 ${displayLabel}\n`;
-
-            mergeSameProductsInGroup(groups[groupLabel]).forEach((i) => {
-              const productName = i.variant?.name ? `${i.name} (${i.variant.name})` : i.name;
-              const qtyLabel = `x${i.quantity}`;
-              const fullLabel = `${productName} ${qtyLabel}`;
-              const price = `₱${Number(i.total_price || 0).toFixed(2)}`;
-
-              const lines = wrapText(fullLabel, MAX_NAME_WIDTH);
-              lines.forEach((line, index) => {
-                const prefix = index === 0 ? " • " : " ";
-                if (index === lines.length - 1) {
-                  text += (prefix + line).padEnd(PRICE_COLUMN_START) + price + "\n";
-                } else {
-                  text += prefix + line + "\n";
-                }
-              });
-            });
-
-            text += "\n";
-          });
-
-        const totalItems = shop.items.reduce((sum, i) => sum + Number(i.quantity || 0), 0);
-        text += "------------------------------------------\n";
-        text += ` Items(${totalItems})`.padEnd(PRICE_COLUMN_START) + `Total: ₱${grandTotal.toFixed(2)}\n\n`;
+      // group items by delivery slot
+      const groups = {};
+      activeShop.items.forEach((item) => {
+        const label = item.delivery_group_name || item.delivery_time || "No delivery group";
+        if (!groups[label]) groups[label] = [];
+        groups[label].push(item);
       });
 
-      // 🔴 STOCK VALIDATION (parent product stock)
-      const allItems = cart.shops.flatMap((shop) => shop.items);
-      const productTotals = {};
+      Object.keys(groups)
+        .sort((a, b) => getDeliverySortScore(a) - getDeliverySortScore(b))
+        .forEach((groupLabel) => {
+          const displayLabel = formatDeliveryLabel(groupLabel);
+          text += `🚚 ${displayLabel}\n`;
 
-      allItems.forEach((item) => {
+          mergeSameProductsInGroup(groups[groupLabel]).forEach((i) => {
+            const productName = i.variant?.name ? `${i.name} (${i.variant.name})` : i.name;
+            const qtyLabel = `x${i.quantity}`;
+            const fullLabel = `${productName} ${qtyLabel}`;
+            const price = `₱${Number(i.total_price || 0).toFixed(2)}`;
+            const lines = wrapText(fullLabel, MAX_NAME_WIDTH);
+
+            lines.forEach((line, index) => {
+              const prefix = index === 0 ? " • " : " ";
+              if (index === lines.length - 1) {
+                text += (prefix + line).padEnd(PRICE_COLUMN_START) + price + "\n";
+              } else {
+                text += prefix + line + "\n";
+              }
+            });
+          });
+
+          text += "\n";
+        });
+
+      const totalItems = activeShop.items.reduce((sum, i) => sum + Number(i.quantity || 0), 0);
+      const shopTotal = activeShop.items.reduce((sum, i) => sum + Number(i.total_price || 0), 0);
+
+      text += "------------------------------------------\n";
+      text += ` Items(${totalItems})`.padEnd(PRICE_COLUMN_START);
+      text += `Total: ₱${shopTotal.toFixed(2)}\n\n`;
+
+      // stock validation
+      const productTotals = {};
+      activeShop.items.forEach((item) => {
         if (!productTotals[item.product_id]) {
           productTotals[item.product_id] = { name: item.name, stock: item.stock, qty: 0 };
         }
         productTotals[item.product_id].qty += Number(item.quantity || 0);
       });
 
-      for (let pid in productTotals) {
+      for (const pid in productTotals) {
         const { name, stock, qty } = productTotals[pid];
-        const remaining = Number(stock || 0);
-        if (remaining < qty) {
-          setStockError(`Not enough stock for "${name}". Ordered ${qty}, only ${remaining} left.`);
-          return; // ❌ stop execution
+        if (Number(stock || 0) < qty) {
+          setStockError(`Not enough stock for "${name}". Ordered ${qty}, only ${stock} left.`);
+          return;
         }
       }
 
@@ -200,29 +186,16 @@ export default function CartPage() {
       await navigator.clipboard.writeText(text);
       toast.success("Ticket copied to clipboard 📋");
 
-      // ✅ checkout (backend handles stock + cart)
-      await checkoutCartApi(token);
-
-      // ✅ refresh UI
-      await fetchCart();
+      // ✅ checkout backend (clears cart)
+      await checkoutCartApi(token, activeShop.shop_id);
       
-      if (token) {
-        // 🟢 logged-in: deduct stock and clear API cart
-        for (let pid in productTotals) {
-          const { qty } = productTotals[pid];
-          await deductStockApi(pid, qty, token, null);
-        }
+      // ✅ fetch cart fresh
+      await fetchCart();
 
-        await Promise.all(allItems.map((item) => removeFromCartApi(item.cart_item_id, token)));
-        await fetchCart();
-      } else {
-        // 🟢 guest: just clear local cart
-        localStorage.removeItem("guest_token");
-        setCart({ shops: [], item_count: 0 });
-      }
+      // ✅ reset active shop
+      setActiveShopId(null);
 
       navigate("/");
-
     } catch (err) {
       console.error(err);
       toast.error("Failed to checkout");
@@ -240,17 +213,11 @@ export default function CartPage() {
 
   const groupItemsByDeliveryGroup = (items) => {
     const groups = {};
-
     items.forEach((item) => {
-      const key =
-        item.delivery_group_name ||
-        item.delivery_time ||
-        "No delivery group";
-
+      const key = item.delivery_group_name || item.delivery_time || "No delivery group";
       if (!groups[key]) groups[key] = [];
       groups[key].push(item);
     });
-
     return groups;
   };
 
@@ -260,19 +227,18 @@ export default function CartPage() {
         <BackButton className="cart-back-btn" fallback="/" />
       </div>
 
-      {(!cart || cart.shops.length === 0) && (
+      {(!activeShop || activeShop.items.length === 0) && (
         <p className="cart-empty">Your cart is empty.</p>
       )}
 
-      {cart?.shops?.map((shop) => (
-        <div key={shop.shop_id} className="cart-shop">
-          <h3>{shop.shop_name}</h3>
+      {activeShop && (
+        <div className="cart-shop">
+          <h3>{activeShop.shop_name}</h3>
 
-          {Object.entries(groupItemsByDeliveryGroup(shop.items))
+          {Object.entries(groupItemsByDeliveryGroup(activeShop.items))
             .sort(([a], [b]) => getDeliverySortScore(a) - getDeliverySortScore(b))
             .map(([groupLabel, groupedItems]) => (
               <div key={groupLabel} className="delivery-group-block">
-
                 <h4 className="delivery-group-title">🚚 {formatDeliveryLabel(groupLabel)}</h4>
 
                 {mergeSameProductsInGroup(groupedItems).map((item) => (
@@ -292,14 +258,8 @@ export default function CartPage() {
                         {item.name}
                         {item.variant ? ` (${item.variant.name})` : ""}
                       </span>
-
-                      <span className="cart-item-qty">
-                        Qty: {item.quantity}
-                      </span>
-
-                      <span className="cart-item-price">
-                        ₱{Number(item.total_price || 0).toFixed(2)}
-                      </span>
+                      <span className="cart-item-qty">Qty: {item.quantity}</span>
+                      <span className="cart-item-price">₱{Number(item.total_price || 0).toFixed(2)}</span>
                     </div>
 
                     <button
@@ -317,92 +277,47 @@ export default function CartPage() {
             ))}
 
           <div className="cart-shop-subtotal">
-            Subtotal: ₱
-            {shop.items
-              .reduce(
-                (sum, item) => sum + Number(item.total_price || 0),
-                0
-              )
-              .toFixed(2)}
+            Subtotal: ₱{grandTotal.toFixed(2)}
           </div>
         </div>
-      ))}
+      )}
 
-      {cart?.shops?.length > 0 && (
-        <>
-          <div className="cart-grand-total">
-            Grand Total: ₱{grandTotal.toFixed(2)}
-          </div>
-
-          <button className="checkout-btn" onClick={handleCopyTicket}>
-            Copy Ticket
-          </button>
-        </>
+      {activeShop && activeShop.items.length > 0 && (
+        <button className="checkout-btn" onClick={handleCopyTicket}>
+          Copy Ticket
+        </button>
       )}
 
       {activeItem && (
-        <div
-          className="qty-modal-backdrop"
-          onClick={() => setActiveItem(null)}
-        >
+        <div className="qty-modal-backdrop" onClick={() => setActiveItem(null)}>
           <div className="qty-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>
-              {activeItem.name}
-              {activeItem.variant ? ` (${activeItem.variant.name})` : ""}
-            </h3>
-
+            <h3>{activeItem.name}{activeItem.variant ? ` (${activeItem.variant.name})` : ""}</h3>
             <p className="modal-delivery-slot" style={{ color: '#666', fontSize: '0.9rem' }}>
-              {/* ✅ Use the name from the API, which now fallbacks to "Now" */}
               {formatDeliveryLabel(activeItem.delivery_group_name)}
-
             </p>
-
             <p>Adjust quantity</p>
-
             <div className="qty-controls">
-              <button className="qty-btn" onClick={decreaseLocal}>
-                –
-              </button>
+              <button className="qty-btn" onClick={decreaseLocal}>–</button>
               <span className="qty-number">{draftQty}</span>
-              <button className="qty-btn" onClick={increaseLocal}>
-                +
-              </button>
+              <button className="qty-btn" onClick={increaseLocal}>+</button>
             </div>
-
             <div className="qty-modal-total">
               New total: ₱{previewTotal.toFixed(2)}
             </div>
-
-            <button
-              className="qty-save"
-              disabled={saving || draftQty === activeItem.quantity}
-              onClick={saveQuantity}
-            >
+            <button className="qty-save" disabled={saving || draftQty === activeItem.quantity} onClick={saveQuantity}>
               {saving ? "Saving..." : "Save Changes"}
             </button>
-
-            <button
-              className="qty-close"
-              onClick={() => setActiveItem(null)}
-            >
-              Cancel
-            </button>
+            <button className="qty-close" onClick={() => setActiveItem(null)}>Cancel</button>
           </div>
         </div>
       )}
 
-      {/* Stock Error Modal */}
       {stockError && (
         <div className="modal-backdrop">
           <div className="modal">
             <h3>Stock Error</h3>
             <p>{stockError}</p>
-            <button
-              className="modal-ok-btn"
-              onClick={() => setStockError(null)}
-            >
-              OK
-            </button>
+            <button className="modal-ok-btn" onClick={() => setStockError(null)}>OK</button>
           </div>
         </div>
       )}

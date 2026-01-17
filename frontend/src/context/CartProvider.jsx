@@ -10,6 +10,16 @@ export const CartProvider = ({ children }) => {
   const { token } = useAuthContext();
   // Ensure default state is always an object
   const [cart, setCart] = useState({ shops: [], item_count: 0 });
+  const [activeShopId, setActiveShopId] = useState(
+    () => localStorage.getItem("activeShopId") || null
+  );
+  
+  // Optional: persist across refreshes
+  useEffect(() => {
+    if (activeShopId) localStorage.setItem("activeShopId", activeShopId);
+    else localStorage.removeItem("activeShopId");
+  }, [activeShopId]);
+  
 
   const fetchCart = async () => {
     try {
@@ -39,7 +49,7 @@ export const CartProvider = ({ children }) => {
   }, [token]);
 
   return (
-    <CartContext.Provider value={{ cart, setCart, fetchCart, refreshCart }}>
+    <CartContext.Provider value={{ cart, setCart, fetchCart, refreshCart, activeShopId, setActiveShopId }}>
       {children}
     </CartContext.Provider>
   );

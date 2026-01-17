@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import { useAuthContext } from "../../context/AuthProvider";
+import { useCartContext } from "../../context/CartProvider";
 
 import ShopListPage from "./ShopListPage";
 import ShopProductsPage from "./ShopProductsPage";
@@ -10,16 +11,21 @@ export default function LandingPage() {
   const { user } = useAuthContext();
   const [searchParams] = useSearchParams();
 
-  const view = searchParams.get("view"); // ?view=shops
-
+  const view = searchParams.get("view");
   const rawShopId = searchParams.get("shop_id");
+
   const urlShopId =
     rawShopId && rawShopId !== "null" && rawShopId !== "undefined"
-      ? rawShopId
+      ? Number(rawShopId)
       : null;
 
   const userShopId = user?.shop?.id || null;
   const shopId = urlShopId || userShopId;
+
+  const {
+    setActiveShopId,
+    setCart
+  } = useCartContext();
 
   const [shops, setShops] = useState([]);
   const [deliveryGroups, setDeliveryGroups] = useState([]);
@@ -27,7 +33,32 @@ export default function LandingPage() {
   const [activeSlot, setActiveSlot] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ----------- Load shops (ONLY when view=shops) -----------
+  // ✅ HARD SET ACTIVE SHOP (EARLY + AUTHORITATIVE)
+  useEffect(() => {
+    if (!shopId) return;
+
+    setActiveShopId(shopId);
+
+    // 🔥 HARD RESET cart view when switching shops
+    setCart((prev) => {
+      const shop = prev.shops?.find(
+        (s) => s.shop_id === shopId
+      );
+
+      return {
+        ...prev,
+        shops: shop ? [shop] : [],
+        item_count: shop
+          ? shop.items.reduce(
+              (sum, i) => sum + Number(i.quantity || 0),
+              0
+            )
+          : 0
+      };
+    });
+  }, [shopId]);
+
+  // ----------- Load shops -----------
   useEffect(() => {
     if (view !== "shops") return;
 
@@ -46,7 +77,7 @@ export default function LandingPage() {
     loadShops();
   }, [view]);
 
-  // ----------- Load products for shop -----------
+  // ----------- Load products -----------
   useEffect(() => {
     if (!shopId || view === "shops") return;
 
@@ -77,20 +108,16 @@ export default function LandingPage() {
     loadProducts();
   }, [shopId, view]);
 
-  const handleSlotChange = slot => {
+  const handleSlotChange = (slot) => {
     if (!slot) return;
     setActiveSlot(slot);
     setFilteredProducts(slot.products || []);
   };
 
-  // ----------- Render -----------
-
-  // Explicit shops view
   if (view === "shops") {
     return <ShopListPage shops={shops} loading={loading} />;
   }
 
-  // Default → shop products
   return (
     <ShopProductsPage
       deliveryGroups={deliveryGroups}
@@ -102,3 +129,4 @@ export default function LandingPage() {
     />
   );
 }
+

@@ -1,4 +1,5 @@
 import axios from "axios";
+import axiosClient from "./axiosClient";
 
 const API_BASE = "http://localhost:3000/api/v1";
 
@@ -95,12 +96,23 @@ export const updateCartApi = async (cartItemId, quantity, token = null) => {
   return res.data;
 };
 
-export const checkoutCartApi = (token = null) => {
-  const headers = {};
+// Inside your cart api file
+export const checkoutCartApi = async (token, shopId = null) => {
+  const headers = { "Content-Type": "application/json" };
   const apiToken = getToken(token);
+  
   if (apiToken) headers["X-Guest-Token"] = apiToken;
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  return axios.post(`${API_BASE}/cart/checkout`, {}, { headers });
-};
+  const res = await fetch(`${API_BASE}/cart/checkout`, {
+    method: "POST",
+    headers: headers,
+    body: JSON.stringify({ shop_id: shopId }), // Pass the shopId here
+  });
 
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error || "Checkout failed");
+  }
+  return res.json();
+};
